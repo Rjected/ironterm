@@ -13,7 +13,7 @@
 
 import type { HevyWorkout } from "./hevy";
 import { LIFTS, matchLift } from "./lifts";
-import type { PlannedExercise, PlannedSession, PlannedSet, ProgramDef, Reentry } from "./program";
+import { rampProgress, rampsSlower, type PlannedExercise, type PlannedSession, type PlannedSet, type ProgramDef, type Reentry } from "./program";
 import { addDays, epley, localDate } from "./stats";
 import { fromKg, loadStep, roundTo, type Unit } from "./units";
 
@@ -119,36 +119,63 @@ export function travelSessions(trip: Trip, e1rm: (lift: string) => number | null
 
 // ───────────────────────── re-entry ramp ─────────────────────────
 
-/** Weight and volume multipliers for ramp session `done` (0-based) of `total`. */
-export function rampFactors(r: Reentry): { load: number; volume: number } {
-  const startLoad = r.gapDays < 14 ? 0.92 : r.gapDays < 28 ? 0.88 : 0.82;
-  const startVol = r.gapDays < 14 ? 0.6 : 0.5;
-  const t = r.total ? r.done / r.total : 1;
+/**
+ * Weight and volume multipliers for one lift (or the session, without `lift`) at its point in the
+ * ramp. Volume starts lower than load: strength is intact for weeks, soreness is volume-driven.
+ * Lower-body lifts start a bit lower on volume and take one more exposure to get back.
+ */
+export function rampFactors(r: Reentry, lift?: string): { load: number; volume: number } {
+  const g = r.gapDays;
+  const startLoad = g < 14 ? 0.92 : g < 28 ? 0.88 : g < 56 ? 0.82 : g < 112 ? 0.78 : 0.72;
+  const startVol = (g < 14 ? 0.6 : g < 56 ? 0.5 : g < 112 ? 0.45 : 0.4) - (lift && rampsSlower(lift) ? 0.1 : 0);
+  const t = rampProgress(r, lift);
   return { load: startLoad + (1 - startLoad) * t, volume: startVol + (1 - startVol) * t };
 }
 
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+/** One line for the top of a ramp session: where you are, and what's lighter. */
+export function rampNote(r: Reentry, lifts: string[] = []): string {
+  const upper = lifts.find((l) => !rampsSlower(l) && LIFTS[l]);
+  const lower = lifts.find((l) => rampsSlower(l) && LIFTS[l]);
+  const f = rampFactors(r, upper ?? lower);
+  let s = `Re-entry ${r.done + 1}/${r.total} after ${r.gapDays} days off: ${pct(f.load)} load, ~${pct(f.volume)} volume, no all-out sets.`;
+  if (lower && upper) {
+    const g = rampFactors(r, lower);
+    s += ` ${LIFTS[lower].name} ramps slower (${pct(g.load)}, ~${pct(g.volume)} volume).`;
+  }
+  return `${s} Won't count against your progression; hit your normal weight and that lift is back.`;
+}
+
 /**
- * Lighten a planned session for re-entry: main lifts a little lighter with no all-out AMRAP,
- * volume work (T2/supplemental/accessories) cut harder. The engine won't count these sessions
- * against your progression.
+ * Lighten a planned session for re-entry, lift by lift: main lifts a little lighter with no
+ * all-out AMRAP, volume work (T2/supplemental/accessories) cut harder, and lower-body main lifts
+ * trimmed to fewer sets too. The engine won't count these sessions against your progression.
  */
 export function applyRamp(plan: PlannedSession, r: Reentry, unit: Unit, def?: ProgramDef): PlannedSession {
-  const { load, volume } = rampFactors(r);
-  const note = `Re-entry ${r.done + 1}/${r.total} after ${r.gapDays} days off: lighter on purpose (${Math.round(load * 100)}% load, ~${Math.round(volume * 100)}% volume). Won't count against your progression; hitting your normal weight still counts.`;
+  const note = rampNote(r, plan.exercises.filter((e) => e.tier === "T1" || e.tier === "MAIN" || e.tier === "T2").map((e) => e.lift));
   const exercises = plan.exercises.map((e, i): PlannedExercise => {
+    const { load, volume } = rampFactors(r, e.lift);
+    if (load >= 1) return e; // this lift is already back
+    const t = rampProgress(r, e.lift);
     const step = loadStep(LIFTS[e.lift]?.kind ?? "barbell", unit, def?.microplates);
     const main = e.tier === "T1" || e.tier === "MAIN";
     const lighten = (s: PlannedSet): PlannedSet => ({
       ...s,
       weight: s.weight ? Math.max(step, roundTo(s.weight * load, step)) : 0,
       amrap: false,
-      rpe: s.rpe ? Math.max(6, s.rpe - (r.done === 0 ? 1.5 : 1)) : s.rpe,
+      rpe: s.rpe ? Math.max(6, s.rpe - (t === 0 ? 1.5 : 1)) : s.rpe,
     });
-    if (main) return { ...e, sets: e.sets.map(lighten), note: [i === 0 ? note : "", e.note].filter(Boolean).join(" · ") || undefined, ifSuccess: undefined, ifFail: undefined };
+    const top = i === 0 ? note : "";
+    if (main) {
+      // Squats and other leg work: fewer top sets too, not just lighter ones.
+      const n = rampsSlower(e.lift) && e.sets.length > 3 ? Math.max(3, Math.round(e.sets.length * volume)) : e.sets.length;
+      return { ...e, sets: e.sets.slice(0, n).map(lighten), note: [top, e.note].filter(Boolean).join(" · ") || undefined, ifSuccess: undefined, ifFail: undefined };
+    }
     // Volume work: fewer sets and a couple fewer reps.
     const n = Math.max(1, Math.round(e.sets.length * volume));
-    const sets = e.sets.slice(0, n).map((s) => ({ ...lighten(s), reps: Math.max(1, Math.round(s.reps * (0.75 + 0.25 * (r.done / r.total)))), repsMax: s.repsMax ? Math.max(1, Math.round(s.repsMax * 0.8)) : undefined }));
-    return { ...e, sets, scheme: `${sets.length}×${sets[0].reps} (ramp)`, ifSuccess: undefined, ifFail: undefined };
+    const sets = e.sets.slice(0, n).map((s) => ({ ...lighten(s), reps: Math.max(1, Math.round(s.reps * (0.75 + 0.25 * t))), repsMax: s.repsMax ? Math.max(1, Math.round(s.repsMax * 0.8)) : undefined }));
+    return { ...e, sets, scheme: `${sets.length}×${sets[0].reps} (ramp)`, note: [top, e.note].filter(Boolean).join(" · ") || undefined, ifSuccess: undefined, ifFail: undefined };
   });
   return { ...plan, exercises };
 }
