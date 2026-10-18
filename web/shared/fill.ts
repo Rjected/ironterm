@@ -9,6 +9,7 @@ import { BIG_FOUR, LIFTS } from "./lifts";
 import { allSlots, usesStartWeight, type ProgramConfig } from "./program";
 import { buildProgram, defaultConfig } from "./programs";
 import { startingConfig } from "./simulate";
+import { similarLifts } from "./swaps";
 import { addDays, liftHistory } from "./stats";
 import type { Unit } from "./units";
 
@@ -52,9 +53,11 @@ export function fillMissing(cfg: ProgramConfig, e1rms: (lifts: string[]) => Reco
   if (!miss.slots.length && !miss.tms.length) return cfg;
   const def = buildProgram(cfg)!;
   const all = allSlots(def);
-  const e = e1rms([...miss.tms, ...all.filter((s) => miss.slots.includes(s.id)).map((s) => s.lift)]);
+  const needed = [...miss.tms, ...all.filter((s) => miss.slots.includes(s.id)).map((s) => s.lift)];
+  // plus close relatives, so a lift you never logged can start from one you did
+  const e = e1rms([...new Set([...needed, ...needed.flatMap((l) => similarLifts(l, 6).map((o) => o.lift))])]);
   const pre = BIG_FOUR.some((k) => (e[k] ?? 0) > 0)
-    ? startingConfig(cfg.templateId, cfg.options, e, cfg.unit, cfg.startDate)
+    ? startingConfig(cfg.templateId, cfg.options, e, cfg.unit, cfg.startDate, cfg.swaps)
     : defaultConfig(cfg.templateId, cfg.unit, cfg.startDate);
   const startWeights = { ...cfg.startWeights };
   for (const id of miss.slots) {
