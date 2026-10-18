@@ -235,6 +235,8 @@ struct FinishResult: Codable, Equatable {
     struct W: Codable, Equatable { var id: String }
     var workout: W
     var demo: Bool?
+    /// local mode: stored on the server, which has no Hevy connected
+    var local: Bool?
     /// a retry of a finish the server already logged (POST /api/live/finish is idempotent per session id)
     var duplicate: Bool?
     /// records set by this workout

@@ -144,6 +144,7 @@ object ProgramTabs {
     const val ABOUT = "about"
     const val RULES = "rules"
     const val WORKOUTS = "workouts"
+    const val BODY = "body"
 }
 
 @Composable
@@ -208,6 +209,7 @@ private fun ProgramPage(
                 when (tab) {
                     ProgramTabs.RULES -> RulesTab(d)
                     ProgramTabs.WORKOUTS -> WorkoutsTab(d, openEnded = head.weeks == null)
+                    ProgramTabs.BODY -> ProgramBodyTab(d.id, opts, data, actions)
                     else -> AboutTab(d, opts, onOption)
                 }
                 Spacer(Modifier.height(24.dp))
@@ -234,7 +236,7 @@ private fun UpdatingStrip(text: String) {
 @Composable
 private fun PageTabs(tab: String, onTab: (String) -> Unit) {
     Row(Modifier.fillMaxWidth()) {
-        listOf(ProgramTabs.ABOUT to "ABOUT", ProgramTabs.RULES to "RULES", ProgramTabs.WORKOUTS to "WORKOUTS").forEach { (k, label) ->
+        listOf(ProgramTabs.ABOUT to "ABOUT", ProgramTabs.RULES to "RULES", ProgramTabs.WORKOUTS to "WORKOUTS", ProgramTabs.BODY to "BODY").forEach { (k, label) ->
             val sel = k == tab
             Column(
                 Modifier.weight(1f).semantics { selected = sel }.clickable(role = Role.Tab) { onTab(k) }.heightIn(min = 48.dp),

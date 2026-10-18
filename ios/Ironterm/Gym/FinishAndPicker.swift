@@ -112,10 +112,17 @@ struct ExercisePicker: View {
 // MARK: - finish
 
 struct FinishSheet: View {
+    @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var gym: GymStore
     var s: LiveSession
     @State private var confirmDiscard = false
+
+    /// local mode and the demo server keep the workout on the server; otherwise it goes to Hevy
+    private var saveTitle: String {
+        let snap: Snapshot? = model.snapshot
+        return snap?.isLocal == true || snap?.demo == true ? "SAVE WORKOUT" : "SAVE TO HEVY"
+    }
 
     var body: some View {
         let p = Live.progress(s)
@@ -147,7 +154,7 @@ struct FinishSheet: View {
                     .accessibilityIdentifier("finish-error")
             }
             VStack(spacing: 10) {
-                TermButton(title: gym.busy ? "SAVING…" : "SAVE TO HEVY", style: .primary, disabled: gym.busy || p.done == 0 && sum.exercises.isEmpty) {
+                TermButton(title: gym.busy ? "SAVING…" : saveTitle, style: .primary, disabled: gym.busy || p.done == 0 && sum.exercises.isEmpty) {
                     Task { await gym.finish(); if gym.session == nil { dismiss() } }
                 }
                 .accessibilityIdentifier("save-workout")
@@ -160,7 +167,7 @@ struct FinishSheet: View {
         .padding(18)
         .background(T.panel.ignoresSafeArea())
         .onDisappear { gym.error = nil } // already shown here; don't repeat it as an alert underneath
-        .confirmationDialog("Discard this workout? Nothing is saved to Hevy.", isPresented: $confirmDiscard, titleVisibility: .visible) {
+        .confirmationDialog(model.snapshot?.isLocal == true ? "Discard this workout? Nothing is saved." : "Discard this workout? Nothing is saved to Hevy.", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard workout", role: .destructive) { Task { await gym.discard(); dismiss() } }
             Button("Keep it", role: .cancel) {}
         }
@@ -187,13 +194,24 @@ struct FinishSummaryView: View {
     var info: GymStore.FinishedInfo
     @ObservedObject var gym: GymStore
 
+    private var savedText: String {
+        if info.demo { return "Saved (demo server): the program advanced." }
+        if info.local { return "Saved on your server (no Hevy connected) · the program advanced." }
+        return "Saved to Hevy · the program advanced."
+    }
+
+    private var queuedText: String {
+        model.snapshot?.isLocal == true
+            ? "You're offline. It uploads to the server as soon as there's a connection."
+            : "You're offline. It uploads to the server (and Hevy) as soon as there's a connection."
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(info.queued ? "> SAVED ON THE PHONE" : "> WORKOUT SAVED").font(T.mono(20, .heavy)).foregroundStyle(info.queued ? T.amber : T.up)
-                    Text(info.queued ? "You're offline. It uploads to the server (and Hevy) as soon as there's a connection." :
-                         info.demo ? "Saved (demo server): the program advanced." : "Saved to Hevy · the program advanced.")
+                    Text(info.queued ? queuedText : savedText)
                         .font(T.mono(11)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                 }
                 Panel(title: info.session.title.uppercased(), detail: Fmt.dayLabel(Day.local(info.session.startDate, tz: .current))) {
