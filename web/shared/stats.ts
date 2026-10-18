@@ -29,7 +29,6 @@ export function workoutYears(workouts: HevyWorkout[], tz: string): { year: strin
 }
 
 export function workoutVolumeKg(w: HevyWorkout): number {
-
   let v = 0;
   for (const e of w.exercises) for (const s of e.sets) if (s.type !== "warmup") v += (s.weight_kg ?? 0) * (s.reps ?? 0);
   return v;
