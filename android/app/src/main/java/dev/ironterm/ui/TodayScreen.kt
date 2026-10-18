@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
 fun TodayScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now: Long, onGym: () -> Unit, onGo: (Route) -> Unit, onHistory: () -> Unit) {
     LaunchedEffect(state.mode) { actions.load(Screens.HOME) }
     val home: AppHome? = data.home.data
-    val s: Snapshot? = home?.snapshot?.takeIf { it.today.isNotEmpty() }?.copy(source = state.snapshot?.source ?: Snapshot.SOURCE_SERVER) ?: state.snapshot
+    val s: Snapshot? = home?.snapshot?.takeIf { it.today.isNotEmpty() }?.copy(origin = state.snapshot?.origin ?: Snapshot.SOURCE_SERVER) ?: state.snapshot
     if (s == null) {
         if (data.home.error != null) ErrorState(data.home.error, data.home.auth, onRetry = { actions.refresh(); actions.load(Screens.HOME, true) })
         else LoadingState("Today")

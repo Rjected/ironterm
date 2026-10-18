@@ -218,13 +218,17 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                         p.reentry?.let { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY ${it.done}/${it.total}") }
                     }
                     Spacer(Modifier.height(12.dp))
-                    BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
-                    Spacer(Modifier.height(6.dp))
-                    Mono(
-                        if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
-                        else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
-                        size = 10.sp, color = T.faint,
-                    )
+                    if (state.snapshot?.isLocal == true) {
+                        Mono("No Hevy connected, so there are no routines to push: log each session in GYM and it's saved on your server.", size = 10.sp, color = T.faint)
+                    } else {
+                        BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
+                        Spacer(Modifier.height(6.dp))
+                        Mono(
+                            if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
+                            else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
+                            size = 10.sp, color = T.faint,
+                        )
+                    }
                     Spacer(Modifier.height(12.dp))
                     TButton("Browse programs ›", modifier = Modifier.fillMaxWidth(), onClick = onBrowse)
                 }
