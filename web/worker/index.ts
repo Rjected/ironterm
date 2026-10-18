@@ -369,6 +369,9 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   }
 
   // ── gym mode: the in-progress session lives server-side so a phone refresh never loses it
+  // A debounced save that lands after FINISH (or a retry from another device) must not bring
+  // the finished session back as the live one.
+  if (path === "/api/live" && method === "PUT" && (await alreadyFinished(env, m, req.clone() as Request))) return json({ ok: true, finished: true });
   if (path === "/api/live" && method === "PUT") {
     await kvPut(env.DB, k(m, "live"), await req.json<LiveSession>());
     return json({ ok: true });
@@ -462,7 +465,16 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   return json({ error: "not found" }, { status: 404 });
 }
 
-function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
+/** Is this PUT /api/live body a session that was already saved as a workout? */
+async function alreadyFinished(env: Env, m: Mode, req: Request): Promise<boolean> {
+  const s = await req.json<{ id?: unknown }>().catch(() => null);
+  if (!s || typeof s.id !== "string") return false;
+  if (m === "demo") return ((await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? []).some((w) => w.id === `demo-live-${s.id}`);
+  return !!(await kvGet<{ workout?: unknown }>(env.DB, `finished:${s.id}`))?.workout;
+}
+
+function socialCtx(
+req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
   return {
     env, self: socialOrigin(env, new URL(req.url)),
     boot: async () => bootstrap(env, authMode, await mode(env)),

@@ -96,6 +96,8 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
   const elapsed = (now - Date.parse(s.startedAt)) / 1000;
 
   const finish = async () => {
+    // a pending debounced save must not re-create the session after it's saved
+    clearTimeout(saveT.current);
     setBusy(true);
     try {
       const r = await api.finishLive(s);
@@ -110,6 +112,8 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
     setBusy(false);
   };
   const discard = async () => {
+    clearTimeout(saveT.current);
+
     await api.discardLive().catch(() => {});
     try { localStorage.removeItem("ht-live"); } catch { /* ignore */ }
     setS(null);
