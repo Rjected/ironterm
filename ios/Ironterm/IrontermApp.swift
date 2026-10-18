@@ -5,27 +5,35 @@ struct IrontermApp: App {
     @StateObject private var model = AppModel()
     @Environment(\.scenePhase) private var phase
 
+    /// Unit tests run inside the app: don't let it sync, flush the gym queue or poll friends against
+    /// whatever server an earlier run left in the simulator's settings.
+    private static let unitTestHost: Bool = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(model)
-                .preferredColorScheme(.dark)
-                .onOpenURL { model.handle($0) }
-                .task { await model.refresh() }
-                .task { await model.gym.load() }
-                .onChange(of: phase) { _, p in
-                    if p == .background { Task { await model.gym.flushNow() } }
-                    guard p == .active else { return }
-                    // anything queued while offline goes out now
-                    Task { await model.gym.queue.flush() }
-                    // the bell and incoming requests
-                    Task { await model.social.refreshNotifications() }
-                    // refresh when coming back to the app if the data is older than 5 minutes
-                    if model.lastSync.map({ Date().timeIntervalSince($0) > 300 }) ?? true {
-                        Task { await model.refresh(); await model.gym.load() }
-                    }
-                }
+            if Self.unitTestHost { Color.clear } else { app }
         }
+    }
+
+    private var app: some View {
+        RootView()
+            .environmentObject(model)
+            .preferredColorScheme(.dark)
+            .onOpenURL { model.handle($0) }
+            .task { await model.refresh() }
+            .task { await model.gym.load() }
+            .onChange(of: phase) { _, p in
+                if p == .background { Task { await model.gym.flushNow() } }
+                guard p == .active else { return }
+                // anything queued while offline goes out now
+                Task { await model.gym.queue.flush() }
+                // the bell and incoming requests
+                Task { await model.social.refreshNotifications() }
+                // refresh when coming back to the app if the data is older than 5 minutes
+                if model.lastSync.map({ Date().timeIntervalSince($0) > 300 }) ?? true {
+                    Task { await model.refresh(); await model.gym.load() }
+                }
+            }
     }
 }
 

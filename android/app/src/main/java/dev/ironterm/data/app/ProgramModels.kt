@@ -33,6 +33,10 @@ data class ProgramSummary(
     @kotlinx.serialization.json.JsonNames("weekCount")
     @Serializable(LenientIntN::class) val weeks: Int? = null,
     val summary: String = "",
+    /** "block" (ends after [weeks]) | "cycles" (repeats forever) | "ongoing" (no weeks); blank from older servers */
+    val length: String = "",
+    /** weeks per cycle (cycles) or block length (block) */
+    @Serializable(LenientIntN::class) val cycleWeeks: Int? = null,
 )
 
 @Serializable
@@ -56,8 +60,10 @@ data class ProgramDetail(
     /** the week-by-week workouts browser (the contract's `weeks` array; see [ProgramDetailSerializer]) */
     val plan: List<PlanWeek> = emptyList(),
     val start: ProgramStartPrefill = ProgramStartPrefill(),
+    val length: String = "",
+    @Serializable(LenientIntN::class) val cycleWeeks: Int? = null,
 ) {
-    val summaryRow: ProgramSummary get() = ProgramSummary(id, name, author, category, level, daysPerWeek, weeks, summary)
+    val summaryRow: ProgramSummary get() = ProgramSummary(id, name, author, category, level, daysPerWeek, weeks, summary, length, cycleWeeks)
     /** the options as they are in this document (what POST start should send) */
     val selectedOptions: Map<String, String> get() = options.associate { it.key to it.selected.ifBlank { it.default } }
 }
@@ -75,14 +81,18 @@ object ProgramDetailSerializer : JsonTransformingSerializer<ProgramDetail>(Progr
     override fun transformDeserialize(element: JsonElement): JsonElement {
         val o = element as? JsonObject ?: return element
         val m = o.toMutableMap()
+        // a week count: a number (or numeric string). `length` is also the server's "block" / "cycles" /
+        // "ongoing" kind, which must not be read as a count.
+        fun count(): JsonElement? = LENGTH_ALIASES.firstNotNullOfOrNull { k -> (o[k] as? JsonPrimitive)?.takeIf { it !is JsonNull && it.content.toDoubleOrNull() != null } }
         val w = o["weeks"]
         if (w is JsonArray) {
             m["plan"] = w
-            m["weeks"] = LENGTH_ALIASES.firstNotNullOfOrNull { k -> o[k]?.takeIf { it is JsonPrimitive && it !is JsonNull } } ?: JsonNull
+            m["weeks"] = count() ?: JsonNull
         }
         if (m["plan"] !is JsonArray) PLAN_ALIASES.firstNotNullOfOrNull { k -> o[k] as? JsonArray }?.let { m["plan"] = it }
-        if (m["weeks"] == null || m["weeks"] is JsonNull) LENGTH_ALIASES.firstNotNullOfOrNull { k -> o[k]?.takeIf { it is JsonPrimitive && it !is JsonNull } }?.let { m["weeks"] = it }
+        if (m["weeks"] == null || m["weeks"] is JsonNull) count()?.let { m["weeks"] = it }
         LENGTH_ALIASES.forEach { m.remove(it) }
+        (o["length"] as? JsonPrimitive)?.takeIf { it.isString && it.content.toDoubleOrNull() == null }?.let { m["length"] = it }
         return JsonObject(m)
     }
 }
