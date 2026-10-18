@@ -86,10 +86,10 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Calgary Barbell 8 Week (`calgary-8`) | | not yet re-checked | |
-| Juggernaut Method 2.0 (`juggernaut`) | | not yet re-checked | |
-| RTS Generalized Intermediate (`rts-generalized`) | | not yet re-checked | |
-| Greg Nuckols High Frequency (`nuckols-hf`) | | not yet re-checked | |
+| Calgary Barbell 8 Week (`calgary-8`) | [LiftVault: Calgary Barbell 8 Week sheet](https://liftvault.com/programs/powerlifting/calgary-barbell-16-week-8-week-program-spreadsheets/) | approximation: every row (sets, reps, % / RPE, rest) of weeks 1–8 and the taper matches, and the 1RM stays static as in the sheet. The "% of E1RM" back-offs use today's top-set Epley e1RM (the sheet doesn't define E1RM). "F"/"R" sets are planned at the top-set RPE. | 2026-10-18 |
+| Juggernaut Method 2.0 (`juggernaut`) | [LiftVault Juggernaut Method Base Template](https://liftvault.com/programs/strength/juggernaut-method-base-template-spreadsheet/) (formulas); [JTS](https://www.jtsstrength.com/going-heavy-on-the-juggernaut-method) | exact to the sheet: every wave and %, TM = CEILING(TM + (reps − standard) × 5 / 2.5 lb) with no cap or floor, the new TM from the next wave (the deload uses the old one), and loads rounded up. The book itself (paid) wasn't checked. | 2026-10-18 |
+| RTS Generalized Intermediate (`rts-generalized`) | [Tuchscherer, RTS Generalized Intermediate Program](https://store.reactivetrainingsystems.com/blogs/program-articles/the-rts-generalized-intermediate-program-by-mike-tuchscherer) (2015) | approximation: all 9 weeks' exercises, reps, RPEs and fatigue % match, and back-offs are exactly the top load minus the fatigue % (or the same load for Repeat). The number of fatigue sets is open-ended in the article; 2–4 are prescribed (midpoint drop %). The RPE chart is the standard RTS chart. | 2026-10-18 |
+| Greg Nuckols High Frequency (`nuckols-hf`) | strongerbyscience.com "Your Drug-Free Muscle and Strength Potential, Part 2" (archived); LiftVault Exact and 6-day sheets | approximation: the weekly table and the AMAP rule (6–7 → +5, 8–9 → +10, 10+ → +15 lb) match. Accessory rep ranges are ours (the sheet writes "?"). Not modelled: the article's 3- and 4-day fallbacks and LiftVault's "stop at ≤5 reps" end condition. | 2026-10-18 |
 
 ## Stronger By Science
 
