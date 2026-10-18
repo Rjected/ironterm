@@ -720,7 +720,8 @@ export const gvt: ProgramTemplate = {
   defaults(unit) {
     return {
       trainingMaxes: inUnit({ dbDeclineBench: 90, chinUp: 70, squat: 315, legCurl: 150, dip: 90, hammerCurl: 50, dbInclineBench: 85, pullUp: 60, deadlift: 405, cgBench: 205, inclineCurl: 45 }, unit),
-      startWeights: {},
+      // B exercises (double progression): phase 1 lifts; phase 2 reuses the slot ids
+      startWeights: inUnit({ "gvt-b1": 25, "gvt-b2": 50, "gvt-b1l": 50, "gvt-b2l": 90, "gvt-b1c": 15, "gvt-b2c": 15 }, unit),
     };
   },
 };
