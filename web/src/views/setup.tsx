@@ -105,8 +105,7 @@ export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved
         </div>
       </div>
       <div class="pp-acts">
-        <button class={`btn ${dirty ? "pri" : ""}`} id="save-setup" onClick={async () => { if (await save()) close(); }}
-><em>⏎</em>SAVE{dirty ? " *" : ""}</button>
+        <button class={`btn ${dirty ? "pri" : ""}`} id="save-setup" onClick={async () => { if (await save()) close(); }}><em>⏎</em>SAVE{dirty ? " *" : ""}</button>
         <button class="btn" onClick={() => { setCfg(b.program ?? cfg); setS(b.settings); setDirty(false); close(); }}>CANCEL</button>
       </div>
     </div>

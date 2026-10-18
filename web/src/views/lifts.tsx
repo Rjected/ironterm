@@ -9,7 +9,7 @@ import { Delta, Panel, RpeTable, Seg, shortDate, StallChip } from "../ui";
 
 export function Lifts(props: { d: Derived; lift?: string; nav: Nav }) {
   const { d, nav } = props;
-  const lift = props.lift && d.lifts[props.lift] ? props.lift : d.liftKeys[0];
+  const lift = props.lift && Object.hasOwn(d.lifts, props.lift) ? props.lift : d.liftKeys[0];
   const [range, setRange] = useState<"1y" | "3y" | "all">("1y");
   if (!lift) return <div class="grid"><Panel title="LIFTS"><div class="empty">No lifts found yet.</div></Panel></div>;
   const pts = d.lifts[lift];

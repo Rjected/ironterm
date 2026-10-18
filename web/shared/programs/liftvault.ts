@@ -124,21 +124,23 @@ export const smolov: ProgramTemplate = {
   id: "smolov",
   name: "Smolov",
   author: "Sergey Smolov",
-  source: "LiftVault: Smolov Squat Program Spreadsheet (all four mesocycles, % and +lb jumps from its formulas)",
-  summary: "The full 13–14 week Russian squat cycle: intro, a four-day-a-week base block, a switching block, then an intense peaking block ending in a max test.",
+  source: "smolovjr.com: Smolov Squat Routine (intro, base, intense, taper) · LiftVault Smolov sheet (base +lb jumps, switching block)",
+  summary: "The full 13-week Russian squat cycle: intro, a four-day-a-week base block, a switching block, then an intense peaking block ending in a max test.",
   category: "peaking",
   level: "advanced",
   daysPerWeek: [3, 4],
-  weeks: 14,
+  weeks: 13,
   options: [],
   build() {
     const intro1 = [...S(3, 8, 0.65), ...S(1, 5, 0.7), ...S(2, 2, 0.75), ...S(1, 1, 0.8)];
     const intro3 = [...S(4, 5, 0.7), ...S(1, 3, 0.75), ...S(2, 2, 0.8), ...S(1, 1, 0.9)];
-    const intro2 = [...S(2, 2, 0.85), ...S(1, 3, 0.85), ...S(1, 5, 0.85)];
+    // smolovjr.com (and Liftosaur): week 2 is three days of 1×5 at 80, 82.5 and 85%; LiftVault's
+    // sheet lists a single combined day.
+    const intro2 = [0.8, 0.825, 0.85].map((p) => S(1, 5, p));
     const test = (name: string): DaySpec[] => [{ name, slots: (p) => [testSlot(`${p}-test`, "squat")] }];
     const weeks: DaySpec[][] = [
       [{ name: "Intro · Day 1", slots: sq(intro1) }, { name: "Intro · Day 2", slots: sq(intro1) }, { name: "Intro · Day 3", slots: sq(intro3) }],
-      [1, 2, 3].map((d) => ({ name: `Intro wk 2 · Day ${d}`, slots: sq(intro2) })),
+      intro2.map((sets, d) => ({ name: `Intro wk 2 · Day ${d + 1}`, slots: sq(sets) })),
       ...SMOLOV_BASE_ADD.map((add, w) => SMOLOV_BASE.map(([day, n, r, pct]) => ({
         name: `Base wk ${w + 1} · ${day} ${n}×${r}`,
         slots: sq(plus(S(n, r, pct), add), add ? `${Math.round(pct * 100)}% + ${add.lb} lb / ${add.kg} kg` : undefined),
@@ -153,8 +155,12 @@ export const smolov: ProgramTemplate = {
         ],
       }]),
       ...SMOLOV_INTENSE.map((days, w) => days.map((sets, d) => ({ name: `Intense wk ${w + 1} · ${["Mon", "Wed", "Sat"][d]}`, slots: sq(sets) }))),
-      [{ name: "Taper", slots: sq([...S(1, 4, 0.75), ...S(4, 4, 0.85)], "Then 3 full days of rest before testing") }],
-      test("Final 1RM test"),
+      // smolovjr.com week 13: two taper days, then the test
+      [
+        { name: "Taper · Day 1", slots: sq([...S(1, 3, 0.7), ...S(1, 3, 0.8), ...S(2, 5, 0.9), ...S(3, 4, 0.95)]) },
+        { name: "Taper · Day 2", slots: sq([...S(1, 4, 0.75), ...S(4, 4, 0.85)]) },
+        ...test("Final 1RM test"),
+      ],
     ];
     return {
       templateId: "smolov",
@@ -163,7 +169,7 @@ export const smolov: ProgramTemplate = {
       days: blockDays(weeks),
       cycle: {
         weeks: weeks.length, finite: true,
-        weekNames: ["Intro 1", "Intro 2", "Base 1", "Base 2 (+20 lb)", "Base 3 (+30 lb)", "Base test", "Switching 1", "Switching 2", "Intense 1", "Intense 2", "Intense 3", "Intense 4", "Taper", "Test"],
+        weekNames: ["Intro 1", "Intro 2", "Base 1", "Base 2 (+20 lb)", "Base 3 (+30 lb)", "Base test", "Switching 1", "Switching 2", "Intense 1", "Intense 2", "Intense 3", "Intense 4", "Taper + test"],
       },
       maxLabel: "1RM",
       notes: [
@@ -681,7 +687,7 @@ export const gvt: ProgramTemplate = {
   id: "gvt",
   name: "German Volume Training",
   author: "Charles Poliquin",
-  source: "LiftVault: German Volume Training Spreadsheet (GVT) · phases 1 and 2",
+  source: "Charles Poliquin, \"German Volume Training\" (Volume 51 text) · LiftVault GVT spreadsheet",
   summary: "Ten sets of ten on two supersetted main lifts per session at 60% of 1RM (phase 2: 10×6 at 70%), plus two lighter supplementary lifts.",
   category: "hypertrophy",
   level: "intermediate",
@@ -696,9 +702,11 @@ export const gvt: ProgramTemplate = {
     const sup = (id: string, lift: string, r: [number, number], tag: string) => ({ ...doubleSlot(id, lift, "ACC", 3, r, w8(5, 2.5), `${tag}: superset, 60 s between`), restSeconds: 60 });
     const days: DayDef[] = two
       ? [
-        { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbInclineBench", "A1"), main("gvt-a2", "pullUp", "A2 · wide grip"), sup("gvt-b1", "chestFly", [6, 12], "B1"), sup("gvt-b2", "row", [6, 12], "B2 · EZ bar")] },
-        { id: "B", name: "Day B · Legs + Abs", slots: [main("gvt-a1l", "deadlift", "A1"), main("gvt-a2l", "legCurl", "A2 · seated"), sup("gvt-b1l", "crunch", [10, 15], "B1 · twisting"), sup("gvt-b2l", "calfRaise", [10, 15], "B2")] },
-        { id: "C", name: "Day C · Arms + Shoulders", slots: [main("gvt-a1c", "cgBench", "A1"), main("gvt-a2c", "inclineCurl", "A2"), sup("gvt-b1c", "lateralRaise", [10, 12], "B1 · seated"), sup("gvt-b2c", "reverseCurl", [10, 12], "B2")] },
+        // Poliquin's phase 2: B1/B2 3×6 (fly, EZ-bar row) and 3×12–15 (twisting crunch, calf);
+        // arms/shoulders day keeps phase 1's dips + incline hammer curls and the two lateral raises.
+        { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbInclineBench", "A1"), main("gvt-a2", "pullUp", "A2 · wide grip"), sup("gvt-b1", "chestFly", [6, 6], "B1 · flat"), sup("gvt-b2", "row", [6, 6], "B2 · EZ bar")] },
+        { id: "B", name: "Day B · Legs + Abs", slots: [main("gvt-a1l", "deadlift", "A1 · bent-knee"), main("gvt-a2l", "legCurl", "A2 · seated"), sup("gvt-b1l", "crunch", [12, 15], "B1 · twisting"), sup("gvt-b2l", "calfRaise", [12, 15], "B2 · standing")] },
+        { id: "C", name: "Day C · Arms + Shoulders", slots: [main("gvt-a1c", "dip", "A1"), main("gvt-a2c", "hammerCurl", "A2 · incline"), sup("gvt-b1c", "rearDeltFly", [10, 12], "B1 · bent-over"), sup("gvt-b2c", "lateralRaise", [10, 12], "B2 · seated")] },
       ]
       : [
         { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbDeclineBench", "A1 · palms facing"), main("gvt-a2", "chinUp", "A2"), sup("gvt-b1", "inclineFly", [10, 12], "B1"), sup("gvt-b2", "dbRow", [10, 12], "B2")] },

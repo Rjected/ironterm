@@ -231,7 +231,6 @@ export function App() {
             return (
               <div class="kv" style={{ cursor: "pointer" }} onClick={() => nav({ view: "lifts", lift: l })}>
                 <span>{LIFTS[l]?.short}</span><span class="hi">{fmt(d.e1rmNow(l) ?? 0, 0)}</span>
-
               </div>
             );
           })}

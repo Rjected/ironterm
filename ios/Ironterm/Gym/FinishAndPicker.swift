@@ -148,6 +148,11 @@ struct FinishSheet: View {
                     if sum.exercises.isEmpty { Text("No sets done yet.").font(T.mono(11)).foregroundStyle(T.dim) }
                 }
             }
+            // The GYM screen's alert can't show over this sheet, so a refused save is reported here.
+            if let e = gym.error {
+                Text(e).font(T.mono(11, .bold)).foregroundStyle(T.down).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("finish-error")
+            }
             VStack(spacing: 10) {
                 TermButton(title: gym.busy ? "SAVING…" : saveTitle, style: .primary, disabled: gym.busy || p.done == 0 && sum.exercises.isEmpty) {
                     Task { await gym.finish(); if gym.session == nil { dismiss() } }
@@ -161,6 +166,7 @@ struct FinishSheet: View {
         }
         .padding(18)
         .background(T.panel.ignoresSafeArea())
+        .onDisappear { gym.error = nil } // already shown here; don't repeat it as an alert underneath
         .confirmationDialog(model.snapshot?.isLocal == true ? "Discard this workout? Nothing is saved." : "Discard this workout? Nothing is saved to Hevy.", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard workout", role: .destructive) { Task { await gym.discard(); dismiss() } }
             Button("Keep it", role: .cancel) {}

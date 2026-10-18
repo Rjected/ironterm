@@ -581,7 +581,7 @@ private fun FocusPanel(ex: LiveExercise, i: Int, unit: String, isCurrent: Boolea
             Spacer(Modifier.weight(1f))
             if (!x.done && x.target == null) {
                 Box(Modifier.clickable { actions.gym { Live.removeSet(it, ex.id, i) } }.size(40.dp), contentAlignment = Alignment.Center) {
-                    Mono("×", size = 18.sp, color = T.down, bold = true)
+                    Mono("×", Modifier.semantics { contentDescription = "Remove set" }, size = 18.sp, color = T.down, bold = true)
                 }
             }
         }
@@ -748,7 +748,8 @@ private fun Keypad(k: KeypadTarget, onDone: (Double?) -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
         }
-        BigButton("OK") { onDone(text.toDoubleOrNull()) }
+        // Untouched: keep the exact value (the display rounds to 0.1, e.g. 1.25 shows as 1.3).
+        BigButton("OK") { onDone(if (fresh) k.initial else text.toDoubleOrNull()) }
     }
 }
 
