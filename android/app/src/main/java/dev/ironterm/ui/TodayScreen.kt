@@ -53,7 +53,7 @@ fun TodayScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, n
             }
             Line()
         }
-        NextCard(s, unit, onGym)
+        NextCard(s, unit, onGym, onBrowse = { onGo(Route.Programs) })
         Section("This week", right = "${s.week.done}/${s.week.target} DONE") {
             WeekStripC(s.week.days)
             Spacer(Modifier.height(14.dp))
@@ -152,9 +152,9 @@ fun TodayScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, n
 }
 
 @Composable
-private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit) {
+private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit, onBrowse: () -> Unit) {
     val next = s.program?.next
-    Column(Modifier.fillMaxWidth().clickable(enabled = next != null || s.isDirect, onClick = onGym).padding(horizontal = 16.dp, vertical = 14.dp)) {
+    Column(Modifier.fillMaxWidth().clickable(onClick = if (next == null && !s.isDirect) onBrowse else onGym).padding(horizontal = 16.dp, vertical = 14.dp)) {
         Label("Next session", right = next?.whenLabel, rightColor = T.amber)
         Spacer(Modifier.height(10.dp))
         if (next == null) {
@@ -162,7 +162,7 @@ private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit) {
             Spacer(Modifier.height(6.dp))
             Mono(
                 if (s.isDirect) "Programs and planned weights come from the ${Brand.NAME} server. You can still log a free workout in GYM."
-                else "Pick a program in the web app (SETUP → Advanced setup) to see planned sessions here.",
+                else "Tap to browse programs and start one; planned sessions show up here.",
                 size = 12.sp, color = T.dim,
             )
             return@Column
@@ -175,7 +175,7 @@ private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit) {
         Mono(listOfNotNull(s.program.name, next.weekName, next.date?.let { Fmt.day(it) }).joinToString(" · ").uppercase(), size = 11.sp, color = T.faint)
         if (next.reentry) {
             Spacer(Modifier.height(6.dp))
-            Mono("Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
+            Mono(next.reentryNote ?: "Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
         }
         Spacer(Modifier.height(10.dp))
         next.exercises.forEachIndexed { i, e ->
