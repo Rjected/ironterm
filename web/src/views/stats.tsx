@@ -6,6 +6,7 @@ import { LIFTS } from "../../shared/lifts";
 import { yearInReview } from "../../shared/review";
 import { STANDARD_LIFTS, strengthProfile, TIERS, type Sex } from "../../shared/standards";
 import { fmt, fmtBig, fmtInt, fromKg, toKg } from "../../shared/units";
+import { workoutYears } from "../../shared/stats";
 import { Bars } from "../charts";
 import type { Bootstrap } from "../api";
 import type { Derived } from "../derive";
@@ -27,7 +28,7 @@ export function Stats(props: { b: Bootstrap; d: Derived; onSettings: (patch: Par
   const { b, d } = props;
   const u = d.unit;
   const dist: DistUnit = b.settings.distUnit ?? (u === "lb" ? "mi" : "km");
-  const years = useMemo(() => [...new Set(d.workouts.map((w) => Number(w.start_time.slice(0, 4))))].sort((a, z) => z - a), [d.workouts]);
+  const years = useMemo(() => workoutYears(d.workouts, d.tz).map((y) => Number(y.year)), [d.workouts]);
   const [year, setYear] = useState(years[0] ?? Number(d.today.slice(0, 4)));
   const hr: HrSession[] = (b.whoop?.workouts ?? []).map((w) => ({ start: w.start, end: w.end, avgHr: w.avgHr, maxHr: w.maxHr, zones: w.zones, strain: w.strain, kj: w.kj }));
   const asc = useMemo(() => [...d.workouts].reverse(), [d.workouts]);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { HevyWorkout } from "../../shared/hevy";
 import { matchLift } from "../../shared/lifts";
-import { durationMin, localDate, workoutVolumeKg } from "../../shared/stats";
+import { durationMin, localDate, workoutVolumeKg, workoutYears } from "../../shared/stats";
 import { fmt, fmtBig, fmtInt, fromKg } from "../../shared/units";
 import { Heatmap, Legend } from "../charts";
 import { whoopFor } from "../../shared/whoop";
@@ -14,10 +14,7 @@ import { splitDescription, type NotesEdit } from "../../shared/notes";
 export function History(props: { d: Derived; mode: "demo" | "live" | "local"; date?: string; workout?: string; nav: Nav; onSaved: (msg: string) => void }) {
   const { d, nav } = props;
   const [q, setQ] = useState("");
-  const years = useMemo(() => {
-    const ys = new Set(d.workouts.map((w) => w.start_time.slice(0, 4)));
-    return [...ys].sort().reverse();
-  }, [d.workouts]);
+  const years = useMemo(() => workoutYears(d.workouts, d.tz), [d.workouts]);
   const sel = props.workout ? d.byId.get(props.workout) : props.date ? d.workouts.find((w) => localDate(w.start_time, d.tz) === props.date) : d.workouts[0];
 
   const list = useMemo(() => {
@@ -41,9 +38,8 @@ export function History(props: { d: Derived; mode: "demo" | "live" | "local"; da
     <div class="grid">
       <Panel n="1" title="ALL YEARS" span={12} sub={`${years.length} years · ${fmtInt(d.workouts.length)} workouts`} act={<Legend />}>
         <div style={{ display: "grid", gap: "10px" }}>
-          {years.map((y) => {
+          {years.map(({ year: y, n }) => {
             const end = y === d.today.slice(0, 4) ? d.today : `${y}-12-31`;
-            const n = d.workouts.filter((w) => w.start_time.startsWith(y)).length;
             return (
               <div style={{ display: "grid", gridTemplateColumns: "44px minmax(0,1fr)", gap: "8px", alignItems: "start" }}>
                 <div><div class="hi">{y}</div><div class="faint" style={{ fontSize: "var(--fs-s)" }}>{n}</div></div>
