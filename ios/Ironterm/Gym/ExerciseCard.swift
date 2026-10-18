@@ -46,7 +46,7 @@ struct ExerciseCard: View {
                         }
                     }
                     NoteField(text: Binding(get: { ex.userNote ?? "" }, set: { v in gym.update { Live.mapEx($0, ex.id) { var e = $0; e.userNote = v.isEmpty ? nil : v; return e } } }),
-                              placeholder: "note for this exercise (saved to Hevy)", minHeight: 38)
+                              placeholder: "note for this exercise (saved with the workout)", minHeight: 38)
                     HStack(spacing: 10) {
                         TermButton(title: "+ SET") { gym.update { Live.addSet($0, exId: ex.id) } }
                         if ex.slotId == nil { TermButton(title: "REMOVE", style: .danger) { confirmRemove = true } }
