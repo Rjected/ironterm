@@ -102,7 +102,7 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
       try { localStorage.removeItem("ht-live"); } catch { /* ignore */ }
       setS(null);
       setFinishing(false);
-      props.onSaved(r.demo ? "Saved (demo): program advanced" : "Saved to Hevy · program advanced");
+      props.onSaved(r.demo ? "Saved (demo): program advanced" : r.local ? "Saved · program advanced" : "Saved to Hevy · program advanced");
       props.onReload();
     } catch (e) {
       props.onSaved(`Couldn't save: ${(e as Error).message}. Your session is kept — try again.`);
@@ -220,7 +220,7 @@ function StartScreen(props: { b: Bootstrap; d: Derived; onStart: (s: LiveSession
       )}
       <div class="gym-hero">
         <button class="btn" onClick={() => props.onStart(emptySession(d.unit))}>START EMPTY WORKOUT</button>
-        <p class="note">Sets are saved as you go, so closing the tab or switching phones won't lose anything. Logging in Hevy instead works too: it syncs in either way.</p>
+        <p class="note">Sets are saved as you go, so closing the tab or switching phones won't lose anything.{props.b.mode === "local" ? " Finished workouts are stored here: no Hevy needed." : " Logging in Hevy instead works too: it syncs in either way."}</p>
       </div>
     </div>
   );
@@ -290,7 +290,7 @@ function ExerciseCard(props: {
             </div>
           ))}
           {p.length > 0 && <div class="plates">PLATES/SIDE {p.map((v) => fmt(v)).join(" · ")}</div>}
-          <input class="inp gx-note" id={`note-${ex.id}`} aria-label={`note for ${name}`} maxLength={2000} placeholder="note for this exercise (optional, saved to Hevy)"
+          <input class="inp gx-note" id={`note-${ex.id}`} aria-label={`note for ${name}`} maxLength={2000} placeholder="note for this exercise (optional)"
             value={ex.userNote ?? ""} onInput={(e) => props.onNote((e.target as HTMLInputElement).value)} />
           <div class="row">
             <button class="btn" onClick={props.onAddSet}>+ SET</button>

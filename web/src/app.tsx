@@ -84,6 +84,7 @@ export function App() {
   const d = useMemo(() => (b ? derive(b, metric) : null), [b, metric]);
 
   const doSync = async () => {
+    if (b?.mode === "local") return say("No Hevy connected: Ironterm is your log. Set HEVY_API_KEY to sync from Hevy.", true);
     if (b?.mode !== "live") return say("Demo mode: add HEVY_API_KEY to .dev.vars to sync.", true);
     setBusy(true);
     try {
@@ -95,6 +96,7 @@ export function App() {
     setBusy(false);
   };
   const doPush = async (day?: number) => {
+    if (b?.mode === "local") return say("No Hevy connected: routines live in PROGRAM and GYM here. Set HEVY_API_KEY to push them to Hevy.", true);
     if (b?.mode !== "live") return say("Demo mode: add HEVY_API_KEY to push routines.", true);
     setBusy(true);
     try {
@@ -113,8 +115,10 @@ export function App() {
     }
     list.push({ key: "SQ", label: "Back Squat detail", run: () => nav({ view: "lifts", lift: "squat" }) });
     list.push({ key: "DL", label: "Deadlift detail", run: () => nav({ view: "lifts", lift: "deadlift" }) });
-    list.push({ key: "SYNC", label: "Pull new workouts from Hevy", run: doSync });
-    list.push({ key: "PUSH", label: "Push next sessions to Hevy routines", run: () => doPush() });
+    if (b?.mode !== "local") {
+      list.push({ key: "SYNC", label: "Pull new workouts from Hevy", run: doSync });
+      list.push({ key: "PUSH", label: "Push next sessions to Hevy routines", run: () => doPush() });
+    }
     list.push({ key: "VOL", label: "Graph by volume", run: () => setMetric("volume") });
     list.push({ key: "SETS", label: "Graph by sets", run: () => setMetric("sets") });
     list.push({ key: "TIME", label: "Graph by duration", run: () => setMetric("duration") });
@@ -153,6 +157,7 @@ export function App() {
   if (!b || !d) return <div class="login"><span class="am">LOADING <span class="faint">IRONTERM &lt;GO&gt;</span></span></div>;
 
   const live = b.mode === "live";
+  const local = b.mode === "local";
   const next = d.next;
 
   return (
@@ -184,9 +189,9 @@ export function App() {
           )}
         </div>
         <div class="meta">
-          <span class={`badge ${live ? "live" : "demo"}`}><i class="dot" />{live ? "LIVE" : "DEMO"}</span>
-          {b.auth === "none" && live && <span class="badge warn" title="No Access or password configured">OPEN</span>}
-          <button class="btn" style={{ border: 0, height: "100%" }} disabled={busy} onClick={doSync} title="Sync now">{busy ? "…" : "SYNC"} <span class="faint">{live ? ago(b.sync.at) : ""}</span></button>
+          <span class={`badge ${b.mode}`} title={local ? "No Hevy: workouts are stored and logged here" : undefined}><i class="dot" />{b.mode.toUpperCase()}</span>
+          {b.auth === "none" && b.mode !== "demo" && <span class="badge warn" title="No Access or password configured">OPEN</span>}
+          {!local && <button class="btn" style={{ border: 0, height: "100%" }} disabled={busy} onClick={doSync} title="Sync now">{busy ? "…" : "SYNC"} <span class="faint">{live ? ago(b.sync.at) : ""}</span></button>}
           <span class="unit faint">{d.unit.toUpperCase()}</span>
           <span class="clock dim">{clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: d.tz })}</span>
         </div>
@@ -220,7 +225,7 @@ export function App() {
         <div class="side-sec">
           <h4>STATUS</h4>
           <div class="kv"><span>workouts</span><span>{d.workouts.length}</span></div>
-          <div class="kv"><span>synced</span><span>{live ? ago(b.sync.at) : "demo"}</span></div>
+          <div class="kv"><span>synced</span><span>{live ? ago(b.sync.at) : local ? "local" : "demo"}</span></div>
           <div class="kv"><span>access</span><span class={b.auth === "none" ? "down" : "up"}>{b.auth.toUpperCase()}</span></div>
         </div>
       </aside>
@@ -232,9 +237,9 @@ export function App() {
         {route.view === "ins" && <Insights d={d} b={b} nav={nav} onReload={load} />}
         {route.view === "cal" && <Calendar b={b} d={d} nav={nav} onSettings={async (patch) => { await api.saveSettings({ ...b.settings, ...patch }); load(); }} />}
         {route.view === "stats" && <Stats b={b} d={d} onSettings={async (patch) => { await api.saveSettings({ ...b.settings, ...patch }); load(); }} />}
-        {route.view === "prog" && <Program d={d} cfg={b.program} live={live} nav={nav} onPush={doPush} busy={busy} />}
+        {route.view === "prog" && <Program d={d} cfg={b.program} mode={b.mode} nav={nav} onPush={doPush} busy={busy} />}
         {route.view === "lifts" && <Lifts d={d} lift={route.lift} nav={nav} />}
-        {route.view === "hist" && <History d={d} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m); load(); }} />}
+        {route.view === "hist" && <History d={d} mode={b.mode} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m); load(); }} />}
         {route.view === "set" && <Setup b={b} onSaved={(m) => { say(m); load(); }} />}
       </main>
 
@@ -242,8 +247,8 @@ export function App() {
         <span><b>F1–F10</b> views</span>
         <span><b>/</b> command</span>
         <span><b>SQ BENCH DL OHP</b> lifts</span>
-        <span><b>SYNC PUSH</b> hevy</span>
-        <span class="r">{d.def ? `${d.def.name} · next ${next?.dayId}` : "no program"} · {live ? "api.hevyapp.com" : "demo data"}</span>
+        {!local && <span><b>SYNC PUSH</b> hevy</span>}
+        <span class="r">{d.def ? `${d.def.name} · next ${next?.dayId}` : "no program"} · {live ? "api.hevyapp.com" : local ? "local log" : "demo data"}</span>
       </footer>
 
       <nav class="tabbar">

@@ -11,7 +11,7 @@ import { Panel, shortDate } from "../ui";
 import { api } from "../api";
 import { splitDescription, type NotesEdit } from "../../shared/notes";
 
-export function History(props: { d: Derived; date?: string; workout?: string; nav: Nav; onSaved: (msg: string) => void }) {
+export function History(props: { d: Derived; mode: "demo" | "live" | "local"; date?: string; workout?: string; nav: Nav; onSaved: (msg: string) => void }) {
   const { d, nav } = props;
   const [q, setQ] = useState("");
   const years = useMemo(() => {
@@ -84,7 +84,7 @@ export function History(props: { d: Derived; date?: string; workout?: string; na
       </Panel>
 
       <Panel n="3" title="DETAIL" span={7} sub={sel ? `${shortDate(localDate(sel.start_time, d.tz))} · ${Math.round(durationMin(sel))} min · ${fmtInt(fromKg(workoutVolumeKg(sel), d.unit))} ${d.unit}` : undefined}>
-        {sel ? <WorkoutDetail key={sel.id} w={sel} d={d} onSaved={props.onSaved} /> : <div class="empty">Pick a workout.</div>}
+        {sel ? <WorkoutDetail key={sel.id} w={sel} d={d} hevy={props.mode === "live" && !sel.id.startsWith("demo-") && !sel.id.startsWith("strong-") && !sel.id.startsWith("local-")} onSaved={props.onSaved} /> : <div class="empty">Pick a workout.</div>}
       </Panel>
     </div>
   );
@@ -115,21 +115,21 @@ function WhoopStrip(props: { w: HevyWorkout; d: Derived }) {
   );
 }
 
-function WorkoutDetail(props: { w: HevyWorkout; d: Derived; onSaved: (msg: string) => void }) {
+function WorkoutDetail(props: { w: HevyWorkout; d: Derived; hevy: boolean; onSaved: (msg: string) => void }) {
   const { w, d } = props;
   const entry = d.state?.log.find((e) => e.workoutId === w.id);
   const desc = splitDescription(w.description).text;
   const [edit, setEdit] = useState<NotesEdit | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const live = !w.id.startsWith("demo-");
+  const live = props.hevy;
   const save = async () => {
     if (!edit) return;
     setBusy(true); setErr(null);
     try {
       const r = await api.saveNotes(w.id, edit);
       setEdit(null);
-      props.onSaved(r.demo ? "Notes saved (demo: kept locally)" : "Notes saved to Hevy");
+      props.onSaved(r.demo ? "Notes saved (demo: kept locally)" : r.local ? "Notes saved" : "Notes saved to Hevy");
     } catch (e) { setErr(String((e as Error).message ?? e)); }
     finally { setBusy(false); }
   };

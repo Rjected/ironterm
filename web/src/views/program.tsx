@@ -8,7 +8,7 @@ import type { Derived } from "../derive";
 import { OutcomeTag, Panel, SessionTicket, shortDate, Tier, Watch } from "../ui";
 import { GENERIC_FIXES } from "../../shared/stall";
 
-export function Program(props: { d: Derived; cfg: ProgramConfig | null; live: boolean; nav: Nav; onPush: (day?: number) => void; busy: boolean }) {
+export function Program(props: { d: Derived; cfg: ProgramConfig | null; mode: "demo" | "live" | "local"; nav: Nav; onPush: (day?: number) => void; busy: boolean }) {
   const { d, cfg, nav } = props;
   const [day, setDay] = useState<number | null>(null);
   if (!d.def || !d.state || !cfg) {
@@ -49,7 +49,9 @@ export function Program(props: { d: Derived; cfg: ProgramConfig | null; live: bo
           <div class="d">{def.cycle ? def.cycle.weekNames?.[weekIndex(def, state.rotations)] ?? `week ${weekIndex(def, state.rotations) + 1} of ${def.cycle.weeks}` : `${def.days.length}-day cycle`}</div>
         </div>
         <div class="kpi"><label>LAST SESSION</label><div class="v" style={{ fontSize: "18px" }}>{lastSession ? lastSession.dayId : "—"}</div><div class="d">{lastSession ? shortDate(localDate(lastSession.date, d.tz)) : "nothing logged yet"}</div></div>
-        <div class="kpi"><label>HEVY ROUTINES</label><div class="v" style={{ fontSize: "18px" }}>{Object.keys(cfg.routineDays ?? {}).length ? "LINKED" : "—"}</div><div class="d">{props.live ? "auto-update after each sync" : "demo mode"}</div></div>
+        {props.mode === "local"
+          ? <div class="kpi"><label>LOGGING</label><div class="v" style={{ fontSize: "18px" }}>GYM</div><div class="d">no Hevy: log sessions here</div></div>
+          : <div class="kpi"><label>HEVY ROUTINES</label><div class="v" style={{ fontSize: "18px" }}>{Object.keys(cfg.routineDays ?? {}).length ? "LINKED" : "—"}</div><div class="d">{props.mode === "live" ? "auto-update after each sync" : "demo mode"}</div></div>}
       </div>
 
       <Panel
@@ -63,11 +65,22 @@ export function Program(props: { d: Derived; cfg: ProgramConfig | null; live: bo
         }
       >
         <SessionTicket s={plan} unit={cfg.unit} showPlates />
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          <button class="btn pri" disabled={!props.live || props.busy} onClick={() => props.onPush()}><em>P</em>PUSH ALL DAYS TO HEVY</button>
-          <button class="btn" disabled={!props.live || props.busy} onClick={() => props.onPush(shown)}>PUSH {plan.dayId} ONLY</button>
-        </div>
-        <p class="note">Pushing creates one routine per day in a "{def.name} · Ironterm" folder. Start a workout from it in Hevy and the result flows back here, through the webhook or the 15-minute sync.</p>
+        {props.mode === "local" ? (
+          <>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <button class="btn pri" onClick={() => props.nav({ view: "gym" })}><em>F2</em>LOG IN GYM</button>
+            </div>
+            <p class="note">No Hevy connected, so there are no routines to push: start this session in GYM and it's saved here. Set HEVY_API_KEY to push routines to Hevy instead.</p>
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <button class="btn pri" disabled={props.mode !== "live" || props.busy} onClick={() => props.onPush()}><em>P</em>PUSH ALL DAYS TO HEVY</button>
+              <button class="btn" disabled={props.mode !== "live" || props.busy} onClick={() => props.onPush(shown)}>PUSH {plan.dayId} ONLY</button>
+            </div>
+            <p class="note">Pushing creates one routine per day in a "{def.name} · Ironterm" folder. Start a workout from it in Hevy and the result flows back here, through the webhook or the 15-minute sync.</p>
+          </>
+        )}
       </Panel>
 
       <Panel n="2" title="SLOTS" span={7} sub="current weight, stage and what happens next">

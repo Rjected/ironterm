@@ -150,24 +150,70 @@ export function liftName(key: string): string {
   return LIFTS[key]?.name ?? key;
 }
 
-// Title → lift (first lift listing a title wins), and per-map inverted indexes; both cached.
-const BY_TITLE = new Map<string, string>();
-for (const [key, def] of Object.entries(LIFTS)) for (const h of def.hevy) if (!BY_TITLE.has(h.toLowerCase())) BY_TITLE.set(h.toLowerCase(), key);
+/**
+ * Other apps' names for library lifts (Strong's catalog, mostly), used only to recognise logged
+ * exercises. Hevy titles above always win; these never go to Hevy.
+ */
+export const ALIASES: Record<string, string[]> = {
+  ohp: ["Strict Military Press (Barbell)", "Military Press (Barbell)", "Overhead Press (Barbell - Standing)"],
+  frontSquat: ["Front Squat (Barbell)"],
+  sumoDeadlift: ["Sumo Deadlift (Barbell)"],
+  trapBarDeadlift: ["Trap Bar Deadlift", "Deadlift (Hex Bar)"],
+  stiffLegDeadlift: ["Stiff Leg Deadlift (Barbell)", "Straight Leg Deadlift (Barbell)"],
+  rackPull: ["Rack Pull (Barbell)"],
+  pushPress: ["Push Press (Barbell)"],
+  powerClean: ["Power Clean (Barbell)", "Hang Clean (Barbell)", "Clean (Barbell)"],
+  cgBench: ["Close Grip Bench Press (Barbell)", "Close-Grip Bench Press (Barbell)"],
+  legPress: ["Leg Press", "Leg Press (Plate Loaded)"],
+  hackSquat: ["Hack Squat (Plate Loaded)"],
+  bulgarianSplitSquat: ["Bulgarian Split Squat"],
+  gobletSquat: ["Goblet Squat (Kettlebell)", "Goblet Squat (Dumbbell)"],
+  legCurl: ["Leg Curl (Machine)", "Lying Leg Curl", "Seated Leg Curl"],
+  legExtension: ["Leg Extension"],
+  backExtension: ["Back Extension", "Back Extension (Machine)", "Hyperextension"],
+  cableRow: ["Seated Cable Row", "Seated Row (Cable)", "Seated Row (Cable - Wide Grip)", "Seated Row (Cable - V Grip)", "Cable Row"],
+  dbRow: ["Bent Over One Arm Row (Dumbbell)", "One Arm Dumbbell Row", "Single Arm Row (Dumbbell)"],
+  invertedRow: ["Inverted Row (Bodyweight)"],
+  latPulldown: ["Lat Pulldown - Wide Grip (Cable)", "Lat Pulldown - Underhand (Cable)", "Lat Pulldown (Single Arm)"],
+  straightArmPulldown: ["Straight Arm Pulldown (Cable)", "Straight Arm Pulldown"],
+  chestFly: ["Cable Crossover", "Pec Deck (Machine)", "Chest Fly (Cable)"],
+  rearDeltFly: ["Reverse Fly (Dumbbell)", "Reverse Fly (Cable)", "Reverse Fly (Machine)"],
+  facePull: ["Face Pull (Cable)"],
+  barbellCurl: ["EZ Bar Curl", "Bicep Curl (EZ Bar)", "Curl (EZ Bar)"],
+  concentrationCurl: ["Concentration Curl (Dumbbell)"],
+  inclineCurl: ["Incline Curl (Dumbbell)"],
+  tricepPushdown: ["Triceps Pushdown (Cable - Straight Bar)", "Triceps Pushdown (Cable - Rope)", "Triceps Pushdown (Cable)"],
+  skullcrusher: ["Skullcrusher (EZ Bar)", "Lying Triceps Extension (Barbell)"],
+  calfRaise: ["Standing Calf Raise (Bodyweight)", "Calf Press on Leg Press", "Calf Raise (Machine)"],
+  seatedCalfRaise: ["Seated Calf Raise (Machine)", "Seated Calf Raise (Plate Loaded)"],
+  hangingLegRaise: ["Hanging Knee Raise (Bodyweight)"],
+  kbSwing: ["Kettlebell Swing (Kettlebell)"],
+  farmersWalk: ["Farmer's Walk", "Farmers Walk (Dumbbell)"],
+};
+
+// Title → lifts that list it (Hevy titles first, then aliases), and per-map inverted indexes; cached.
+const BY_TITLE = new Map<string, string[]>();
+const addTitle = (title: string, key: string) => {
+  const t = title.toLowerCase(), l = BY_TITLE.get(t) ?? [];
+  if (!l.includes(key)) l.push(key);
+  BY_TITLE.set(t, l);
+};
+for (const [key, def] of Object.entries(LIFTS)) for (const h of def.hevy) addTitle(h, key);
+for (const [key, list] of Object.entries(ALIASES)) for (const h of list) addTitle(h, key);
 const MAP_INDEX = new WeakMap<Record<string, string>, Map<string, string>>();
 
-/** Find which lift (if any) a Hevy exercise counts as. */
+/** Template id Ironterm uses for a library lift logged without Hevy (local mode). */
+export const localTemplateId = (lift: string) => `lift:${lift}`;
+
+/** Find which lift (if any) a logged exercise counts as. */
 export function matchLift(title: string, templateId: string, map: Record<string, string> = {}): string | null {
   let inv = MAP_INDEX.get(map);
   if (!inv) { inv = new Map(Object.entries(map).map(([lift, tid]) => [tid, lift])); MAP_INDEX.set(map, inv); }
+  // explicit mapping wins over title guessing
   const mapped = inv.get(templateId);
   if (mapped) return mapped;
-  const key = BY_TITLE.get(title.trim().toLowerCase());
-  // explicit mapping wins over title guessing
-  if (!key) return null;
-  if (map[key]) {
-    // that lift is mapped to a different template; look for another lift with this title
-    for (const [k, def] of Object.entries(LIFTS)) if (!map[k] && def.hevy.some((h) => h.toLowerCase() === title.trim().toLowerCase())) return k;
-    return null;
-  }
-  return key;
+  if (templateId.startsWith("lift:") && LIFTS[templateId.slice(5)]) return templateId.slice(5);
+  // first lift with this title that isn't mapped to a different template
+  for (const k of BY_TITLE.get(title.trim().toLowerCase()) ?? []) if (!map[k]) return k;
+  return null;
 }

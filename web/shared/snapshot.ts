@@ -23,6 +23,8 @@ export interface Snapshot {
   unit: Unit;
   tz: string;
   demo: boolean;
+  /** where workouts come from: Hevy sync, Ironterm itself (Strong import / logged in the app), or demo data */
+  source: "hevy" | "local" | "demo";
   /** 53 × 7 grid ending today (oldest first, Monday-first weeks); level 0–4 like GitHub */
   graph: { start: string; days: { date: string; level: number; value: number }[] };
   streak: { current: number; best: number }; // weeks meeting the weekly target
@@ -174,7 +176,7 @@ export function snapshot(b: Bootstrap, now = new Date()): Snapshot {
 
   const lw = d.workouts[0];
   return {
-    v: SNAPSHOT_VERSION, generatedAt: now.toISOString(), today, unit, tz, demo: b.mode === "demo",
+    v: SNAPSHOT_VERSION, generatedAt: now.toISOString(), today, unit, tz, demo: b.mode === "demo", source: b.mode === "live" ? "hevy" : b.mode === "local" ? "local" : "demo",
     graph: { start, days },
     streak: d.streak,
     week: { target: ws.planned, done: weekDays.filter((x) => x.status === "done").length, days: weekDays },

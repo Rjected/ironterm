@@ -1,7 +1,7 @@
 // Live gym session: what you're doing right now, logged set by set in the app, then written to
 // Hevy as a normal workout when you finish. Pure helpers shared by the UI and the Worker.
 
-import type { HevySet, SetType } from "./hevy";
+import type { HevySet, HevyWorkout, SetType } from "./hevy";
 import { LIFTS } from "./lifts";
 import type { PlannedSession, Tier } from "./program";
 import { loadStep, roundTo, toKg, type Unit } from "./units";
@@ -203,6 +203,23 @@ export function toHevyWorkout(s: LiveSession, templateFor: (ex: LiveExercise) =>
       is_private: false,
       exercises,
     },
+  };
+}
+
+/**
+ * The workout as Ironterm stores it when there's no Hevy to send it to (demo and local mode):
+ * same shape Hevy returns, titles from the lift library so matching and the body map work.
+ */
+export function toStoredWorkout(s: LiveSession, id: string, templateFor: (ex: LiveExercise) => string, end = new Date().toISOString()): HevyWorkout {
+  const body = toHevyWorkout(s, templateFor, end).workout;
+  const kept = s.exercises.filter((ex) => ex.sets.some((x) => x.done));
+  return {
+    id, title: body.title, description: body.description || null, start_time: body.start_time, end_time: body.end_time,
+    exercises: body.exercises.map((e, i) => {
+      const ex = kept[i];
+      const title = ex.title ?? LIFTS[ex.lift]?.hevy[0] ?? LIFTS[ex.lift]?.name ?? e.exercise_template_id;
+      return { index: i, title, exercise_template_id: e.exercise_template_id, notes: e.notes ?? null, superset_id: null, sets: e.sets.map(({ custom_metric: _, ...x }, j) => ({ ...x, index: j })) };
+    }),
   };
 }
 

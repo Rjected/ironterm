@@ -35,6 +35,7 @@ describe("snapshot", () => {
     expect(JSON.stringify(s).length).toBeLessThan(40_000);
   });
   it("writes the fixture the native apps test against", async () => {
+    if ((globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.WRITE_FIXTURES !== "1") return;
     const fs = "node:fs";
     const { writeFileSync } = (await import(/* @vite-ignore */ fs)) as { writeFileSync: (u: URL, s: string) => void };
     writeFileSync(new URL("../../docs/api/snapshot.sample.json", import.meta.url), JSON.stringify(s, null, 2) + "\n");

@@ -108,6 +108,7 @@ a { color: inherit; }
 .badge { font-size: var(--fs-s); letter-spacing: .08em; }
 .badge.demo { color: var(--amber); }
 .badge.live { color: var(--up); }
+.badge.local { color: var(--hi); }
 .badge.warn { color: var(--down); }
 .dot { width: 6px; height: 6px; background: currentColor; display: inline-block; }
 

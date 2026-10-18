@@ -10,7 +10,7 @@ import type { PlannedSession } from "../shared/program";
 export type { Settings };
 
 export interface Bootstrap {
-  mode: "demo" | "live";
+  mode: "demo" | "live" | "local";
   auth: "google" | "access" | "password" | "none";
   settings: Settings;
   program: ProgramConfig | null;
@@ -22,6 +22,21 @@ export interface Bootstrap {
   body?: { date: string; weightKg: number }[];
   weighins?: { date: string; kg: number }[];
   trips?: Trip[];
+}
+
+export interface StrongImportResult {
+  workouts: number;
+  added: number;
+  updated: number;
+  skipped: number;
+  from: string | null;
+  to: string | null;
+  unmatchedExercises: string[];
+  unitDetected: "kg" | "lb" | null;
+  rows: number;
+  ignoredRows: number;
+  preview?: boolean;
+  mode?: Bootstrap["mode"];
 }
 
 export interface AppTokenInfo { id: string; name: string; created: string; lastUsed: string | null }
@@ -49,16 +64,18 @@ export const api = {
   push: (dayIndex?: number) => call<{ pushed: { dayId: string; title: string }[] }>("/api/routines/push", { method: "POST", body: JSON.stringify({ dayIndex }) }),
   saveLive: (s: LiveSession) => call("/api/live", { method: "PUT", body: JSON.stringify(s) }),
   discardLive: () => call("/api/live", { method: "DELETE" }),
-  finishLive: (s: LiveSession) => call<{ workout: { id: string }; demo?: boolean }>("/api/live/finish", { method: "POST", body: JSON.stringify(s) }),
+  finishLive: (s: LiveSession) => call<{ workout: { id: string }; demo?: boolean; local?: boolean; duplicate?: boolean }>("/api/live/finish", { method: "POST", body: JSON.stringify(s) }),
   whoopSync: () => call<{ workouts: number; recoveries: number }>("/api/whoop/sync", { method: "POST" }),
   whoopDisconnect: () => call("/api/whoop", { method: "DELETE" }),
   weighIn: (date: string, kg: number) => call("/api/weighin", { method: "POST", body: JSON.stringify({ date, kg }) }),
   saveTrips: (trips: Trip[]) => call("/api/trips", { method: "PUT", body: JSON.stringify(trips) }),
   pushTravel: (sessions: PlannedSession[], unit: "lb" | "kg") => call<{ pushed: { title: string }[] }>("/api/routines/travel", { method: "POST", body: JSON.stringify({ sessions, unit }) }),
   saveNotes: (id: string, edit: { description: string; exercises: (string | null)[] }) =>
-    call<{ ok: true; demo?: boolean }>(`/api/workouts/${encodeURIComponent(id)}/notes`, { method: "PUT", body: JSON.stringify(edit) }),
+    call<{ ok: true; demo?: boolean; local?: boolean }>(`/api/workouts/${encodeURIComponent(id)}/notes`, { method: "PUT", body: JSON.stringify(edit) }),
   tokens: () => call<AppTokenInfo[]>("/api/tokens"),
   createToken: (name: string) => call<{ id: string; name: string; token: string }>("/api/tokens", { method: "POST", body: JSON.stringify({ name }) }),
   revokeToken: (id: string) => call("/api/tokens/" + encodeURIComponent(id), { method: "DELETE" }),
+  setMode: (mode: "local" | "demo") => call<{ mode: Bootstrap["mode"] }>("/api/mode", { method: "PUT", body: JSON.stringify({ mode }) }),
+  importStrong: (body: { csv: string; unit?: "kg" | "lb"; preview?: boolean }) => call<StrongImportResult>("/api/import/strong", { method: "POST", body: JSON.stringify(body) }),
   templates: () => call<{ id: string; title: string; equipment?: string }[]>("/api/templates"),
 };
