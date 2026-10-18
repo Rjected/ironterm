@@ -6,6 +6,7 @@ import { LIFTS } from "./lifts";
 import { MUSCLES } from "./muscles";
 import { TEMPLATES } from "./programs";
 import { demoData } from "./demo";
+import { history as dayHistory } from "./schedule";
 
 const today = "2026-10-15";
 const demo = demoData(today);
@@ -71,12 +72,17 @@ describe("app API", () => {
     const p2 = appHistory(boot, { cursor: p1.next, limit: 20 }, d);
     expect(p2.workouts[0].id).not.toBe(p1.workouts[19].id);
     expect(new Set([...p1.workouts, ...p2.workouts].map((w) => w.id)).size).toBe(40);
+    // a junk ?limit (NaN) falls back to the default page, not an empty one
+    expect(appHistory(boot, { limit: Number("abc") }, d).workouts).toHaveLength(30);
+    expect(appHistory(boot, { limit: 2.5 }, d).workouts).toHaveLength(2);
     expect(appHistory(boot, { q: "arms" }, d).workouts.every((w) => /arms/i.test(w.title) || w.exercises.some((e) => /arms/i.test(e)))).toBe(true);
     await fixture("history", p1);
     const w = appWorkout(boot, p1.workouts[0].id, d)!;
     expect(w.exercises[0].sets.length).toBeGreaterThan(0);
     await fixture("workout", w);
     expect(appWorkout(boot, "missing", d)).toBeNull();
+    // keys from the URL that only exist on Object.prototype used to throw (a 500)
+    for (const k of ["__proto__", "constructor", "toString", "hasOwnProperty"]) expect(appLift(boot, k, d)).toBeNull();
   });
 
   it("calendar month grid", async () => {
@@ -86,6 +92,11 @@ describe("app API", () => {
     expect(c.days.some((x) => x.status === "done")).toBe(true);
     expect(c.days.some((x) => x.status === "planned")).toBe(true);
     await fixture("calendar", c);
+    // ?month=2026-13 used to throw "Invalid time value" (a 500); now it's this month
+    // ?month=0000-01 put the grid in year -1, where addDays stops advancing: the server hung
+    for (const bad of ["2026-13", "2026-00", "x", "0000-01", "0001-01", "1000-01"]) expect(appCalendar(boot, bad, d).month).toBe(today.slice(0, 7));
+    expect(appCalendar(boot, "1970-01", d).month).toBe("1970-01");
+    expect(dayHistory(boot.workouts, [], "UTC", [0], today, "-000001-12").size).toBeGreaterThanOrEqual(0);
   });
 
   it("program", async () => {

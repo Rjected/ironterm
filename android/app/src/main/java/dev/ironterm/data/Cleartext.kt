@@ -1,6 +1,5 @@
 package dev.ironterm.data
 
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * Plain-http servers. The app allows them (a self-hosted server on a home network is often http),
@@ -13,8 +12,16 @@ object Cleartext {
     /** A warning for http:// to a host that isn't on a private network, else null. */
     fun warning(serverUrl: String): String? {
         // no scheme typed means https (normalizeServerUrl)
-        val url = serverUrl.trim().takeIf { it.startsWith("http://", ignoreCase = true) }?.toHttpUrlOrNull() ?: return null
-        return if (isPrivateHost(url.host)) null else WARNING
+        val url = serverUrl.trim().takeIf { it.startsWith("http://", ignoreCase = true) } ?: return null
+        val host = hostOf(url) ?: return null
+        return if (isPrivateHost(host)) null else WARNING
+    }
+
+    /** The host of an http(s) URL (IPv6 keeps its brackets), or null if there is none. */
+    internal fun hostOf(url: String): String? {
+        val authority = url.substringAfter("://").takeWhile { it != '/' && it != '?' && it != '#' }.substringAfterLast('@')
+        val host = if (authority.startsWith("[")) authority.substringBefore(']') + "]" else authority.substringBefore(':')
+        return host.takeIf { it.isNotEmpty() && it != "[]" }
     }
 
     /** Loopback, LAN, link-local, CGNAT/Tailscale, and names that only resolve locally. */

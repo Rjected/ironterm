@@ -7,9 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
 import java.io.IOException
 
@@ -61,36 +58,34 @@ object ReleaseParser {
         val r = runCatching { SnapshotJson.json.decodeFromString(Release.serializer(), json) }.getOrNull() ?: return null
         if (r.draft) return null
         val code = versionCode(r.tag) ?: return null
-        val apk = r.assets.firstOrNull { APK.matches(it.name) && it.url.toHttpUrlOrNull()?.isHttps == true } ?: return null
+        val apk = r.assets.firstOrNull { APK.matches(it.name) && isHttps(it.url) } ?: return null
         return UpdateInfo(code, r.tag, r.name?.ifBlank { null } ?: r.tag, apk.url, apk.name, apk.size, r.body.orEmpty().trim(), r.htmlUrl)
     }
 
     fun isNewer(info: UpdateInfo?, currentVersionCode: Int): Boolean = info != null && info.versionCode > currentVersionCode
+
+    /** An absolute https URL with a host. */
+    private fun isHttps(url: String): Boolean =
+        runCatching { java.net.URI(url) }.getOrNull()?.let { it.scheme.equals("https", true) && !it.host.isNullOrEmpty() } == true
 }
 
 class UpdateChecker(
     private val repo: String,
     private val currentVersionCode: Int,
     private val apiBase: String = "https://api.github.com",
-    private val client: OkHttpClient = Net.client,
 ) {
-    suspend fun check(): CheckResult = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url("${apiBase.trimEnd('/')}/repos/$repo/releases/latest")
-            .header("Accept", "application/vnd.github+json")
-            .header("X-GitHub-Api-Version", "2022-11-28")
-            .get().build()
-        try {
-            client.newCall(req).execute().use { res ->
-                val body = res.body?.string().orEmpty()
-                when {
-                    res.code == 404 -> CheckResult.Failed("No releases published yet for $repo.")
-                    res.code == 403 || res.code == 429 -> CheckResult.Failed("GitHub rate limit reached. Try again later.")
-                    !res.isSuccessful -> CheckResult.Failed("GitHub error ${res.code}.")
-                    else -> {
-                        val info = ReleaseParser.parse(body)
-                            ?: return@use CheckResult.Failed("The latest release has no installable APK.")
-                        if (ReleaseParser.isNewer(info, currentVersionCode)) CheckResult.Available(info) else CheckResult.UpToDate
-                    }
+    suspend fun check(): CheckResult {
+        val headers = mapOf("Accept" to "application/vnd.github+json", "X-GitHub-Api-Version" to "2022-11-28")
+        return try {
+            val res = Net.send("${apiBase.trimEnd('/')}/repos/$repo/releases/latest", headers = headers)
+            when {
+                res.code == 404 -> CheckResult.Failed("No releases published yet for $repo.")
+                res.code == 403 || res.code == 429 -> CheckResult.Failed("GitHub rate limit reached. Try again later.")
+                !res.isSuccessful -> CheckResult.Failed("GitHub error ${res.code}.")
+                else -> {
+                    val info = ReleaseParser.parse(res.body)
+                        ?: return CheckResult.Failed("The latest release has no installable APK.")
+                    if (ReleaseParser.isNewer(info, currentVersionCode)) CheckResult.Available(info) else CheckResult.UpToDate
                 }
             }
         } catch (e: IOException) {
@@ -115,20 +110,20 @@ class UpdateStore(context: Context) {
 object ApkDownloader {
     /**
      * Streams [info]'s APK into the app cache, reporting 0..1 progress (or -1 if size unknown).
-     * HTTPS only, redirects included (OkHttp would otherwise follow an https → http redirect).
+     * HTTPS only, redirects included (GitHub answers with a 302 to its download host).
+     * [requireHttps] is false only in tests, whose local server speaks plain http.
      */
-    suspend fun download(context: Context, info: UpdateInfo, client: OkHttpClient = Net.client, onProgress: (Float) -> Unit): File =
+    suspend fun download(context: Context, info: UpdateInfo, requireHttps: Boolean = true, onProgress: (Float) -> Unit): File =
         withContext(Dispatchers.IO) {
-            val url = info.apkUrl.toHttpUrlOrNull()?.takeIf { it.isHttps } ?: throw IOException("Refusing a non-HTTPS download")
+            if (requireHttps && !info.apkUrl.startsWith("https://", ignoreCase = true)) throw IOException("Refusing a non-HTTPS download")
             val dir = File(context.cacheDir, "updates").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
             val out = File(dir, "ironterm-${info.versionCode}.apk")
-            client.newCall(Request.Builder().url(url).build()).execute().use { res ->
-                if (!res.request.url.isHttps) throw IOException("Refusing a non-HTTPS download (redirected)")
-                if (!res.isSuccessful) throw IOException("Download failed (HTTP ${res.code})")
-                val body = res.body ?: throw IOException("Empty download")
-                val total = body.contentLength().takeIf { it > 0 } ?: info.apkSize
-                body.byteStream().use { input ->
+            Net.exchange(info.apkUrl, httpsOnly = requireHttps) { code, body, length ->
+                if (code !in 200..299) throw IOException("Download failed (HTTP $code)")
+                if (body == null) throw IOException("Empty download")
+                val total = length.takeIf { it > 0 } ?: info.apkSize
+                body.use { input ->
                     out.outputStream().use { o ->
                         val buf = ByteArray(64 * 1024)
                         var read = 0L

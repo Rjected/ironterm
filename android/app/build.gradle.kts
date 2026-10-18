@@ -88,8 +88,7 @@ dependencies {
     // Widgets
     implementation("androidx.glance:glance-appwidget:1.1.1")
 
-    // Networking + JSON
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // JSON (HTTP is the platform's HttpURLConnection)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
@@ -99,7 +98,8 @@ dependencies {
     // QR connect: Google code scanner (Play services UI, no CAMERA permission)
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 
-    // Encrypted credentials
+    // Only to read (once) credentials stored by older versions; Settings now uses the Android Keystore.
+    // Remove together with Settings.migrateLegacy after a few releases.
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Tests
@@ -110,6 +110,5 @@ dependencies {
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.39.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.39.0")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

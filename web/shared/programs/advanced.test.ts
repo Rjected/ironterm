@@ -39,36 +39,42 @@ describe("Juggernaut 2.0", () => {
   it("builds 16 weeks × 4 days with the sheet's percentages", () => {
     const { def } = setup(juggernaut);
     expect(def.days).toHaveLength(64);
-    // squat TM 285. 10s accumulation: 5×10 @ 60% (last AMRAP) → 171 → 170
+    // squat TM 285. 10s accumulation: 5×10 @ 60% (last AMRAP) → 171 → CEILING 175 (the sheet rounds up)
     const acc = plan(juggernaut, "W1D1").exercises[0];
-    expect(acc.sets.map((s) => s.weight)).toEqual([170, 170, 170, 170, 170]);
+    expect(acc.sets.map((s) => s.weight)).toEqual([175, 175, 175, 175, 175]);
     expect(acc.sets[4].amrap).toBe(true);
     // 10s intensification: 55%×5, 62.5%×5, 3×10 @ 67.5%
     expect(plan(juggernaut, "W2D1").exercises[0].sets.map((s) => [s.pct, s.reps])).toEqual([[0.55, 5], [0.625, 5], [0.675, 10], [0.675, 10], [0.675, 10]]);
     // 3s realization: 50/60/70/75/80/85 ramp, 90% × 3+
     const r3 = plan(juggernaut, "W15D1").exercises[0].sets;
     expect(r3.map((s) => s.pct)).toEqual([0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9]);
-    expect(r3[6]).toMatchObject({ reps: 3, amrap: true, weight: 255 }); // 285 × .9 = 256.5
+    expect(r3[6]).toMatchObject({ reps: 3, amrap: true, weight: 260 }); // 285 × .9 = 256.5 → 260
     // 5s accumulation is 6×5 @ 70%
     expect(plan(juggernaut, "W9D2").exercises[0].sets).toHaveLength(6);
   });
 
-  it("realization AMRAP adds 5 lb (lower) / 2.5 lb (upper) per rep over the standard, capped at 10", () => {
-    const { cfg, def } = setup(juggernaut);
-    let s = { ...initialState(def, cfg), rotations: 2 };
-    // 10s realization squat @ 75% of 285 = 215: 14 reps = 4 over → +20
-    s = applyWorkout(def, cfg, s, W("r1", "2026-01-15", [["Squat (Barbell)", [[145, 5], [170, 3], [200, 1], [215, 14]]]]), dayIdx(def, "W3D1"));
-    expect(s.tms.squat).toBe(305);
-    // bench @ 75% of 205 = 155: 25 reps → capped at 10 over → +25
-    s = applyWorkout(def, cfg, s, W("r2", "2026-01-16", [["Bench Press (Barbell)", [[155, 25]]]]), dayIdx(def, "W3D2"));
-    expect(s.tms.bench).toBe(230);
-    // deadlift short of the standard: TM holds
-    s = applyWorkout(def, cfg, s, W("r3", "2026-01-17", [["Deadlift (Barbell)", [[275, 8]]]]), dayIdx(def, "W3D3"));
-    expect(s.tms.deadlift).toBe(365);
+  // LiftVault sheet: new TM = CEILING(TM + (reps − standard) × 5 lb lower / 2.5 lb upper), no cap and
+  // no floor; the deload week still uses the old TM.
+  it("realization AMRAP moves the TM by (reps − standard) × 5 / 2.5 lb either way, from the next wave", () => {
+    const { def } = setup(juggernaut);
+    const cfg: ProgramConfig = { templateId: "juggernaut", options: {}, unit: "lb", startDate: "2026-01-01", startWeights: {}, trainingMaxes: { squat: 405, bench: 240, deadlift: 500, ohp: 135 } };
+    let s = { ...initialState(def, cfg), rotations: 2, dayIndex: dayIdx(def, "W3D1") };
+    // 10s realization squat @ 75% of 405 = 303.75 → 305: 22 reps = 12 over → +60 (no cap)
+    s = applyWorkout(def, cfg, s, W("r1", "2026-01-15", [["Squat (Barbell)", [[305, 22]]]]), dayIdx(def, "W3D1"));
+    // bench @ 75% of 240 = 180: 13 reps = 3 over → 247.5 → CEILING 250
+    s = applyWorkout(def, cfg, s, W("r2", "2026-01-16", [["Bench Press (Barbell)", [[180, 13]]]]), dayIdx(def, "W3D2"));
+    // deadlift 8 reps = 2 short → −10
+    s = applyWorkout(def, cfg, s, W("r3", "2026-01-17", [["Deadlift (Barbell)", [[375, 8]]]]), dayIdx(def, "W3D3"));
+    s = applyWorkout(def, cfg, s, W("r4", "2026-01-18", [["Overhead Press (Barbell)", [[105, 10]]]]), dayIdx(def, "W3D4"));
+    expect(s.tms).toMatchObject({ squat: 405, bench: 240, deadlift: 500, ohp: 135 });
+    // deload week runs off the old TM: 60% of 405 = 243 → 245
+    expect(planDay(def, cfg, s).exercises[0].sets.map((x) => x.weight)).toEqual([165, 205, 245]);
+    for (const d of [1, 2, 3, 4]) s = applyWorkout(def, cfg, s, W(`d${d}`, "2026-01-22", [["Squat (Barbell)", [[100, 5]]]]), dayIdx(def, `W4D${d}`));
+    expect(s.tms).toMatchObject({ squat: 465, bench: 250, deadlift: 490, ohp: 135 });
     // accumulation AMRAPs never move the TM
     let a = initialState(def, cfg);
-    a = applyWorkout(def, cfg, a, W("a", "2026-01-02", [["Squat (Barbell)", rep(5, 170, 10, 20)]]), dayIdx(def, "W1D1"));
-    expect(a.tms.squat).toBe(285);
+    a = applyWorkout(def, cfg, a, W("a", "2026-01-02", [["Squat (Barbell)", rep(5, 245, 10, 20)]]), dayIdx(def, "W1D1"));
+    expect(a.tms.squat).toBe(405);
   });
 
   it("completes after 16 weeks", () => {
@@ -106,19 +112,18 @@ describe("Calgary Barbell", () => {
     expect(setup(calgary8).def.cycle!.weeks).toBe(9);
   });
 
-  it("top-set weeks: back-offs are % of e1RM, which the RPE top set resets", () => {
+  it("top-set weeks: back-offs are % of today's e1RM; the 1RM stays as entered (the sheet's taper uses the static maxes)", () => {
     const { cfg, def } = setup(calgary8);
     const i = dayIdx(def, "W5D1");
     let s = { ...initialState(def, cfg), rotations: 4 };
     const sq = planDay(def, cfg, s, i).exercises[0];
     expect(sq.sets[0]).toMatchObject({ rpe: 8, reps: 3, weight: 0 });
     expect(sq.sets.slice(1).map((x) => [x.pct, x.reps, x.ofTop, x.weight])).toEqual(Array(6).fill([0.65, 5, true, 0])); // 6×5 @ 65% of today's e1RM
-    // 300 × 3 @8 → e1RM 300 / .863 ≈ 347.6 → 350
     s = applyWorkout(def, cfg, s, W("t", "2026-02-01", [["Squat (Barbell)", [[300, 3], ...rep(6, 205, 5)]]]), i);
-    expect(s.tms.squat).toBe(350);
-    // the taper's % work then runs off it: 5 days out 3×2 @ 82% of 350 = 287 → 285
+    expect(s.tms.squat).toBe(315);
+    // taper 5 days out: 3×2 @ 82% of the entered 315 = 258.3 → 260
     const taper = planDay(def, cfg, { ...s, rotations: 8 }, dayIdx(def, "W9D1")).exercises[0];
-    expect(taper.sets[1]).toMatchObject({ weight: 285, reps: 2 });
+    expect(taper.sets[1]).toMatchObject({ weight: 260, reps: 2 });
   });
 
   it("taper: 3 days out squat is 1×1 @ 85% + 2×2 @ 78%", () => {
@@ -149,7 +154,8 @@ describe("RTS Generalized Intermediate", () => {
     expect(w1[0].sets).toEqual([{ weight: 0, reps: 4, rpe: 9, amrap: false, pct: undefined, repsMax: undefined }]);
     const sq = plan(rtsGeneralized, "W3D1").exercises[0];
     // back-offs: top set (3 @9 = 89.2% of e1RM) minus 7.5% → 82.5% of today's top-set e1RM, 4 sets
-    expect(sq.sets.slice(1).map((s) => [s.pct, s.reps, s.ofTop])).toEqual(Array(4).fill([0.825, 3, true]));
+    // article: "drop the bar by X%": 7.5% off a top triple = 0.925 / 1.1 of its Epley e1RM
+    expect(sq.sets.slice(1).map((s) => [s.pct, s.reps, s.ofTop])).toEqual(Array(4).fill([0.841, 3, true]));
   });
 
   it("the comp top set updates the max; week 9 tests it", () => {

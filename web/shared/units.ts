@@ -23,6 +23,14 @@ export function fmt(w: number, digits = 1): string {
   return Number.isInteger(r) ? String(r) : r.toFixed(digits).replace(/0+$/, "");
 }
 
+/** A weight typed by a person: "82.5", "82,5", " 180 lb" → number; empty, negative or junk → null. */
+export function parseWeightInput(s: string): number | null {
+  const t = s.trim().toLowerCase().replace(/\s*(kg|kgs|lb|lbs)$/, "").replace(",", ".");
+  if (!/^\d+(\.\d+)?$|^\.\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function fmtInt(n: number): string {
   return Math.round(n).toLocaleString("en-US");
 }
@@ -34,7 +42,6 @@ export function fmtBig(n: number): string {
   if (a < 999_500) return fmt(n / 1000, a < 100_000 ? 1 : 0) + "k";
   return fmt(n / 1e6, a < 9_995_000 ? 2 : 1) + "M";
 }
-
 
 /** Plates per side for a barbell load. */
 export function plates(total: number, unit: Unit, bar = unit === "lb" ? 45 : 20): number[] {
