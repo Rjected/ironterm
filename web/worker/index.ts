@@ -5,7 +5,7 @@ import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken, tokenExists } from "./tokens";
-import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
+import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, safePath, type GoogleConfig } from "./google";
 import { Hevy, HevyError } from "./hevy";
 import { applyNotes, toHevyUpdate, type NotesEdit } from "../shared/notes";
 import { authUrl, disconnect, ensureWhoopSchema, handleCallback, handleWebhookEvent, syncWhoop, verifyWebhook, whoopConfigured, whoopData } from "./whoop";
@@ -178,7 +178,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const tok = await checkToken(env.DB, String(form?.get("token") ?? ""));
     const next = String(form?.get("next") ?? "/");
     if (!tok) return new Response("Invalid or revoked app token.", { status: 403 });
-    const h = new Headers({ location: /^\/(?![\/\\])/.test(next) ? next : "/" });
+    const h = new Headers({ location: safePath(next) });
     if (sessionSecret) h.append("set-cookie", await sessionCookie(sessionSecret, `t${tok.id}`));
     return new Response(null, { status: 302, headers: h });
   }
