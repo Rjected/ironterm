@@ -146,6 +146,9 @@ interface AppActions {
     fun disconnect() {}
     fun clearTest() {}
     fun scanQr() {}
+    /** connect link / QR: the user accepted [UiState.pendingConnect] */
+    fun confirmConnect() {}
+    fun cancelConnect() {}
     fun checkUpdates() {}
     fun startUpdate() {}
     fun allowInstalls() {}

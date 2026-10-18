@@ -58,6 +58,8 @@
 .pp-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: var(--fs-s); }
 .pp-dl dt { color: var(--faint); letter-spacing: .06em; }
 .pp-dl dd { margin: 0; color: var(--fg); }
+.pp-dl .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--amber); cursor: pointer; }
+.pp-dl .linkbtn:hover { text-decoration: underline; }
 .pp-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 10px; max-width: none; }
 
 .pp-rot { display: grid; border-top: 1px solid var(--line); }
