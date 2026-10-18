@@ -141,7 +141,6 @@ export function bestAt(points: { date: string; e1rm: number }[], date: string, w
 }
 
 /** Rolling best e1RM — smooths out light days so the trend reads cleanly. */
-
 export function rollingBest(points: LiftPoint[], windowDays = 28): { date: string; v: number }[] {
   return points.map((p, i) => {
     let best = p.e1rm;

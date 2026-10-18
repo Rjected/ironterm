@@ -34,7 +34,6 @@ export function fmtBig(n: number): string {
   return fmt(n / 1e6, a < 9_995_000 ? 2 : 1) + "M";
 }
 
-
 /** Plates per side for a barbell load. */
 export function plates(total: number, unit: Unit, bar = unit === "lb" ? 45 : 20): number[] {
   const avail = unit === "lb" ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25];

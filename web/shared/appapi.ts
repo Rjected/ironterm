@@ -66,7 +66,6 @@ export interface AppHome {
 
 const e1rmAt = (points: { date: string; e1rm: number }[], date: string) => bestAt(points, date);
 
-
 export function appHome(b: Bootstrap, d: Derived = derive(b, b.settings.graphMetric ?? "volume")): AppHome {
   const keys = d.liftKeys;
   const e1rm = keys.slice(0, 10).flatMap((k) => {
