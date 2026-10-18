@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "test": "vitest run",
+    "test": "node scripts/test.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p cli",
     "cli": "esbuild cli/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cli/ironterm-graph.mjs --log-level=warning && node dist/cli/ironterm-graph.mjs",
     "db:migrate:local": "wrangler d1 migrations apply hevy --local",
@@ -33,7 +33,6 @@
     "esbuild": "0.28.1",
     "typescript": "5.9.3",
     "vite": "8.3.1",
-    "vitest": "5.0.3",
     "wrangler": "4.145.0"
   }
 }
