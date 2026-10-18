@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # newest stable Xcode on the runner image, not the image default
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: Show Xcode version
         run: xcodebuild -version
 

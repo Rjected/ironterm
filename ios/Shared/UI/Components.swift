@@ -135,11 +135,14 @@ struct Sparkline: View {
     private func points(_ size: CGSize) -> [CGPoint] {
         let v = values.filter { $0 > 0 }.isEmpty ? values : values.map { $0 > 0 ? $0 : (values.filter { $0 > 0 }.min() ?? 0) }
         guard v.count > 1, let lo = v.min(), let hi = v.max() else { return [] }
-        let span = max(hi - lo, max(1, hi * 0.02))
-        let pad = 2.0
-        return v.enumerated().map { i, x in
-            CGPoint(x: CGFloat(i) / CGFloat(v.count - 1) * size.width,
-                    y: pad + (1 - CGFloat((x - lo) / span)) * (size.height - pad * 2))
+        let span: Double = max(hi - lo, max(1, hi * 0.02))
+        let pad: CGFloat = 2
+        let last = CGFloat(v.count - 1)
+        // explicit types: older Swift compilers find the mixed Double / CGFloat math ambiguous
+        return v.enumerated().map { (i: Int, x: Double) -> CGPoint in
+            let t: CGFloat = CGFloat((x - lo) / span)
+            let y: CGFloat = pad + (1 - t) * (size.height - pad * 2)
+            return CGPoint(x: CGFloat(i) / last * size.width, y: y)
         }
     }
 }
