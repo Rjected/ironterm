@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { loginRedirect, verifyIdToken } from "./google";
+import { loginRedirect, safePath, verifyIdToken } from "./google";
+import worker from "./index";
+import { NodeD1 } from "../server/d1";
+import { ensureSchema } from "./store";
+import { createToken } from "./tokens";
 
 const enc = new TextEncoder();
 const b64url = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -53,5 +57,34 @@ describe("loginRedirect", () => {
     // protocol-relative return paths fall back to "/"
     const ret = cookie.split("=")[1].split(".")[3];
     expect(atob(ret.replace(/-/g, "+").replace(/_/g, "/") + "==".slice(0, (4 - (ret.length % 4)) % 4))).toBe("/");
+  });
+});
+
+describe("safePath (post-login redirects)", () => {
+  it("keeps same-site paths", () => {
+    expect(safePath("/")).toBe("/");
+    expect(safePath("/#set")).toBe("/#set");
+    expect(safePath("/lifts/squat?x=1#top")).toBe("/lifts/squat?x=1#top");
+  });
+
+  it("refuses anything that could leave the site", () => {
+    // browsers strip tabs and newlines from URLs: "/\t/evil.com" would become "//evil.com"
+    for (const p of ["//evil.com", "/\\evil.com", "/\t/evil.com", "/\n/evil.com", "/\r\n/evil.com", "/ /evil.com", "https://evil.com", "evil.com", "", "/\u0000x"]) {
+      expect(safePath(p), JSON.stringify(p)).toBe("/");
+    }
+    expect(new URL(safePath("/%09/evil.com"), "https://app.example").host).toBe("app.example");
+  });
+
+  it("/auth/app won't redirect off-site either", async () => {
+    const env = { DB: new NodeD1(":memory:"), APP_PASSWORD: "pw", SESSION_SECRET: "s" } as unknown as { DB: D1Database };
+    const ctx = { waitUntil() {}, passThroughOnException() {}, props: {} } as never;
+    await ensureSchema(env.DB);
+    const { token } = await createToken(env.DB, "t");
+    const form = new FormData();
+    form.set("token", token);
+    form.set("next", "/\t/evil.com");
+    const r = await worker.fetch!(new Request("https://gym.example.com/auth/app", { method: "POST", body: form }) as never, env as never, ctx);
+    expect(r.status).toBe(302);
+    expect(new URL(r.headers.get("location")!, "https://gym.example.com").host).toBe("gym.example.com");
   });
 });

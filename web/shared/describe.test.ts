@@ -44,10 +44,10 @@ describe("describeProgram", () => {
 
   it("GZCLP: grouped tiers, per-lift increments in the unit, stage fallbacks", () => {
     const r = rules("gzclp", "lb");
-    expect(r.rotation[0]).toEqual({ day: "Day A1 · Squat", lifts: ["T1 SQUAT", "T2 BENCH", "T3 LAT PD", "T3 CURL"] });
-    expect(r.tiers.map((t) => t.title)).toEqual(["T1 · 5×3+ → 6×2+ → 10×1+", "T2 · 3×10 → 3×8 → 3×6", "T3 · 3×15+", "T3 · 4×12+"]);
+    expect(r.rotation[0]).toEqual({ day: "Day A1 · Squat", lifts: ["T1 SQUAT", "T2 BENCH", "T3 LAT PD"] });
+    expect(r.tiers.map((t) => t.title)).toEqual(["T1 · 5×3+ → 6×2+ → 10×1+", "T2 · 3×10 → 3×8 → 3×6", "T3 · 3×15+"]);
     expect(r.tiers[0].text).toBe("5×3+ (last set as many reps as you can). Get every rep and add 10 lb on Back Squat and Deadlift and 5 lb on Overhead Press and Bench Press next time. If you miss a rep, move to 6×2+, then 10×1+ at the same weight. When 10×1+ stalls too, test a new 5-rep max and restart at 85% of it.");
-    expect(r.tiers[2].text).toBe("3×15+. When the last set reaches 25 reps, add 5 lb next time; until then, keep the weight and push the last set.");
+    expect(r.tiers[2].text).toBe("3×15+. When the first two sets get 15 and the last set reaches 25 reps, add 5 lb next time; until then, keep the weight and push the last set.");
     expect(rules("gzclp", "kg").tiers[0].text).toContain("add 5 kg on Back Squat and Deadlift and 2.5 kg on Overhead Press and Bench Press");
   });
 
@@ -63,7 +63,7 @@ describe("describeProgram", () => {
       title: "Main · % of training max", lifts: ["Overhead Press", "Deadlift", "Bench Press", "Back Squat"],
       text: "5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%.",
     });
-    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%. Skipped on deload weeks.");
+    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%."); // BBB stays in the deload week (jimwendler.com)
     expect(r.tiers[0].text).not.toMatch(/training max/); // the title already says it
   });
 

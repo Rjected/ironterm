@@ -111,6 +111,7 @@ struct HistoryScreen: View {
                 }
             if !h.query.isEmpty {
                 Button { h.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(T.faint) }
+                    .accessibilityLabel("Clear search")
             }
             Cap("\(h.total)", T.faint, size: 9)
         }
@@ -226,7 +227,7 @@ struct WorkoutScreen: View {
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $editing) {
             if let w = remote.value {
-                NotesEditor(w: w) { edit in
+                NotesEditor(w: w, local: model.snapshot?.isLocal == true) { edit in
                     guard let api = model.api else { return "Not connected." }
                     do {
                         try await api.saveNotes(workoutId: id, edit)
@@ -333,6 +334,7 @@ struct ResultRow: View {
 struct NotesEditor: View {
     @Environment(\.dismiss) private var dismiss
     var w: AppWorkout
+    var local: Bool = false
     var save: (NotesEdit) async -> String?
     @State private var note = ""
     @State private var notes: [String] = []
@@ -369,7 +371,7 @@ struct NotesEditor: View {
                             NoteField(text: $notes[i], placeholder: "note for this exercise", minHeight: 44)
                         }
                     }
-                    Text("Saved to Hevy. The hidden program-day tag is kept automatically.").font(T.mono(9)).foregroundStyle(T.faint)
+                    Text(local ? "Saved on your server. The hidden program-day tag is kept automatically." : "Saved to Hevy. The hidden program-day tag is kept automatically.").font(T.mono(9)).foregroundStyle(T.faint)
                 }
                 .padding(14)
             }
