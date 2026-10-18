@@ -12,6 +12,7 @@ import {
   putCache, putConfig, putFriend, removeFriend, toAuthor, toFriend, unreadCount, type FriendRow, type SocialConfig,
 } from "./db";
 import { allowHttp, directoryOf, directoryUser, fetchWellKnown, MAX_SMALL, PeerError, peerJson, signedFetch, timedFetch } from "./net";
+import { feedFrom, profileFrom } from "./sanitize";
 import { ownFeed, selfAuthor, type SocialCtx } from "./peer";
 import { fingerprint, friendId, normOrigin } from "./sign";
 import {
@@ -50,14 +51,23 @@ const peerFail = (d: { status: number; error?: string }, who: string) =>
 
 // ── lazy fetch with cache ────────────────────────────────────────────────
 
-export async function fetchFriend<T>(c: SocialCtx, f: FriendRow, what: string, fresh: boolean): Promise<{ data: T; stale: boolean }> {
+/**
+ * A friend's profile or feed: fresh, cached, or stale-cached. `parse` rebuilds their JSON into our
+ * wire type (social/sanitize.ts); a response it rejects counts as a failed fetch, never a 500.
+ */
+export async function fetchFriend<T>(c: SocialCtx, f: FriendRow, what: string, fresh: boolean, parse: (x: unknown) => T): Promise<{ data: T; stale: boolean }> {
   const db = c.env.DB;
-  const cached = await getCache<T>(db, f.id, what);
+  const safe = (x: unknown): T | null => { try { return parse(x); } catch { return null; } };
+  const hit = await getCache<unknown>(db, f.id, what);
+  // (a cache written before responses were checked may hold anything)
+  const cached = hit ? (() => { const d = safe(hit.data); return d ? { at: hit.at, data: d } : null; })() : null;
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return { data: cached.data, stale: false };
   let r: Response | null = null;
   try { r = await signedFetch(db, c.self, `${f.server}/social/v1/${what}`); } catch { r = null; }
-  const data = r?.ok ? await peerJson<T>(r) : null;
-  if (r?.ok && data && typeof data === "object") {
+  const raw = r?.ok ? await peerJson<unknown>(r) : null;
+  const data = raw != null ? safe(raw) : null;
+  if (r?.ok && !data && !cached) throw new PeerError(`${f.server} sent a response this server can't read`);
+  if (r?.ok && data) {
     await putCache(db, f.id, what, data);
     const share = (data as { share?: unknown }).share;
     await patchFriend(db, f.id, { last_seen: new Date().toISOString(), ...(isShare(share) ? { their_share: share } : {}) });
@@ -249,7 +259,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
     if (act === "/profile" && method === "GET") {
       if (f.status !== "friends") return err(409, "Not friends yet.");
       try {
-        const r = await fetchFriend<SocialProfile>(c, f, "profile", fresh);
+        const r = await fetchFriend(c, f, "profile", fresh, profileFrom);
         return json({ profile: r.data, stale: r.stale });
       } catch (e) { return err((e as PeerError).status ?? 502, (e as Error).message); }
     }
@@ -258,7 +268,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
       const before = q.get("before");
       const limit = Math.max(1, Math.min(100, Number(q.get("limit") ?? 30) || 30));
       try {
-        const r = await fetchFriend<FeedPage>(c, f, `feed?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`, fresh);
+        const r = await fetchFriend(c, f, `feed?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`, fresh, feedFrom);
         return json({ items: r.data.items.map((it) => ({ ...it, author: { ...toAuthor(f), unit: r.data.unit ?? null }, unit: r.data.unit ?? null })), next: r.data.next, stale: r.stale ? [f.id] : [] });
       } catch (e) { return err((e as PeerError).status ?? 502, (e as Error).message); }
     }
@@ -270,7 +280,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
     const stale: string[] = [], unreachable: string[] = [];
     const pages = await Promise.all(friends.map(async (f) => {
       try {
-        const r = await fetchFriend<FeedPage>(c, f, "feed?limit=100", fresh);
+        const r = await fetchFriend(c, f, "feed?limit=100", fresh, feedFrom);
         if (r.stale) stale.push(f.id);
         return r.data.items.map((it) => ({ ...it, author: { ...toAuthor(f), unit: r.data.unit ?? null }, unit: r.data.unit ?? null }));
       } catch { unreachable.push(f.id); return []; }
@@ -293,7 +303,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
     const f = await friendOr404(c, cm[1], "friends");
     if (!f) return err(404, "No such friend.");
     let theirs: { data: SocialProfile; stale: boolean };
-    try { theirs = await fetchFriend<SocialProfile>(c, f, "profile", fresh); }
+    try { theirs = await fetchFriend(c, f, "profile", fresh, profileFrom); }
     catch (e) { return err((e as PeerError).status ?? 502, (e as Error).message); }
     const b = await c.boot();
     const d = derive(b, b.settings.graphMetric ?? "volume");
