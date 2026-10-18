@@ -223,7 +223,7 @@ describe("app API", () => {
         expect(JSON.stringify(p), t.id).not.toMatch(/NaN|null,"name":null,"days":\[\]/);
         expect(p.weeks.every((w) => w.days.length > 0), t.id).toBe(true);
       }
-    });
+    }, 60_000); // plans all ~60 programs; slow CI runners need more than the 5 s default
 
     it("start: builds a config with overrides, validates", () => {
       const r = startProgram(boot, "531", { options: { supp: "fsl" }, trainingDays: [4, 0, 2], trainingMaxes: { squat: 300 }, startDate: "2026-10-19" });
