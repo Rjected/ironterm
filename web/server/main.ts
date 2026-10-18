@@ -10,6 +10,8 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { setPeerFetch } from "../worker/social/net";
+import { peerFetch } from "./peerfetch";
 import { PAGE_HEADERS } from "../worker/headers";
 import { isLocal } from "./local";
 
@@ -19,6 +21,8 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 const DATA = resolve(process.env.DATA_DIR ?? "./data");
 const STATIC = resolve(process.env.STATIC_DIR ?? join(here, "../client"));
 const SYNC_MIN = Number(process.env.SYNC_MINUTES ?? 15);
+/** behind a reverse proxy: take the client address from X-Forwarded-For */
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 
 mkdirSync(DATA, { recursive: true });
 const DB = new NodeD1(join(DATA, "hevy.sqlite"));
@@ -53,10 +57,15 @@ const ASSETS = {
 const KEYS = [
   "HEVY_API_KEY", "APP_PASSWORD", "SESSION_SECRET", "WEBHOOK_SECRET", "TIMEZONE", "ALLOWED_EMAILS",
   "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "WHOOP_CLIENT_ID", "WHOOP_CLIENT_SECRET",
-  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN",
+  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN", "SOCIAL_ALLOW_PRIVATE",
 ];
 const env: Record<string, unknown> = { DB, ASSETS };
 for (const k of KEYS) if (process.env[k]) env[k] = process.env[k];
+
+// Friend servers and directories are URLs other people choose: never let them point this box at
+// its own LAN or loopback, unless that's explicitly what you want (local testing, a private network).
+const on = (v: unknown) => v === "1" || v === "true";
+if (!on(env.SOCIAL_ALLOW_HTTP) && !on(env.SOCIAL_ALLOW_PRIVATE)) setPeerFetch(peerFetch as typeof fetch);
 
 const pending = new Set<Promise<unknown>>();
 const ctx = {
@@ -71,7 +80,11 @@ function toRequest(req: IncomingMessage): Request {
   const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] ?? "http";
   const host = (req.headers["x-forwarded-host"] as string) ?? req.headers.host ?? `localhost:${PORT}`;
   const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) if (v != null) for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  for (const [k, v] of Object.entries(req.headers)) if (v != null && k !== "cf-connecting-ip") for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  // The client address for rate limits (password sign-in). Clients can't set it: from the socket,
+  // or with TRUST_PROXY=1 from the proxy's X-Forwarded-For.
+  const fwd = TRUST_PROXY ? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() : null;
+  headers.set("cf-connecting-ip", fwd || req.socket.remoteAddress || "unknown");
   const body = req.method === "GET" || req.method === "HEAD" ? undefined : (Readable.toWeb(req) as ReadableStream);
   return new Request(`${proto}://${host}${req.url}`, { method: req.method, headers, body, duplex: "half" } as RequestInit);
 }

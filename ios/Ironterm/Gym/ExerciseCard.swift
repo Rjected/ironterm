@@ -46,7 +46,7 @@ struct ExerciseCard: View {
                         }
                     }
                     NoteField(text: Binding(get: { ex.userNote ?? "" }, set: { v in gym.update { Live.mapEx($0, ex.id) { var e = $0; e.userNote = v.isEmpty ? nil : v; return e } } }),
-                              placeholder: "note for this exercise (saved to Hevy)", minHeight: 38)
+                              placeholder: "note for this exercise (saved with the workout)", minHeight: 38)
                     HStack(spacing: 10) {
                         TermButton(title: "+ SET") { gym.update { Live.addSet($0, exId: ex.id) } }
                         if ex.slotId == nil { TermButton(title: "REMOVE", style: .danger) { confirmRemove = true } }
@@ -114,22 +114,20 @@ struct SetRow: View {
         HStack(spacing: 6) {
             typeMenu
             if ex.isCardio {
-                Stepper2(value: set.durationSec.map { $0 / 60 }, placeholder: "MIN", step: 5, h: h, big: current, dim: set.done,
+                Stepper2(name: "minutes", value: set.durationSec.map { $0 / 60 }, placeholder: "MIN", step: 5, h: h, big: current, dim: set.done,
                          onChange: { v in patch { $0.durationSec = v.map { max(0, $0) * 60 } } },
                          onTap: { onEdit(target(.minutes, set.durationSec.map { $0 / 60 }, 5, "MIN")) })
-                Stepper2(value: set.distanceM.map { $0 / (unit == "lb" ? 1609.344 : 1000) }, placeholder: unit == "lb" ? "MI" : "KM", step: 0.5, h: h, big: current, dim: set.done,
+                Stepper2(name: unit == "lb" ? "miles" : "kilometres", value: set.distanceM.map { $0 / (unit == "lb" ? 1609.344 : 1000) }, placeholder: unit == "lb" ? "MI" : "KM", step: 0.5, h: h, big: current, dim: set.done,
                          onChange: { v in patch { $0.distanceM = v.map { max(0, $0) * (unit == "lb" ? 1609.344 : 1000) } } },
                          onTap: { onEdit(target(.distance, set.distanceM.map { $0 / (unit == "lb" ? 1609.344 : 1000) }, 0.5, unit == "lb" ? "MI" : "KM")) })
             } else {
-                Stepper2(value: set.weight, placeholder: kind == "bodyweight" ? "BW" : unit.uppercased(), step: step, h: h, big: current, dim: set.done,
+                Stepper2(name: "weight", value: set.weight, placeholder: kind == "bodyweight" ? "BW" : unit.uppercased(), step: step, h: h, big: current, dim: set.done,
                          onChange: { v in patch { $0.weight = v.map { max(0, $0) } } },
                          onTap: { onEdit(target(.weight, set.weight, step, unit.uppercased())) })
-                    .accessibilityLabel("weight")
-                Stepper2(value: set.reps.map(Double.init), placeholder: "REPS", step: 1, h: h, big: current, dim: set.done,
+                Stepper2(name: "reps", value: set.reps.map(Double.init), placeholder: "REPS", step: 1, h: h, big: current, dim: set.done,
                          onChange: { v in patch { $0.reps = v.map { max(0, Int($0.rounded())) } } },
                          onTap: { onEdit(target(.reps, set.reps.map(Double.init), 1, "REPS")) })
                     .frame(maxWidth: 118)
-                    .accessibilityLabel("reps")
             }
             doneButton
         }
@@ -221,6 +219,8 @@ struct SetRow: View {
 
 /// − value + with tap-to-type on the value.
 struct Stepper2: View {
+    /// what VoiceOver calls it: "weight", "reps"…
+    var name: String
     var value: Double?
     var placeholder: String
     var step: Double
@@ -233,6 +233,7 @@ struct Stepper2: View {
     var body: some View {
         HStack(spacing: 0) {
             btn("minus") { onChange(max(0, (value ?? 0) - step)) }
+                .accessibilityLabel("Less \(name)")
             Button(action: onTap) {
                 Text(value.map { Fmt.weight(DirectScreens.r1($0)) } ?? placeholder)
                     .font(T.mono(big ? 20 : 15, .bold))
@@ -242,7 +243,11 @@ struct Stepper2: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(name)
+            .accessibilityValue(value.map { Fmt.weight(DirectScreens.r1($0)) } ?? "not set")
+            .accessibilityHint("Type a value")
             btn("plus") { onChange((value ?? 0) + step) }
+                .accessibilityLabel("More \(name)")
         }
         .frame(height: h)
         .background(Color(hex: 0x0B0C0E))
