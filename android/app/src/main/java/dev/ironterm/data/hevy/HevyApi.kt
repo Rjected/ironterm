@@ -9,8 +9,12 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
-/** Read-only client for the Hevy public API. Direct mode only ever calls GET /v1/workouts. */
+/** Client for the Hevy public API. Direct mode reads GET /v1/workouts and, from GYM, creates workouts. */
 class HevyApi(
     private val baseUrl: String = DEFAULT_BASE_URL,
     private val client: OkHttpClient = Net.client,
@@ -43,4 +47,32 @@ class HevyApi(
                 }
             }
         }
+
+    /** POST /v1/workouts with a [dev.ironterm.gym.HevyWorkoutBody] JSON. Returns the new workout id when Hevy sends one. */
+    suspend fun createWorkout(apiKey: String, body: String): String? = withContext(Dispatchers.IO) {
+        val url = baseUrl.toHttpUrl().newBuilder().addPathSegments("v1/workouts").build()
+        val req = Request.Builder().url(url)
+            .header("api-key", apiKey)
+            .header("accept", "application/json")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        client.newCall(req).execute().use { res ->
+            val text = res.body?.string().orEmpty()
+            when {
+                res.code == 401 || res.code == 403 -> throw AuthException("Hevy API key invalid or revoked. Reconnect.")
+                !res.isSuccessful -> throw dev.ironterm.data.app.ApiException(res.code, "Hevy API error ${res.code}: ${text.take(200)}")
+                else -> runCatching {
+                    // Hevy answers {"workout": [{…}]} or {"workout": {…}}; take the id wherever it is.
+                    val el = SnapshotJson.json.parseToJsonElement(text).jsonObject
+                    val w = el["workout"]
+                    val obj = when (w) {
+                        is kotlinx.serialization.json.JsonArray -> w.firstOrNull()?.jsonObject
+                        is kotlinx.serialization.json.JsonObject -> w
+                        else -> el
+                    }
+                    obj?.get("id")?.jsonPrimitive?.content
+                }.getOrNull()
+            }
+        }
+    }
 }

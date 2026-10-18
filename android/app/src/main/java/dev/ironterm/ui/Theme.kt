@@ -48,14 +48,24 @@ object T {
         TextStyle(fontFamily = mono, fontSize = size, color = color, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, letterSpacing = 0.sp)
 }
 
+/** Bottom-bar tabs plus the deep-link targets widgets and notifications use (EXTRA_TAB). */
 object Tabs {
     const val TODAY = "today"
-    const val GRAPH = "graph"
+    const val GYM = "gym"
     const val LIFTS = "lifts"
-    const val BODY = "body"
-    const val WEB = "web"
+    const val HISTORY = "history"
+    const val MORE = "more"
+    val bar = listOf(TODAY, GYM, LIFTS, HISTORY, MORE)
+
+    // deep-link targets that open a screen under MORE (or a tab with something selected)
     const val SETUP = "setup"
-    val all = listOf(TODAY, GRAPH, LIFTS, BODY, WEB, SETUP)
+    const val BODY = "body"
+    const val GRAPH = "graph"
+    const val CALENDAR = "calendar"
+    const val PROGRAM = "program"
+    const val INSIGHTS = "insights"
+    const val STATS = "stats"
+    val all = bar + listOf(SETUP, BODY, GRAPH, CALENDAR, PROGRAM, INSIGHTS, STATS)
 }
 
 @Composable

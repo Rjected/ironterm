@@ -4,7 +4,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- In-app updates from GitHub Releases (the user confirms every install). -->
+    <!-- read whether Advanced Protection (Android 16) blocks in-app updates -->
+    <uses-permission android:name="android.permission.QUERY_ADVANCED_PROTECTION_MODE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- GYM: rest timer in a foreground service with an ongoing notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Held only for the length of a rest, so the rest-over alert fires with the screen off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- usesCleartextTraffic: self-hosted servers on a LAN are often plain http. -->
     <application
@@ -47,6 +56,23 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".gym.RestTimerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Workout in progress: rest timer countdown and next set, with +30s / skip / set done controls" />
+        </service>
+
+        <receiver
+            android:name=".gym.GymWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_gym_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_gym_info" />
+        </receiver>
 
         <receiver
             android:name=".update.InstallStatusReceiver"

@@ -106,6 +106,7 @@ object Widgets {
         WeekWidgetReceiver::class.java,
         LiftsWidgetReceiver::class.java,
         RecoveryWidgetReceiver::class.java,
+        dev.ironterm.gym.GymWidgetReceiver::class.java,
     )
 
     fun any(context: Context): Boolean {
@@ -115,7 +116,7 @@ object Widgets {
 
     /** Re-render every placed widget from the cache. */
     suspend fun updateAll(context: Context) {
-        listOf(GraphWidget(), NextWorkoutWidget(), WeekWidget(), LiftsWidget(), RecoveryWidget()).forEach {
+        listOf(GraphWidget(), NextWorkoutWidget(), WeekWidget(), LiftsWidget(), RecoveryWidget(), dev.ironterm.gym.GymWidget()).forEach {
             runCatching { it.updateAll(context) }
         }
     }

@@ -23,7 +23,7 @@ object TestData {
 
     fun workout(id: String, date: LocalDate, title: String, vararg ex: Exercise, hour: Int = 18, minutes: Long = 60): Workout {
         val start = date.atTime(hour, 0).atZone(zone).toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC)
-        return Workout(id, title, start.toString(), start.plusMinutes(minutes).toString(), start.toString(), ex.toList())
+        return Workout(id, title, start.toString(), start.plusMinutes(minutes).toString(), start.toString(), exercises = ex.toList())
     }
 
     /** ~10 months of a 4-day split with steady progress, deterministic. Newest first like the API. */

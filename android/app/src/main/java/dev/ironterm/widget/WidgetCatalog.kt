@@ -50,6 +50,10 @@ object WidgetCatalog {
             "recovery", "Recovery", "Muscle readiness (server mode). 2×2: overall gauge · 4×2 / 4×3: least-ready muscles.",
             RecoveryWidgetReceiver::class.java, listOf(S, M, L),
         ) { RecoveryWidgetContent(it) },
+        WidgetKind(
+            "gym", "Gym · current set", "While you train: the exercise and set you're on, and the live rest countdown. 2×1. Tap opens GYM.",
+            dev.ironterm.gym.GymWidgetReceiver::class.java, listOf(Variant("small", "2×1", DpSize(176.dp, 92.dp)), W),
+        ) { dev.ironterm.gym.GymWidgetContent(it.gymSession, if (it.now > 0) it.now else System.currentTimeMillis()) },
     )
 
     fun byReceiver(cls: String?): WidgetKind? = all.firstOrNull { it.receiver.name == cls }

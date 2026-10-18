@@ -1,0 +1,206 @@
+{
+  "projections": [
+    {
+      "lift": "squat",
+      "short": "SQUAT",
+      "status": "ok",
+      "note": "Trending 9/week (+6.5%/month) since 2026-04-16; 12 weeks out ≈ 694.3 (80%: 664.8–716.7).",
+      "current": 586.8,
+      "projected": 694.3
+    },
+    {
+      "lift": "bench",
+      "short": "BENCH",
+      "status": "ok",
+      "note": "Trending 4.9/week (+5.8%/month) since 2026-04-16; 12 weeks out ≈ 421.1 (80%: 409.8–434.4).",
+      "current": 362.2,
+      "projected": 421.1
+    },
+    {
+      "lift": "deadlift",
+      "short": "DEADLIFT",
+      "status": "ok",
+      "note": "Trending 8/week (+5.6%/month) since 2026-04-20; 12 weeks out ≈ 710.5 (80%: 688.8–734.5).",
+      "current": 614.7,
+      "projected": 710.5
+    },
+    {
+      "lift": "ohp",
+      "short": "OHP",
+      "status": "ok",
+      "note": "Trending 5.1/week (+7.4%/month) since 2026-04-20; 12 weeks out ≈ 355.6 (80%: 346.7–365.3).",
+      "current": 294.6,
+      "projected": 355.6
+    }
+  ],
+  "balance": {
+    "summary": "3 of 3 ratios outside typical ranges. Biggest gap: Overhead Press is 81% of your Bench Press (typical 0.55–0.70): bench is lagging the press — unusual; check bench technique (arch, leg drive) or bench frequency.",
+    "lagging": [
+      "bench",
+      "deadlift"
+    ],
+    "ratios": [
+      {
+        "name": "Deadlift / Squat",
+        "value": 1.01,
+        "lo": 1.1,
+        "hi": 1.3,
+        "status": "low"
+      },
+      {
+        "name": "Bench / Squat",
+        "value": 0.63,
+        "lo": 0.65,
+        "hi": 0.85,
+        "status": "low"
+      },
+      {
+        "name": "OHP / Bench",
+        "value": 0.81,
+        "lo": 0.55,
+        "hi": 0.7,
+        "status": "high"
+      }
+    ]
+  },
+  "achievements": {
+    "unlocked": 32,
+    "total": 58,
+    "recent": [
+      {
+        "id": "plates-bench-3",
+        "title": "3-Plate Bench",
+        "description": "Bench 315 lb for at least one rep (3 plates a side).",
+        "tier": "gold",
+        "category": "plates",
+        "current": 320.00097356152753,
+        "target": 315,
+        "measure": "lb",
+        "unlockedAt": "2026-10-01",
+        "progress": 1
+      },
+      {
+        "id": "plates-squat-5",
+        "title": "5-Plate Squat",
+        "description": "Squat 495 lb for at least one rep (5 plates a side).",
+        "tier": "gold",
+        "category": "plates",
+        "current": 504.99085776096103,
+        "target": 495,
+        "measure": "lb",
+        "unlockedAt": "2026-09-28",
+        "progress": 1
+      },
+      {
+        "id": "club-1500",
+        "title": "1,500 lb Club",
+        "description": "Best squat + bench + deadlift estimated 1RMs add up to 1,500 lb.",
+        "tier": "gold",
+        "category": "total",
+        "current": 1557.485046174224,
+        "target": 1500,
+        "measure": "lb",
+        "unlockedAt": "2026-09-18",
+        "progress": 1
+      },
+      {
+        "id": "plates-deadlift-5",
+        "title": "5-Plate Deadlift",
+        "description": "Deadlift 495 lb for at least one rep (5 plates a side).",
+        "tier": "gold",
+        "category": "plates",
+        "current": 540.000264995939,
+        "target": 495,
+        "measure": "lb",
+        "unlockedAt": "2026-09-01",
+        "progress": 1
+      },
+      {
+        "id": "club-1200-actual",
+        "title": "1,200 lb Club (Actual)",
+        "description": "Heaviest squat, bench and deadlift sets actually lifted add up to 1,200 lb.",
+        "tier": "gold",
+        "category": "total",
+        "current": 1364.9920963184277,
+        "target": 1200,
+        "measure": "lb",
+        "unlockedAt": "2026-08-18",
+        "progress": 1
+      }
+    ],
+    "next": [
+      {
+        "id": "anniversary-1y",
+        "title": "One Year Lifting",
+        "description": "1 year since your first logged workout.",
+        "tier": "bronze",
+        "category": "milestones",
+        "current": 0.99,
+        "target": 1,
+        "measure": "years",
+        "unlockedAt": null,
+        "progress": 0.99
+      },
+      {
+        "id": "club-1500-actual",
+        "title": "1,500 lb Club (Actual)",
+        "description": "Heaviest squat, bench and deadlift sets actually lifted add up to 1,500 lb.",
+        "tier": "gold",
+        "category": "total",
+        "current": 1364.9920963184277,
+        "target": 1500,
+        "measure": "lb",
+        "unlockedAt": null,
+        "progress": 0.9099947308789518
+      },
+      {
+        "id": "plates-ohp-3",
+        "title": "3-Plate Overhead Press",
+        "description": "Overhead Press 315 lb for at least one rep (3 plates a side).",
+        "tier": "gold",
+        "category": "plates",
+        "current": 264.99563914637,
+        "target": 315,
+        "measure": "lb",
+        "unlockedAt": null,
+        "progress": 0.8412559972900636
+      },
+      {
+        "id": "plates-bench-4",
+        "title": "4-Plate Bench",
+        "description": "Bench 405 lb for at least one rep (4 plates a side).",
+        "tier": "gold",
+        "category": "plates",
+        "current": 320.00097356152753,
+        "target": 405,
+        "measure": "lb",
+        "unlockedAt": null,
+        "progress": 0.790125860645747
+      },
+      {
+        "id": "sessions-250",
+        "title": "250 Workouts",
+        "description": "Log 250 workouts.",
+        "tier": "gold",
+        "category": "milestones",
+        "current": 178,
+        "target": 250,
+        "measure": "workouts",
+        "unlockedAt": null,
+        "progress": 0.712
+      },
+      {
+        "id": "streak-26w",
+        "title": "26-Week Streak",
+        "description": "26 weeks in a row with at least 3 workouts.",
+        "tier": "gold",
+        "category": "consistency",
+        "current": 14,
+        "target": 26,
+        "measure": "weeks",
+        "unlockedAt": null,
+        "progress": 0.5384615384615384
+      }
+    ]
+  }
+}

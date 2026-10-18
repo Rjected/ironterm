@@ -1,0 +1,315 @@
+{
+  "unit": "lb",
+  "weekly": [
+    {
+      "week": "2025-10-20",
+      "volume": 25975,
+      "sessions": 5,
+      "sets": 54
+    },
+    {
+      "week": "2025-10-27",
+      "volume": 26776,
+      "sessions": 4,
+      "sets": 48
+    },
+    {
+      "week": "2025-11-03",
+      "volume": 23045,
+      "sessions": 4,
+      "sets": 43
+    },
+    {
+      "week": "2025-11-10",
+      "volume": 22766,
+      "sessions": 3,
+      "sets": 38
+    },
+    {
+      "week": "2025-11-17",
+      "volume": 30670,
+      "sessions": 4,
+      "sets": 49
+    },
+    {
+      "week": "2025-11-24",
+      "volume": 14870,
+      "sessions": 2,
+      "sets": 22
+    },
+    {
+      "week": "2025-12-01",
+      "volume": 19024,
+      "sessions": 3,
+      "sets": 33
+    },
+    {
+      "week": "2025-12-08",
+      "volume": 25538,
+      "sessions": 3,
+      "sets": 37
+    },
+    {
+      "week": "2025-12-15",
+      "volume": 32988,
+      "sessions": 4,
+      "sets": 49
+    },
+    {
+      "week": "2025-12-22",
+      "volume": 23869,
+      "sessions": 3,
+      "sets": 35
+    },
+    {
+      "week": "2025-12-29",
+      "volume": 27385,
+      "sessions": 3,
+      "sets": 39
+    },
+    {
+      "week": "2026-01-05",
+      "volume": 35864,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-01-12",
+      "volume": 21769,
+      "sessions": 2,
+      "sets": 26
+    },
+    {
+      "week": "2026-01-19",
+      "volume": 39500,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-01-26",
+      "volume": 26075,
+      "sessions": 3,
+      "sets": 35
+    },
+    {
+      "week": "2026-02-02",
+      "volume": 43720,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-02-09",
+      "volume": 43692,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-02-16",
+      "volume": 15916,
+      "sessions": 1,
+      "sets": 15
+    },
+    {
+      "week": "2026-03-02",
+      "volume": 44265,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-03-09",
+      "volume": 47551,
+      "sessions": 5,
+      "sets": 56
+    },
+    {
+      "week": "2026-03-16",
+      "volume": 47120,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-03-23",
+      "volume": 48461,
+      "sessions": 4,
+      "sets": 50
+    },
+    {
+      "week": "2026-03-30",
+      "volume": 49481,
+      "sessions": 4,
+      "sets": 54
+    },
+    {
+      "week": "2026-04-06",
+      "volume": 29916,
+      "sessions": 3,
+      "sets": 39
+    },
+    {
+      "week": "2026-04-13",
+      "volume": 40794,
+      "sessions": 3,
+      "sets": 43
+    },
+    {
+      "week": "2026-04-20",
+      "volume": 52406,
+      "sessions": 4,
+      "sets": 58
+    },
+    {
+      "week": "2026-04-27",
+      "volume": 51641,
+      "sessions": 4,
+      "sets": 58
+    },
+    {
+      "week": "2026-05-04",
+      "volume": 51096,
+      "sessions": 4,
+      "sets": 58
+    },
+    {
+      "week": "2026-05-11",
+      "volume": 44560,
+      "sessions": 3,
+      "sets": 42
+    },
+    {
+      "week": "2026-05-18",
+      "volume": 54566,
+      "sessions": 4,
+      "sets": 58
+    },
+    {
+      "week": "2026-05-25",
+      "volume": 52935,
+      "sessions": 4,
+      "sets": 58
+    },
+    {
+      "week": "2026-06-01",
+      "volume": 56010,
+      "sessions": 4,
+      "sets": 59
+    },
+    {
+      "week": "2026-06-15",
+      "volume": 55500,
+      "sessions": 4,
+      "sets": 59
+    },
+    {
+      "week": "2026-06-22",
+      "volume": 57275,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-06-29",
+      "volume": 58660,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-07-06",
+      "volume": 48149,
+      "sessions": 3,
+      "sets": 44
+    },
+    {
+      "week": "2026-07-13",
+      "volume": 60959,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-07-20",
+      "volume": 24064,
+      "sessions": 2,
+      "sets": 32
+    },
+    {
+      "week": "2026-07-27",
+      "volume": 64345,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-08-03",
+      "volume": 49614,
+      "sessions": 3,
+      "sets": 44
+    },
+    {
+      "week": "2026-08-10",
+      "volume": 56160,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-08-17",
+      "volume": 58335,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-08-24",
+      "volume": 61285,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-08-31",
+      "volume": 62065,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-09-07",
+      "volume": 51780,
+      "sessions": 3,
+      "sets": 44
+    },
+    {
+      "week": "2026-09-14",
+      "volume": 61925,
+      "sessions": 4,
+      "sets": 60
+    },
+    {
+      "week": "2026-09-21",
+      "volume": 35141,
+      "sessions": 3,
+      "sets": 48
+    },
+    {
+      "week": "2026-09-28",
+      "volume": 89621,
+      "sessions": 5,
+      "sets": 84
+    },
+    {
+      "week": "2026-10-05",
+      "volume": 26764,
+      "sessions": 2,
+      "sets": 32
+    },
+    {
+      "week": "2026-10-12",
+      "volume": 52756,
+      "sessions": 3,
+      "sets": 52
+    }
+  ],
+  "totals": {
+    "workouts": 178,
+    "sessions52": 178,
+    "avgMin": 70,
+    "streak": {
+      "current": 1,
+      "best": 14
+    }
+  },
+  "cardio": null
+}

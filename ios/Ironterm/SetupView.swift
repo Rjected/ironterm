@@ -1,3 +1,4 @@
+import SafariServices
 import SwiftUI
 
 struct SetupView: View {
@@ -15,30 +16,53 @@ struct SetupView: View {
     @State private var scanning = false
     @State private var scanned: String?
 
+    @State private var safari: SafariLink?
+
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    if model.source == .none { quickConnectPanel }
-                    statusPanel
-                    sourcePanel
-                    widgetsPanel
-                    Cap("\(Brand.upper) · iOS \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")", T.faint, size: 8)
-                    Text("Uses the Hevy public API; not affiliated with Hevy.").font(T.mono(9)).foregroundStyle(T.faint)
-                }
-                .padding(14)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                if model.source == .none { quickConnectPanel }
+                statusPanel
+                sourcePanel
+                GymPrefsPanel(prefs: model.prefs)
+                if model.source == .server, let base = model.serverURL { advancedPanel(base) }
+                widgetsPanel
+                Cap("\(Brand.upper) · iOS \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")", T.faint, size: 8)
+                Text("Uses the Hevy public API; not affiliated with Hevy.").font(T.mono(9)).foregroundStyle(T.faint)
             }
-            .background(T.bg)
-            .navigationDestination(isPresented: $model.showGallery) { GalleryView() }
-            .fullScreenCover(isPresented: $scanning, onDismiss: {
-                // hand the code over after the cover is gone, so the confirmation sheet can present
-                if let s = scanned { scanned = nil; model.handleScanned(s) }
-            }) {
-                QRScannerView(onCode: { scanned = $0; scanning = false }, onCancel: { scanning = false })
-            }
-            .toolbar(.hidden, for: .navigationBar)
+            .padding(14)
         }
+        .background(T.bg)
+        .fullScreenCover(isPresented: $scanning, onDismiss: {
+            // hand the code over after the cover is gone, so the confirmation sheet can present
+            if let s = scanned { scanned = nil; model.handleScanned(s) }
+        }) {
+            QRScannerView(onCode: { scanned = $0; scanning = false }, onCancel: { scanning = false })
+        }
+        .sheet(item: $safari) { l in SafariView(url: l.url).ignoresSafeArea() }
         .onAppear(perform: loadFields)
+    }
+
+    /// Program choice and lift mapping stay in the web app: the one web surface, opened in Safari.
+    func advancedPanel(_ base: URL) -> some View {
+        Panel(title: "ADVANCED SETUP", detail: "WEB") {
+            Text("Program choice, start weights, training days, trips and lift mapping are set in the web app on your server.")
+                .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
+            Button { safari = SafariLink(url: ServerClient.endpoint(base, "/#set")) } label: {
+                HStack {
+                    Image(systemName: "safari")
+                    Text("ADVANCED SETUP (WEB)").font(T.mono(11, .bold))
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                }
+                .foregroundStyle(T.amber)
+                .padding(.vertical, 10).padding(.horizontal, 10)
+                .overlay(Rectangle().stroke(T.line, lineWidth: 1))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("advanced-setup")
+        }
     }
 
     func loadFields() {
@@ -128,13 +152,13 @@ struct SetupView: View {
             .overlay(Rectangle().stroke(T.line, lineWidth: 1))
 
             if choice == .server {
-                Text("Your \(Brand.name) server: everything, including the program, recovery and the full web app. In the web app: F10 SETUP → APPS & WIDGETS → New app token, then scan its QR code, tap \"Open in app\", or paste the URL and token here.")
+                Text("Your \(Brand.name) server: everything, including the program, the GYM logger, recovery and insights. In the web app: F10 SETUP → APPS & WIDGETS → New app token, then scan its QR code, tap \"Open in app\", or paste the URL and token here.")
                     .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                 scanButton(prominent: false)
                 Field(label: "SERVER URL", text: $serverText, placeholder: "https://gym.example.com", secure: false, keyboard: .URL)
                 Field(label: "APP TOKEN", text: $token, placeholder: "ht_…", secure: true)
             } else {
-                Text("Only a Hevy API key (hevy.com → Settings → Developer). The phone reads your workouts from Hevy and computes the graph, streak, totals and lift e1RMs itself. No program, recovery or web app in this mode.")
+                Text("Only a Hevy API key (hevy.com → Settings → Developer). The phone reads your workouts from Hevy and computes the graph, streak, totals and lift e1RMs itself. No program, GYM logging, recovery or insights in this mode.")
                     .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                 Field(label: "HEVY API KEY", text: $apiKey, placeholder: "xxxxxxxx-xxxx-…", secure: true)
                 HStack(spacing: 16) {
@@ -208,7 +232,7 @@ struct SetupView: View {
         } else if choice == .direct {
             await model.useDirect(apiKey: apiKey.trimmingCharacters(in: .whitespaces), unit: unit, weekTarget: weekTarget)
         }
-        if model.error == nil { model.tab = .today }
+        if model.error == nil { model.tab = .today; model.morePath = [] }
     }
 
     // MARK: widgets
@@ -231,7 +255,7 @@ struct SetupView: View {
             }
             Text("Widgets read the same data source and fetch on their own every ~30 minutes; the app refreshes them after every sync. Long-press a widget → Edit to pick a theme or lift.")
                 .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
-            Button { model.showGallery = true } label: {
+            Button { model.morePath.append(.gallery) } label: {
                 HStack {
                     Image(systemName: "square.grid.2x2")
                     Text("WIDGET GALLERY").font(T.mono(11, .bold))
@@ -274,6 +298,67 @@ struct Field: View {
             .padding(.horizontal, 10).padding(.vertical, 9)
             .background(Color(hex: 0x0B0C0E))
             .overlay(Rectangle().stroke(T.line, lineWidth: 1))
+        }
+    }
+}
+
+struct SafariLink: Identifiable {
+    var url: URL
+    var id: String { url.absoluteString }
+}
+
+struct SafariView: UIViewControllerRepresentable {
+    var url: URL
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let c = SFSafariViewController(url: url)
+        c.preferredControlTintColor = UIColor(red: 1, green: 0.69, blue: 0, alpha: 1)
+        c.preferredBarTintColor = .black
+        c.dismissButtonStyle = .close
+        return c
+    }
+    func updateUIViewController(_ c: SFSafariViewController, context: Context) {}
+}
+
+struct GymPrefsPanel: View {
+    @ObservedObject var prefs: GymPrefs
+
+    var body: some View {
+        Panel(title: "GYM", detail: "ON THIS PHONE") {
+            toggle("REST ALERT", "Notification when rest ends, also when locked", $prefs.restAlerts)
+            toggle("LIVE ACTIVITY", "Rest countdown on the lock screen and Dynamic Island", $prefs.liveActivity)
+            toggle("HAPTICS", "Buzz on each set and when rest ends", $prefs.haptics)
+            toggle("KEEP SCREEN ON", "While a session is running", $prefs.keepAwake)
+            toggle("AUTO-ADVANCE", "Scroll to the next exercise when one is done", $prefs.autoAdvance)
+            HStack(spacing: 16) {
+                bar("BAR LB", $prefs.barLb, [45, 35, 33, 25, 15])
+                bar("BAR KG", $prefs.barKg, [20, 15, 10, 7])
+            }
+        }
+    }
+
+    func toggle(_ t: String, _ sub: String, _ b: Binding<Bool>) -> some View {
+        Toggle(isOn: b) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(t).font(T.mono(11, .bold)).foregroundStyle(T.text)
+                Text(sub).font(T.mono(9)).foregroundStyle(T.faint)
+            }
+        }
+        .tint(T.amber)
+    }
+
+    func bar(_ t: String, _ b: Binding<Double>, _ opts: [Double]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Cap(t, T.faint, size: 9)
+            Menu {
+                ForEach(opts, id: \.self) { o in Button(Fmt.weight(o)) { b.wrappedValue = o } }
+            } label: {
+                HStack {
+                    Text(Fmt.weight(b.wrappedValue)).font(T.mono(13, .bold)).foregroundStyle(T.text)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 9)).foregroundStyle(T.faint)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .overlay(Rectangle().stroke(T.line, lineWidth: 1))
+            }
         }
     }
 }

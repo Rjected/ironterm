@@ -1,0 +1,234 @@
+{
+  "summary": {
+    "id": "demo-2026-10-15",
+    "date": "2026-10-15",
+    "start": "2026-10-15T11:27:00.000Z",
+    "title": "GZCLP · B1",
+    "durationMin": 66,
+    "volume": 11355,
+    "sets": 16,
+    "exercises": [
+      "Overhead Press (Barbell)",
+      "Deadlift (Barbell)",
+      "Dumbbell Row"
+    ],
+    "programDay": "B1",
+    "hasNotes": false
+  },
+  "unit": "lb",
+  "note": "",
+  "exercises": [
+    {
+      "title": "Overhead Press (Barbell)",
+      "lift": "ohp",
+      "note": null,
+      "sets": [
+        {
+          "type": "warmup",
+          "weight": 135,
+          "reps": 3,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": null
+        },
+        {
+          "type": "warmup",
+          "weight": 200,
+          "reps": 3,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": null
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 1,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 265
+        },
+        {
+          "type": "normal",
+          "weight": 265,
+          "reps": 2,
+          "rpe": 9,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 282.7
+        }
+      ]
+    },
+    {
+      "title": "Deadlift (Barbell)",
+      "lift": "deadlift",
+      "note": null,
+      "sets": [
+        {
+          "type": "normal",
+          "weight": 185,
+          "reps": 8,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 234.3
+        },
+        {
+          "type": "normal",
+          "weight": 185,
+          "reps": 8,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 234.3
+        },
+        {
+          "type": "normal",
+          "weight": 185,
+          "reps": 8,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 234.3
+        }
+      ]
+    },
+    {
+      "title": "Dumbbell Row",
+      "lift": "dbRow",
+      "note": null,
+      "sets": [
+        {
+          "type": "normal",
+          "weight": 80,
+          "reps": 15,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 120
+        },
+        {
+          "type": "normal",
+          "weight": 80,
+          "reps": 15,
+          "rpe": null,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 120
+        },
+        {
+          "type": "normal",
+          "weight": 80,
+          "reps": 20,
+          "rpe": 9,
+          "distanceM": null,
+          "durationSec": null,
+          "e1rm": 133.3
+        }
+      ]
+    }
+  ],
+  "program": {
+    "dayId": "B1",
+    "results": [
+      {
+        "lift": "ohp",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "weight": 265,
+        "outcome": "success",
+        "note": "10/10 → 270"
+      },
+      {
+        "lift": "deadlift",
+        "tier": "T2",
+        "scheme": "3×8",
+        "weight": 185,
+        "outcome": "success",
+        "note": "24/24 → 195"
+      },
+      {
+        "lift": "dbRow",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "weight": 80,
+        "outcome": "hold",
+        "note": "20 on last set, need 25"
+      }
+    ]
+  }
+}
