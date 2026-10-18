@@ -12,3 +12,4 @@ data/
 wrangler.jsonc
 wrangler.hooks.jsonc
 wrangler.directory.jsonc
+.dev/

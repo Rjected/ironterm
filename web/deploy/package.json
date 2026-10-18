@@ -1,0 +1,8 @@
+{
+  "name": "ironterm-deploy",
+  "private": true,
+  "description": "Cloudflare deploy tooling, installed only when you deploy (pnpm wrangler …), not for development or CI.",
+  "devDependencies": {
+    "wrangler": "4.145.0"
+  }
+}

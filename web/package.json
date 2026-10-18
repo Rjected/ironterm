@@ -4,34 +4,33 @@
   "type": "module",
   "packageManager": "pnpm@9.7.1+sha512.faf344af2d6ca65c4c5c8c2224ea77a81a5e8859cbc4e06b1511ddce2f0151512431dd19e6aff31f2c6a8f5f2aced9bd2273e1fed7dd4de1868984059d2c4247",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "deploy": "npm run build && wrangler deploy",
+    "dev": "node scripts/dev.mjs",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "build:node": "tsc --noEmit -p server && node scripts/build.mjs --node",
+    "start": "node --disable-warning=ExperimentalWarning dist/server/main.mjs",
+    "preview": "pnpm build:node && pnpm start",
     "test": "node scripts/test.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p cli",
     "cli": "esbuild cli/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cli/ironterm-graph.mjs --log-level=warning && node dist/cli/ironterm-graph.mjs",
-    "db:migrate:local": "wrangler d1 migrations apply hevy --local",
-    "db:migrate:remote": "wrangler d1 migrations apply hevy --remote",
     "fonts": "node scripts/copy-fonts.mjs",
-    "deploy:hooks": "wrangler deploy --config wrangler.hooks.jsonc",
-    "deploy:pages": "cd ../gym-proxy && wrangler pages deploy --project-name hevy-gym --branch main",
-    "build:node": "tsc --noEmit -p server && vite build && esbuild server/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server/main.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
-    "start": "node --disable-warning=ExperimentalWarning dist/server/main.mjs",
+    "wrangler": "pnpm --dir deploy install --frozen-lockfile --silent && deploy/node_modules/.bin/wrangler",
+    "deploy": "pnpm build && pnpm wrangler deploy",
+    "db:migrate:local": "pnpm wrangler d1 migrations apply hevy --local",
+    "db:migrate:remote": "pnpm wrangler d1 migrations apply hevy --remote",
+    "deploy:hooks": "pnpm wrangler deploy --config wrangler.hooks.jsonc",
+    "deploy:pages": "pnpm wrangler --version && cd ../gym-proxy && ../web/deploy/node_modules/.bin/wrangler pages deploy --project-name hevy-gym --branch main",
     "build:directory": "tsc --noEmit -p server && esbuild server/directory.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/directory/main.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
     "start:directory": "node --disable-warning=ExperimentalWarning dist/directory/main.mjs",
-    "deploy:directory": "wrangler d1 migrations apply ironterm-directory --remote --config wrangler.directory.jsonc && wrangler deploy --config wrangler.directory.jsonc"
+    "deploy:directory": "pnpm wrangler d1 migrations apply ironterm-directory --remote --config wrangler.directory.jsonc && pnpm wrangler deploy --config wrangler.directory.jsonc"
   },
   "dependencies": {
-    "preact": "10.29.8"
+    "preact": "10.29.8",
+    "qrcode-generator": "1.4.4"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.62.3",
     "@cloudflare/workers-types": "5.20260930.2",
     "@types/node": "22.13.0",
     "esbuild": "0.28.1",
-    "typescript": "5.9.3",
-    "vite": "8.3.1",
-    "wrangler": "4.145.0"
+    "typescript": "5.9.3"
   }
 }

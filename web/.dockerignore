@@ -7,3 +7,6 @@ dist
 data
 public/fonts/*
 !public/fonts/.gitkeep
+deploy/node_modules
+.dev
+.test-dist

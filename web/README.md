@@ -28,7 +28,7 @@ cp .dev.vars.example .dev.vars   # add HEVY_API_KEY, or leave it blank for demo 
 pnpm dev                         # http://localhost:5173
 ```
 
-Local D1 creates its tables on first request. Hit **SYNC** (or `curl -X POST localhost:5173/api/sync`) to backfill your history.
+`pnpm dev` runs the app as the Node server with SQLite in `./data` (tables are created on first request) and reloads the page when you save a file. Hit **SYNC** (or `curl -X POST localhost:5173/api/sync`) to backfill your history.
 
 ## How data flows
 
@@ -51,19 +51,21 @@ With **auto-update** on (Setup), the Worker re-pushes routines after every new w
 
 ```bash
 cp wrangler.example.jsonc wrangler.jsonc   # your own config; gitignored
-wrangler d1 create ironterm                # paste the id into wrangler.jsonc
-wrangler secret put HEVY_API_KEY
-wrangler secret put SESSION_SECRET         # any long random string
-wrangler secret put WEBHOOK_SECRET         # any long random string
+pnpm wrangler d1 create ironterm           # paste the id into wrangler.jsonc
+pnpm wrangler secret put HEVY_API_KEY
+pnpm wrangler secret put SESSION_SECRET    # any long random string
+pnpm wrangler secret put WEBHOOK_SECRET    # any long random string
 pnpm deploy
 ```
+
+`pnpm wrangler` installs Cloudflare's CLI into `deploy/` from its own lockfile the first time you use it. Developing, testing and self-hosting don't need it.
 
 Then choose **one** way to log in. With none configured, the Worker refuses to serve data anywhere but localhost.
 
 ### a) Google sign-in in the app (works on any domain)
 
 1. Google Cloud → APIs & Services → Credentials → **OAuth client ID → Web application**. Add the redirect URI `https://<your domain>/auth/callback`.
-2. Put the client ID in `GOOGLE_CLIENT_ID` and your email(s) in `ALLOWED_EMAILS` in `wrangler.jsonc`. Then run `wrangler secret put GOOGLE_CLIENT_SECRET`, and redeploy.
+2. Put the client ID in `GOOGLE_CLIENT_ID` and your email(s) in `ALLOWED_EMAILS` in `wrangler.jsonc`. Then run `pnpm wrangler secret put GOOGLE_CLIENT_SECRET`, and redeploy.
 
 Sessions are a signed cookie (30 days).
 
@@ -82,7 +84,7 @@ The Worker also verifies Access's signed JWT on every request, so a request that
 
 ### c) Password
 
-`wrangler secret put APP_PASSWORD`. That gives a simple password screen.
+`pnpm wrangler secret put APP_PASSWORD`. That gives a simple password screen.
 
 ### Hevy webhook (optional, instant sync)
 

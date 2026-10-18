@@ -4,7 +4,7 @@
   //   wrangler d1 create ironterm-directory      (paste the id below)
   //   pnpm deploy:directory
   // Then point servers at it with SOCIAL_DIRECTORY=https://<this worker's URL>.
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "deploy/node_modules/wrangler/config-schema.json",
   "name": "ironterm-directory",
   "main": "directory/worker.ts",
   "compatibility_date": "2026-09-15",
