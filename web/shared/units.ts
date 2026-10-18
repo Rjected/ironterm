@@ -5,7 +5,8 @@ export const LB_PER_KG = 2.20462262185;
 export const fromKg = (kg: number, unit: Unit) => (unit === "kg" ? kg : kg * LB_PER_KG);
 export const toKg = (w: number, unit: Unit) => (unit === "kg" ? w : w / LB_PER_KG);
 
-export const roundTo = (w: number, step: number) => Math.round(w / step) * step;
+/** Nearest multiple of `step`, halves up (like the sheets' MROUND); the epsilon keeps 0.7 × 325 = 227.4999… from rounding down. */
+export const roundTo = (w: number, step: number) => Math.round(w / step + 1e-9) * step;
 
 /** Smallest jump you can load. Matches the sheet's "Microplates? No" default. */
 export function loadStep(kind: LiftKind, unit: Unit, micro = false): number {

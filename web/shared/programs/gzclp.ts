@@ -1,14 +1,17 @@
-// GZCLP, from "GZCLP 3 or 4-Day (12 Week) v4.5b5 by /u/Blacknoir" (LiftVault). The rules
-// below come from the sheet's Start tab:
+// GZCLP, from "GZCLP 3 or 4-Day (12 Week) v4.5b5 by /u/Blacknoir" (LiftVault), checked against
+// Cody Lefever's "GZCL Applications & Adaptations" (swoleateveryheight, 2016), the r/gzcl wiki
+// and the GZCLP infographic (2026-10-18):
 //
 //   T1  5×3+ → 6×2+ → 10×1+ (modified 3×5+ → 4×3+ → 5×2+). Add weight each success.
 //       Missing base volume (15 / 12 / 10) drops a stage at the SAME weight. Failing the last
 //       stage means "Retest": find a new 5RM, next weight = 85% of it.
 //   T2  3×10 → 3×8 → 3×6 (modified 4×8 → 4×6 → 4×4). Base volume 30 / 24 / 18. Failing the
-//       last stage resets to 3×10 at slightly more than the previous 3×10 start. No retest.
-//   T3  3×15+ (modified 4×12+). Add weight once the last set reaches 25 (modified 18).
+//       last stage resets to 3×10 "at a slightly heavier weight than your previous 3×10" (no more
+//       than +20 lb / 9 kg): here the last 3×10 weight + 2 jumps (+10 lb upper, +20 lb lower).
+//   T3  3×15+ (modified 4×12+). Add weight once the sets go 15/15/25 (modified 12/12/12/18).
 //
 // 3-day and 4-day run the same A1 B1 A2 B2 rotation; 3-day just spreads it over more weeks.
+// The sheet leaves the optional extra T3s empty; curls on A1 are an opt-in.
 
 import type { ProgramTemplate, SlotDef, Stage, Tier, Weights } from "../program";
 import { LIFTS } from "../lifts";
@@ -53,10 +56,10 @@ export const gzclp: ProgramTemplate = {
     { key: "t1", label: "T1 scheme", default: "default", choices: [{ value: "default", label: "5×3+ › 6×2+ › 10×1+" }, { value: "modified", label: "3×5+ › 4×3+ › 5×2+" }] },
     { key: "t2", label: "T2 scheme", default: "default", choices: [{ value: "default", label: "3×10 › 3×8 › 3×6" }, { value: "modified", label: "4×8 › 4×6 › 4×4" }] },
     { key: "t3", label: "T3 scheme", default: "default", choices: [{ value: "default", label: "3×15+ (move up at 25)" }, { value: "modified", label: "4×12+ (move up at 18)" }] },
-    { key: "curls", label: "Extra T3 on A1", default: "on", choices: [{ value: "on", label: "Bicep curls 4×12+" }, { value: "off", label: "None" }] },
+    { key: "curls", label: "Extra T3 on A1", default: "off", choices: [{ value: "off", label: "None" }, { value: "on", label: "Bicep curls 4×12+" }] },
   ],
   build(o) {
-    const opts = { days: "4", t1: "default", t2: "default", t3: "default", curls: "on", ...o };
+    const opts = { days: "4", t1: "default", t2: "default", t3: "default", curls: "off", ...o };
     const a1 = [slot("a1-t1", "T1", "squat", opts), slot("a1-t2", "T2", "bench", opts), slot("a1-t3", "T3", "latPulldown", opts)];
     if (opts.curls === "on") a1.push(slot("a1-t3b", "T3", "bicepCurl", opts, "modified"));
     return {
@@ -72,7 +75,8 @@ export const gzclp: ProgramTemplate = {
     };
   },
   defaults(unit: Unit) {
-    // Starting weights from the sheet's Start tab (entered in lb).
+    // Example starting weights for a lifter a few months in (lb). The sheet's Start tab holds
+    // placeholders (135/95/30, 95/135/20, 135/95/30, 225/65/20); these are only prefills.
     const lb: Record<string, number> = {
       "a1-t1": 185, "a1-t2": 145, "a1-t3": 42.5, "a1-t3b": 20,
       "b1-t1": 85, "b1-t2": 135, "b1-t3": 40,

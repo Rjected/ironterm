@@ -275,7 +275,7 @@ export const gzclUhf5: ProgramTemplate = {
   id: "gzcl-uhf-5wk",
   name: "GZCL UHF+ (5 Week)",
   author: "Cody Lefever (GZCL)",
-  source: "LiftVault: GZCL UHF+ (5 weeks) spreadsheet (training schedule tab)",
+  source: "LiftVault: GZCL UHF Method + Heavy Singles (Sept 2018) spreadsheet, UHF+ tab",
   summary: "Ultra high frequency GZCL: five days a week, a heavy T1 single plus rep-out back-offs, T2 volume and three T3 pump lifts a day.",
   category: "gzcl",
   level: "advanced",
@@ -290,7 +290,7 @@ export const gzclUhf5: ProgramTemplate = {
       days: uhfDays(UHF5),
       cycle: { weeks: 5, finite: true, weekNames: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5 (deload / test)"] },
       maxLabel: "Training max (2RM)",
-      notes: [...UHF_NOTES, "The heavy single sits inside the TM: no AMRAP on it. Week 5 drops volume: one rep-out set capped at ~8 reps."],
+      notes: [...UHF_NOTES, "The heavy single sits inside the TM: no AMRAP on it. Week 5 drops volume: one rep-out set capped at ~8 reps (\"target practice\").", "Week 6 (not scheduled): set the new TM, then start again."],
     };
   },
   defaults(unit) {
@@ -308,7 +308,7 @@ export const gzclUhf9: ProgramTemplate = {
   level: "advanced",
   daysPerWeek: [5],
   weeks: 9,
-  options: [{ key: "taper", label: "Taper", default: "off", choices: [{ value: "off", label: "9 weeks" }, { value: "on", label: "+ 2-week taper (weeks 10–11), then meet" }] }],
+  options: [{ key: "taper", label: "Taper", default: "off", choices: [{ value: "off", label: "9 weeks" }, { value: "on", label: "+ taper (weeks 10–11; week 12 openers / meet)" }] }],
   build(o) {
     const taper = o.taper === "on";
     const data = taper ? UHF9 : UHF9.slice(0, 9);
@@ -329,7 +329,8 @@ export const gzclUhf9: ProgramTemplate = {
 
 // ───────────────────────── GZCL General Gainz Wave LP ─────────────────────────
 
-const ggInc = (lift: string) => (lift === "ohp" ? w8(2.5, 1.25) : w8(5, 2.5));
+// The sheet's text: "Add 5kg/10lb a week, 2.5kg/5lb for OHP".
+const ggInc = (lift: string) => (lift === "ohp" ? w8(5, 2.5) : w8(10, 5));
 const ggAdd = (lift: string, k: number) => (k ? w8(ggInc(lift).lb * k, ggInc(lift).kg * k) : undefined);
 /** T2 "rep max + half-sets" per wave. */
 const GG_T2: [number, [number, number][]][] = [[10, [[4, 5]]], [8, [[4, 4]]], [7, [[2, 4], [2, 3]]], [6, [[4, 3]]]];
@@ -388,7 +389,7 @@ export const gzclGgWave: ProgramTemplate = {
       maxLabel: "1RM",
       microplates: true,
       notes: [
-        "T1 = 80% of 1RM, T2 = 70%, + one increment a week (OHP 2.5 lb, others 5 lb). Each wave starts one increment above the last.",
+        "T1 = 80% of 1RM, T2 = 70%, + one increment a week (10 lb / 5 kg, OHP 5 lb / 2.5 kg). Each wave starts one increment above the last.",
         "T1: hit the rep max (6, 5, 4, 3 by wave), rest 3–5 min, then that many singles. T2: rep max, then half-sets totalling about twice it.",
       ],
     };
