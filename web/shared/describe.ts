@@ -252,7 +252,8 @@ function tmRuleText(rule: TmRule, slots: SlotDef[], def: ProgramDef, wr: Writer,
   const weeks = slotWeeks(def, s0);
   const lifts = slots.map((s) => (s.progression as Percent).tmLift);
   const incs = wr.perLift(lifts.map((l) => ({ lift: l, v: wr.tmInc(l) })));
-  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week." : "";
+  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week."
+    : "applyAt" in rule && rule.applyAt === "afterNextWeek" ? " The change applies after the following week." : "";
   const amt = (n: number) => incs.uniform ? wr.signed(wr.tmInc(lifts[0]), n) : `${n < 0 ? "−" : "+"}${plural(Math.abs(n), "step")}`;
   const legend = incs.uniform ? "" : ` One step is ${incs.text}.`;
   switch (rule.type) {

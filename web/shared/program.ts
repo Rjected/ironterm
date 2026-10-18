@@ -18,6 +18,8 @@ import type { HevyWorkout } from "./hevy";
 import { LIFTS, matchLift } from "./lifts";
 import { fmt, fromKg, loadStep, roundTo, type Unit } from "./units";
 
+const ceilTo = (w: number, s: number) => Math.ceil(w / s - 1e-9) * s;
+
 // ───────────────────────── definitions ─────────────────────────
 
 export type Tier = "T1" | "T2" | "T3" | "MAIN" | "SUPP" | "ACC";
@@ -58,7 +60,10 @@ export type TmRule =
       alsoLifts?: string[] }
   /** SBS / Juggernaut: reps beyond (or short of) the set's target → TM change. The last row
    *  with diff ≤ (reps − target) applies. pct = fraction of TM; increments = × tmIncrement. */
-  | { type: "amrapVsTarget"; setIndex: number; table: { diff: number; pct?: number; increments?: number }[]; allSets?: boolean; applyAt?: "now" | "weekEnd";
+  | { type: "amrapVsTarget"; setIndex: number; table: { diff: number; pct?: number; increments?: number }[]; allSets?: boolean;
+      /** "afterNextWeek": the week after this one still uses the old TM (Juggernaut: the deload
+       *  week after realization runs off the old TM; the new one starts with the next wave). */
+      applyAt?: "now" | "weekEnd" | "afterNextWeek";
       /** SBS: a planned set at the target weight that was skipped, or done for fewer than its planned
        *  reps, counts as "failed to complete the sets": diff becomes at most −1 − (sets short). */
       penalizeMissingSets?: boolean;
@@ -159,6 +164,9 @@ export interface ProgramDef {
     tmIncreaseAt?: number[] };
   /** TM increment unit per lift for amrapTable / amrapVsTarget increments. */
   tmIncrement?: Record<string, Weights>;
+  /** Round prescribed loads (and TM changes from increment tables) UP to the plate step, like a
+   *  sheet's CEILING (Juggernaut). Default: nearest. */
+  roundUp?: boolean;
   /** What the maxes are called in setup: "Training max", "1RM", "5RM"… */
   maxLabel?: string;
   microplates?: boolean;
@@ -303,6 +311,8 @@ export interface ProgramState {
   complete?: boolean;
   /** TM changes waiting for the end of the current week (tmRule applyAt: "weekEnd") */
   pendingTm?: Record<string, number>;
+  /** TM changes that wait one more week (applyAt: "afterNextWeek"); they move to pendingTm at the next week end */
+  pendingTmNext?: Record<string, number>;
   /** coming back from a break: the next `total − done` sessions are a lighter ramp */
   reentry?: Reentry;
 }
@@ -486,7 +496,7 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
     const tm = state.tms[p.tmLift] ?? 0;
     const table = p.weeks[week % p.weeks.length] ?? [];
     const sets: PlannedSet[] = table.map((ps) => ({
-      weight: ps.pct != null && !ps.ofTop ? roundTo(tm * ps.pct + (ps.add ? inc(ps.add, cfg.unit) : 0), step(def, cfg, slot.lift)) : 0,
+      weight: ps.pct != null && !ps.ofTop ? (def.roundUp ? ceilTo : roundTo)(tm * ps.pct + (ps.add ? inc(ps.add, cfg.unit) : 0), step(def, cfg, slot.lift)) : 0,
       reps: ps.reps, repsMax: ps.repsMax, amrap: !!ps.amrap, pct: ps.pct, rpe: ps.rpe, ofTop: ps.ofTop,
     }));
     let ifSuccess: string | undefined;
@@ -790,6 +800,8 @@ function evalPercent(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, state: 
     for (const r of rows) if (diff >= r.diff) row = r;
     // Not rounded: small % changes must accumulate; prescribed loads get rounded when planned.
     d = row ? (row.pct != null ? Math.round(tm * row.pct * 100) / 100 : (row.increments ?? 0) * tmi) : 0;
+    // roundUp programs (Juggernaut's CEILING(TM + reps over × increment)) keep the TM on the step.
+    if (def.roundUp && row?.increments != null) d = ceilTo(tm + d, step(def, cfg, p.tmLift)) - tm;
   }
   return {
     tmDelta: d,
@@ -823,6 +835,7 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
   const slots = { ...state.slots };
   const tms = { ...state.tms };
   const pending = { ...state.pendingTm };
+  let pendingNext: Record<string, number> = { ...state.pendingTmNext };
   const results: SlotResult[] = [];
   const used = new Map<string, number>(); // lift -> how many exercise blocks consumed
 
@@ -840,12 +853,13 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
     const p = slot.progression;
     if (p.kind === "percent") {
       const { tmDelta, tmSet, also, res } = evalPercent(def, cfg, slot, state, planned, sets);
-      const later = !!p.tmRule && "applyAt" in p.tmRule && p.tmRule.applyAt === "weekEnd";
+      const at = p.tmRule && "applyAt" in p.tmRule ? p.tmRule.applyAt : undefined;
       const deltas: Record<string, number> = { ...also };
       if (tmDelta) deltas[p.tmLift] = (deltas[p.tmLift] ?? 0) + tmDelta;
       if (tmSet != null) tms[p.tmLift] = tmSet;
       for (const [lift, d] of Object.entries(deltas)) {
-        if (later) pending[lift] = (pending[lift] ?? 0) + d;
+        if (at === "weekEnd") pending[lift] = (pending[lift] ?? 0) + d;
+        else if (at === "afterNextWeek") pendingNext[lift] = (pendingNext[lift] ?? 0) + d;
         else tms[lift] = (tms[lift] ?? 0) + d;
       }
       results.push(res);
@@ -860,6 +874,8 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
   if (next.rotations > state.rotations) {
     for (const [lift, d] of Object.entries(pending)) tms[lift] = (tms[lift] ?? 0) + d;
     for (const k of Object.keys(pending)) delete pending[k];
+    Object.assign(pending, pendingNext);
+    pendingNext = {};
   }
   // Once-per-cycle TM bumps (5/3/1) when a pass boundary lands on a cycle boundary.
   if (def.cycle?.tmIncrease && (!def.cycle.finite || def.cycle.tmIncreaseEvery || def.cycle.tmIncreaseAt)) {
@@ -873,7 +889,7 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
   }
   const entry: LogEntry = { workoutId: w.id, date: w.start_time, dayId: day.id, week: plan.week, results };
   const complete = !!def.cycle?.finite && next.rotations >= def.cycle.weeks;
-  return { dayIndex: next.dayIndex, rotations: next.rotations, slots, tms, log: [...state.log, entry], complete, pendingTm: pending };
+  return { dayIndex: next.dayIndex, rotations: next.rotations, slots, tms, log: [...state.log, entry], complete, pendingTm: pending, ...(Object.keys(pendingNext).length ? { pendingTmNext: pendingNext } : {}) };
 }
 
 /** Which program day a Hevy workout was, or -1 if it isn't a program session. */
