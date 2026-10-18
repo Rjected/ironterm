@@ -5,7 +5,7 @@ import { fmt, fmtInt } from "../../shared/units";
 import { Bars, Heatmap, Legend, LineChart, Spark } from "../charts";
 import { bestAt, rollingBest, type Derived } from "../derive";
 import type { Nav } from "../app";
-import { Delta, Panel, Seg, SessionTicket, shortDate, Watch } from "../ui";
+import { Delta, Panel, ReentryNote, Seg, SessionTicket, shortDate, Watch } from "../ui";
 
 const COLORS: Record<string, string> = { squat: "#8cb4ff", bench: "#ffb000", deadlift: "#e8e8e8", ohp: "#5082dc" };
 
@@ -82,6 +82,7 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         sub={d.next ? `${d.def?.name}${d.next.weekName ? " · " + d.next.weekName : ""}` : undefined}
         act={d.next && <button class="btn" onClick={() => nav({ view: "prog" })}><em>F2</em>PROGRAM</button>}
       >
+        {d.reentry && <ReentryNote info={d.reentry} onOpen={(id) => nav({ view: "set", tab: "programs", id })} />}
         {d.next ? <SessionTicket s={d.next} unit={u} /> : (
           <div class="empty">No active program. <button class="btn pri" onClick={() => nav({ view: "set" })}>SET UP GZCLP</button></div>
         )}

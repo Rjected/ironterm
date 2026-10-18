@@ -19,6 +19,8 @@ import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
 import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
+import { BadRequest, liveSession, notesEdit, programConfig, readJson, readObject, settingsPatch, trips as tripsBody, validTz, weighIn } from "./validate";
+import { buildProgram } from "../shared/programs";
 
 export interface Env {
   DB: D1Database;
@@ -92,7 +94,10 @@ const NO_HEVY: Record<Mode, string> = {
 
 async function settings(env: Env, m: Mode): Promise<Settings> {
   const s = await kvGet<Partial<Settings>>(env.DB, k(m, "settings"));
-  return { unit: "lb", tz: env.TIMEZONE ?? "America/New_York", autoPush: true, graphMetric: "volume", ...s };
+  const out: Settings = { unit: "lb", tz: env.TIMEZONE ?? "America/New_York", autoPush: true, graphMetric: "volume", ...s };
+  // A zone the runtime doesn't know would make every date computation throw.
+  if (!validTz(out.tz)) out.tz = validTz(env.TIMEZONE) ? env.TIMEZONE! : "UTC";
+  return out;
 }
 
 function today(tz: string) {
@@ -130,7 +135,8 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   if (path === "/api/whoop/webhook" && method === "POST") {
     const raw = await req.text();
     if (!(await verifyWebhook(env, req, raw))) return json({ error: "bad signature" }, { status: 401 });
-    const ev = JSON.parse(raw) as { id: string; type: string };
+    let ev: { id: string; type: string };
+    try { ev = JSON.parse(raw); } catch { return json({ error: "body must be JSON" }, { status: 400 }); }
     ctx.waitUntil(Promise.resolve(handleWebhookEvent(env, ev)).catch((e) => console.error("whoop webhook", e)));
     return json({ ok: true });
   }
@@ -190,8 +196,8 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ error: "No login configured for this deployment." }, { status: 403 });
   }
   if (path === "/api/login" && method === "POST") {
-    const { password } = await req.json<{ password: string }>();
-    if (!env.APP_PASSWORD || !safeEqual(password ?? "", env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
+    const { password } = await readObject(req, true);
+    if (!env.APP_PASSWORD || typeof password !== "string" || !safeEqual(password, env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
     return json({ ok: true }, { headers: { "set-cookie": await sessionCookie(sessionSecret!) } });
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
@@ -219,7 +225,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   // "Start fresh (no Hevy)": use Ironterm as the log even before any workout exists.
   if (path === "/api/mode" && method === "PUT") {
     if (m === "live") return json({ error: "A Hevy key is set; mode follows Hevy." }, { status: 400 });
-    const { mode: want } = await req.json<{ mode?: string }>().catch(() => ({}) as { mode?: string });
+    const { mode: want } = await readObject(req, true);
     if (want !== "local" && want !== "demo") return json({ error: "mode must be local or demo" }, { status: 400 });
     await kvPut(env.DB, "mode", want === "local" ? "local" : null);
     return json({ mode: await mode(env) });
@@ -266,8 +272,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   const notesM = path.match(/^\/api\/workouts\/([^/]+)\/notes$/);
   if (notesM && method === "PUT") {
     const id = decodeURIComponent(notesM[1]);
-    const edit = await req.json<NotesEdit>();
-    if (typeof edit?.description !== "string" || !Array.isArray(edit.exercises)) return json({ error: "bad request" }, { status: 400 });
+    const edit: NotesEdit = notesEdit(await readJson(req));
     if (m === "local") {
       const w = (await allWorkouts(env.DB)).find((x) => x.id === id);
       if (!w) return json({ error: "workout not found" }, { status: 404 });
@@ -344,8 +349,9 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       return json({ ok: true, program: appProgram(await bootstrap(env, authMode, m)) });
     }
     if (sub === "gym/start" && method === "POST") {
-      const body = await req.json<{ dayIndex?: number; empty?: boolean }>().catch(() => ({}));
-      const s = startSession(b, body);
+      const body = await readObject(req, true);
+      const dayIndex = checkDayIndex(body.dayIndex, b.program);
+      const s = startSession(b, { dayIndex, empty: body.empty === true });
       await kvPut(env.DB, k(m, "live"), s);
       return json(s);
     }
@@ -354,19 +360,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   if (path === "/api/tokens" && method === "GET") return json(await listTokens(env.DB));
   if (path === "/api/tokens" && method === "POST") {
-    const { name } = await req.json<{ name?: string }>().catch(() => ({ name: "" }));
-    return json(await createToken(env.DB, name ?? ""));
+    const { name } = await readObject(req, true);
+    return json(await createToken(env.DB, typeof name === "string" ? name : ""));
   }
   if (path.startsWith("/api/tokens/") && method === "DELETE") return json({ ok: await revokeToken(env.DB, decodeURIComponent(path.slice(12))) });
 
   if (path === "/api/settings" && method === "PUT") {
-    const next = { ...(await settings(env, m)), ...(await req.json<Partial<Settings>>()) };
+    const next = { ...(await settings(env, m)), ...settingsPatch(await readJson(req)) };
     await kvPut(env.DB, k(m, "settings"), next);
     return json(next);
   }
 
   if (path === "/api/program" && method === "PUT") {
-    const cfg = await req.json<ProgramConfig | null>();
+    const cfg = programConfig(await readJson(req, true));
     await kvPut(env.DB, k(m, "program"), cfg);
     return json({ ok: true });
   }
@@ -380,9 +386,10 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   if (path === "/api/routines/push" && method === "POST") {
     if (m !== "live") return json({ error: `${NO_HEVY[m]} push routines.` }, { status: 400 });
-    const { dayIndex } = await req.json<{ dayIndex?: number }>().catch(() => ({}) as { dayIndex?: number });
+    const body = await readObject(req, true);
     const cfg = await program(env, m);
     if (!cfg) return json({ error: "Set up a program first." }, { status: 400 });
+    const dayIndex = checkDayIndex(body.dayIndex, cfg);
     const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex);
     await kvPut(env.DB, "program", r.cfg);
     return json(r);
@@ -390,7 +397,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   // ── gym mode: the in-progress session lives server-side so a phone refresh never loses it
   if (path === "/api/live" && method === "PUT") {
-    await kvPut(env.DB, k(m, "live"), await req.json<LiveSession>());
+    await kvPut(env.DB, k(m, "live"), liveSession(await readJson(req)));
     return json({ ok: true });
   }
   if (path === "/api/live" && method === "DELETE") {
@@ -398,8 +405,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ ok: true });
   }
   if (path === "/api/live/finish" && method === "POST") {
-    const session = await req.json<LiveSession>();
-    if (typeof session?.id !== "string" || !Array.isArray(session.exercises)) return json({ error: "bad request" }, { status: 400 });
+    const session = liveSession(await readJson(req)) as unknown as LiveSession;
     if (m === "demo") {
       // Demo: keep the workout locally so the program advances.
       const w = toStoredWorkout(session, `demo-live-${session.id}`, (ex) => ex.templateId ?? `demo-${ex.lift}`);
@@ -438,18 +444,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   // ── trips
   if (path === "/api/trips" && method === "PUT") {
-    await kvPut(env.DB, k(m, "trips"), await req.json<Trip[]>());
+    await kvPut(env.DB, k(m, "trips"), tripsBody(await readJson(req)) as Trip[]);
     return json({ ok: true });
   }
   if (path === "/api/routines/travel" && method === "POST") {
     if (m !== "live") return json({ error: `${NO_HEVY[m]} push routines.` }, { status: 400 });
-    const { sessions, unit } = await req.json<{ sessions: PlannedSession[]; unit: "lb" | "kg" }>();
-    return json({ pushed: await pushSessions(env.DB, env.HEVY_API_KEY!, sessions, unit) });
+    const { sessions, unit } = await readObject(req);
+    if (!Array.isArray(sessions) || (unit !== "lb" && unit !== "kg")) return json({ error: 'send {sessions: [...], unit: "lb" | "kg"}' }, { status: 400 });
+    return json({ pushed: await pushSessions(env.DB, env.HEVY_API_KEY!, sessions as PlannedSession[], unit) });
   }
 
   // ── manual weigh-ins (Hevy's own log is rarely used)
   if (path === "/api/weighin" && method === "POST") {
-    const w = await req.json<{ date: string; kg: number }>();
+    const w = weighIn(await readJson(req));
     const list = ((await kvGet<{ date: string; kg: number }[]>(env.DB, k(m, "weighins"))) ?? []).filter((x) => x.date !== w.date);
     if (w.kg > 0) list.push({ date: w.date, kg: w.kg });
     await kvPut(env.DB, k(m, "weighins"), list.sort((a, z) => a.date.localeCompare(z.date)));
@@ -482,7 +489,16 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   return json({ error: "not found" }, { status: 404 });
 }
 
-function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
+/** An optional program day index: absent, or a day of the current program. */
+function checkDayIndex(v: unknown, cfg: ProgramConfig | null): number | undefined {
+  if (v == null) return undefined;
+  const days = cfg ? buildProgram(cfg)?.days.length ?? 0 : 0;
+  if (!Number.isInteger(v) || (v as number) < 0 || (v as number) >= days) throw new BadRequest(days ? `dayIndex must be 0 to ${days - 1}` : "no program to pick a day from");
+  return v as number;
+}
+
+function socialCtx(
+req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
   return {
     env, self: socialOrigin(env, new URL(req.url)),
     boot: async () => bootstrap(env, authMode, await mode(env)),
@@ -518,6 +534,7 @@ export default {
       return withSecurityHeaders(await api(req, env, ctx, url.pathname));
     } catch (e) {
       console.error(e);
+      if (e instanceof BadRequest) return json({ error: e.message }, { status: 400 });
       const status = e instanceof HevyError ? 502 : 500;
       return withSecurityHeaders(json({ error: e instanceof Error ? e.message : String(e) }, { status }));
     }

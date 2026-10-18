@@ -154,7 +154,10 @@ struct AppProgram: Codable, Equatable {
         var log: [LogEntry]
         var pushed: Bool
     }
-    struct Reentry: Codable, Equatable { var done: Int; var total: Int }
+    struct Reentry: Codable, Equatable {
+        var done: Int; var total: Int
+        var gapDays: Int?; var headline: String?; var summary: String?
+    }
     struct Slot: Codable, Equatable, Identifiable {
         var slotId: String; var lift: String; var name: String; var tier: String; var scheme: String
         var weight: Double; var stage: Int; var stages: [String]

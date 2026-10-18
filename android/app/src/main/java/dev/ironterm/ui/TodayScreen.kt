@@ -175,7 +175,7 @@ private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit) {
         Mono(listOfNotNull(s.program.name, next.weekName, next.date?.let { Fmt.day(it) }).joinToString(" · ").uppercase(), size = 11.sp, color = T.faint)
         if (next.reentry) {
             Spacer(Modifier.height(6.dp))
-            Mono("Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
+            Mono(next.reentryNote ?: "Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
         }
         Spacer(Modifier.height(10.dp))
         next.exercises.forEachIndexed { i, e ->
