@@ -508,7 +508,7 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
       else seen.push({ label, weeks: new Set(ws) });
     }
     return {
-      day: (sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
+      day: (sameDays && def.days.length > 3 ? "Every session" : sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
       lifts: seen.map((x) => x.label),
     };
   });

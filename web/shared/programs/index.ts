@@ -18,6 +18,8 @@ import { WENDLER_FOREVER_TEMPLATES } from "./wendler-forever";
 import { CLASSIC_TEMPLATES } from "./classic";
 import { PEAKING_CLASSICS } from "./peaking-classics";
 import { HYPERTROPHY_CLASSICS } from "./hypertrophy-classics";
+import { COACH_TEMPLATES } from "./coaches";
+import { BODYWEIGHT_TEMPLATES } from "./bodyweight";
 
 export const TEMPLATES: ProgramTemplate[] = [gzclp, ...gzclFamily, wendler531, wendlerBeginners, wendlerShort, fivesPro, monolith, bbbChallenge, nsuns, nsuns4, nsuns6Squat, nsuns6Deadlift, ...HYPERTROPHY_TEMPLATES, ...NOVICE_TEMPLATES, candito6, clarence14, complete16, calgary8, juggernaut, rtsGeneralized, sbsRtf, sbsRir, sbsHypertrophy, sbsNoviceHypertrophy, ...SHEIKO_TEMPLATES, ...SPECIALIZATION_TEMPLATES, ...LIFTVAULT_TEMPLATES, ...COMEBACK_TEMPLATES,
   // added families, one per line so parallel additions merge cleanly
@@ -25,6 +27,8 @@ export const TEMPLATES: ProgramTemplate[] = [gzclp, ...gzclFamily, wendler531, w
   ...CLASSIC_TEMPLATES,
   ...PEAKING_CLASSICS,
   ...HYPERTROPHY_CLASSICS,
+  ...COACH_TEMPLATES,
+  ...BODYWEIGHT_TEMPLATES,
 ];
 
 export function getTemplate(id: string): ProgramTemplate | undefined {
