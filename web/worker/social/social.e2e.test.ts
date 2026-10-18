@@ -38,6 +38,8 @@ const tokens = {} as Record<Who, string>;
 const offline = new Set<string>();
 /** origin → public key its .well-known should claim instead (a server whose key changed) */
 const keyOverride = new Map<string, string>();
+/** origin → a body its /social/v1/* answers should be replaced with (a broken or hostile server) */
+const tamper = new Map<string, string>();
 const realFetch = globalThis.fetch;
 
 async function route(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -49,6 +51,7 @@ async function route(input: RequestInfo | URL, init?: RequestInit): Promise<Resp
   if (!who) throw new TypeError(`no route to ${origin}`);
   const r = await worker.fetch!(req as never, envs[who] as never, ctx);
   if (keyOverride.has(origin) && new URL(req.url).pathname === "/.well-known/ironterm") return Response.json({ ...(await r.json() as object), publicKey: keyOverride.get(origin) });
+  if (tamper.has(origin) && r.ok && new URL(req.url).pathname.startsWith("/social/v1/") && req.method === "GET") return new Response(tamper.get(origin), { headers: { "content-type": "application/json" } });
   return r;
 }
 
@@ -307,7 +310,34 @@ describe("social end to end", () => {
     }
   });
 
+  it("a friend's server sending junk is an error or a stale copy, never a 500", async () => {
+    const junk = [
+      "not json", "null", "[]", '{"items":"x"}',
+      '{"graph":{"start":"soon","levels":7},"lifts":"many","streak":null,"unit":"stone","share":"admin"}',
+      '{"items":[null,{"id":1},{"id":"x","at":"never","kind":"session"},{"id":"y","at":"2026-01-01T00:00:00Z","kind":"pr","lift":{"$gt":1}}],"next":{}}',
+    ];
+    try {
+      for (const body of junk) {
+        tamper.set(ORIGINS.B, body);
+        for (const p of ["/api/social/feed?fresh=1", `/api/social/friends/${bId}/feed?fresh=1`, `/api/social/friends/${bId}/profile?fresh=1`, `/api/social/compare/${bId}?fresh=1`]) {
+          const r = await call("A", "GET", p);
+          expect(r.status, `${p} with ${body}`).not.toBe(500);
+          if (r.status !== 200) expect(r.status, `${p} with ${body}`).toBe(502);
+        }
+      }
+      // with nothing cached, a profile that isn't one is a clear 502 rather than garbage
+      tamper.set(ORIGINS.B, "[]");
+      await envs.A.DB.prepare("DELETE FROM kv WHERE key LIKE ?").bind("social:cache:%").run();
+      const r = await call("A", "GET", `/api/social/friends/${bId}/profile?fresh=1`);
+      expect(r.status).toBe(502);
+      expect(r.data.error).toMatch(/can.t read/);
+    } finally {
+      tamper.delete(ORIGINS.B);
+    }
+  });
+
   it("C requests A; A rejects; C's request disappears on both sides", async () => {
+
     // add by server URL, no directory
     const r = await call<{ friend: Friend }>("C", "POST", "/api/social/friends", { server: "a.test" });
     expect(r.status).toBe(200);
