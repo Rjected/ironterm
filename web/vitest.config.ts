@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
 // loaded machine. A timeout here means "hung", not "slow".
 export default defineConfig({
   test: {
-    include: ["shared/**/*.test.ts", "worker/**/*.test.ts", "directory/**/*.test.ts", "server/**/*.test.ts"],
+    include: ["shared/**/*.test.ts", "worker/**/*.test.ts", "directory/**/*.test.ts", "server/**/*.test.ts", "cli/**/*.test.ts"],
     testTimeout: 60_000,
     hookTimeout: 120_000,
   },

@@ -194,7 +194,8 @@ private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSet
             TButton("Start empty workout", modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !data.starting) { actions.gymStart(null, empty = true) }
             Spacer(Modifier.height(12.dp))
             Mono(
-                "Every set is saved on this phone as you go and synced to ${if (state.mode == SourceMode.DIRECT) "Hevy when you finish" else "your server"}, so closing the app, losing signal or the app being killed won't lose anything. Logging in Hevy instead works too: it syncs in either way.",
+                "Every set is saved on this phone as you go and synced to ${if (state.mode == SourceMode.DIRECT) "Hevy when you finish" else "your server"}, so closing the app, losing signal or the app being killed won't lose anything." +
+                    if (state.snapshot?.isLocal == true) " Finished workouts are stored on your server: no Hevy needed." else " Logging in Hevy instead works too: it syncs in either way.",
                 size = 10.sp, color = T.faint,
             )
         }
@@ -335,12 +336,13 @@ private fun LiveScreen(s: LiveSession, state: UiState, data: DataUi, gym: GymUi,
                     "Only completed sets are saved" + when {
                         state.mode == SourceMode.DIRECT -> ", straight to Hevy."
                         state.snapshot?.demo == true -> " (demo server)."
+                        state.snapshot?.isLocal == true -> " on your server (no Hevy connected); the program advances."
                         else -> " to Hevy through your server; the program advances."
                     } + if (prog.done < prog.total) " ${prog.total - prog.done} work sets aren't done." else "",
                     size = 11.sp, color = T.dim,
                 )
                 Spacer(Modifier.height(16.dp))
-                BigButton(if (state.mode == SourceMode.DIRECT || state.snapshot?.demo != true) "SAVE TO HEVY" else "SAVE", enabled = prog.done > 0 || s.exercises.any { e -> e.sets.any { it.done } }) {
+                BigButton(if (state.mode == SourceMode.DIRECT || (state.snapshot?.demo != true && state.snapshot?.isLocal != true)) "SAVE TO HEVY" else "SAVE", enabled = prog.done > 0 || s.exercises.any { e -> e.sets.any { it.done } }) {
                     sheet = GymSheet.NONE; actions.gymFinish()
                 }
                 Spacer(Modifier.height(10.dp))
@@ -515,7 +517,7 @@ private fun ExerciseCard(
             if (noteOpen) {
                 Spacer(Modifier.height(8.dp))
                 var note by remember(ex.id) { mutableStateOf(ex.userNote.orEmpty()) }
-                SearchField(note, { note = it.take(2000); actions.gym { x -> Live.setUserNote(x, ex.id, note) } }, "note for this exercise (saved to Hevy)", Modifier.fillMaxWidth(), singleLine = false)
+                SearchField(note, { note = it.take(2000); actions.gym { x -> Live.setUserNote(x, ex.id, note) } }, "note for this exercise (saved with the workout)", Modifier.fillMaxWidth(), singleLine = false)
             }
         }
     }
@@ -757,9 +759,10 @@ private fun FinishSummaryScreen(sum: FinishSummary, gym: GymUi, actions: AppActi
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         val (title, color, body) = when (sum.state) {
             FinishState.SAVED -> Triple(
-                if (sum.demo) "SAVED (DEMO)" else "SAVED TO HEVY", T.up,
+                if (sum.demo) "SAVED (DEMO)" else if (sum.local) "SAVED" else "SAVED TO HEVY", T.up,
                 when {
                     sum.demo -> "Demo server: kept on the server, not sent to Hevy." + if (sum.program) " The program has advanced." else ""
+                    sum.local -> "Stored on your server (no Hevy connected)." + if (sum.program) " The program has advanced." else ""
                     sum.program -> "In Hevy, and the program has advanced."
                     else -> "Your workout is in Hevy."
                 },

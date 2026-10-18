@@ -6,7 +6,7 @@ import type { LiveSession } from "../shared/live";
 import type { WhoopData } from "../shared/whoop";
 import type { Trip } from "../shared/travel";
 import type { PlannedSession } from "../shared/program";
-import type { AppProgram, AppProgramList, ProgramDetail, StartBody } from "../shared/appapi";
+import type { AppProgram, AppProgramList, ProgramBody, ProgramDetail, StartBody } from "../shared/appapi";
 import type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author } from "../worker/social/types";
 
 export type { Settings };
@@ -83,9 +83,12 @@ export const api = {
   programs: () => call<AppProgramList>("/api/app/programs"),
   programDetail: (id: string, opts: Record<string, string> = {}) =>
     call<ProgramDetail>(`/api/app/programs/${encodeURIComponent(id)}${Object.keys(opts).length ? "?" + Object.entries(opts).map(([k, v]) => `opt.${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&") : ""}`),
+  /** the web draws the figure itself, so it skips the SVGs (svg=0) */
+  programBody: (id: string, opts: Record<string, string> = {}, days: number[] | null = null) =>
+    call<ProgramBody>(`/api/app/programs/${encodeURIComponent(id)}/body?svg=0${days?.length ? `&days=${days.join(",")}` : ""}${Object.entries(opts).map(([k, v]) => `&opt.${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("")}`),
   startProgram: (id: string, body: StartBody) => call<{ ok: true; program: AppProgram }>(`/api/app/programs/${encodeURIComponent(id)}/start`, { method: "POST", body: JSON.stringify(body) }),
 };
-export type { ProgramDetail };
+export type { ProgramBody, ProgramDetail };
 
 // ── social (docs/social/PROTOCOL.md §6) ──
 export type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author };

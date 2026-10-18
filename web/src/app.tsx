@@ -227,11 +227,11 @@ export function App() {
         )}
         <div class="side-sec">
           <h4>e1RM · {d.unit}</h4>
-          {d.liftKeys.slice(0, 6).map((l) => {
-            const pts = d.lifts[l];
+          {d.liftKeys.filter((l) => (d.e1rmNow(l) ?? 0) > 0).slice(0, 6).map((l) => {
             return (
               <div class="kv" style={{ cursor: "pointer" }} onClick={() => nav({ view: "lifts", lift: l })}>
-                <span>{LIFTS[l]?.short}</span><span class="hi">{fmt(pts[pts.length - 1].e1rm, 0)}</span>
+                <span>{LIFTS[l]?.short}</span><span class="hi">{fmt(d.e1rmNow(l) ?? 0, 0)}</span>
+
               </div>
             );
           })}
