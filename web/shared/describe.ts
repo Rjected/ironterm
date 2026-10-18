@@ -461,8 +461,11 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
   // ── overview
   const scheduled = def.days.some((d) => d.weeks);
   const n = def.sessionsPerWeek, nd = def.days.length;
+  const ids = (d: ProgramDef["days"][number]) => d.slots.map((x) => x.id).join(",");
+  const sameDays = !scheduled && def.days.every((d) => ids(d) === ids(def.days[0]));
   overview.push(
     scheduled ? `${plural(n, "session")} a week · different sessions each week`
+      : sameDays ? `${plural(n, "session")} a week · the same workout every session`
       : nd === n ? `${plural(n, "session")} a week · ${word(nd)} different days`
       : nd < n ? `${plural(n, "session")} a week · ${word(nd)} days that alternate, so the order shifts week to week`
       : `${plural(n, "session")} a week · ${word(nd)} days in rotation, so each week picks up where the last left off`,
@@ -489,7 +492,7 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
 
   // ── rotation
   const many = scheduled && def.days.length > 8;
-  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : def.days;
+  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : sameDays ? def.days.slice(0, 1) : def.days;
   // Slots that take turns (one per phase, never in the same week) show once: "MAIN SQUAT", not four times.
   const nWeeks = c?.weeks ?? 1;
   const activeWeeks = (s: SlotDef) => {
@@ -505,7 +508,7 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
       else seen.push({ label, weeks: new Set(ws) });
     }
     return {
-      day: d.name + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
+      day: (sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
       lifts: seen.map((x) => x.label),
     };
   });
