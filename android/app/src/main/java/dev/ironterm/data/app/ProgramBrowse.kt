@@ -125,6 +125,47 @@ object ProgramBrowse {
         return "$n days picked · ${d.name} is written for ${days(d.daysPerWeek)} a week."
     }
 
+    // ── BODY tab ──
+
+    /** Cache / map key for a body document. */
+    fun bodyKey(id: String, opts: Map<String, String>, mode: String): String = detailKey(id, opts) + "#" + mode
+
+    /** Range bars run 0 → this many hard sets a week (as on the web). */
+    const val RANGE_SCALE = 30.0
+    val GROUPS = listOf("chest" to "CHEST", "shoulders" to "SHOULDERS", "arms" to "ARMS", "back" to "BACK", "core" to "CORE", "hips" to "HIPS", "legs" to "LEGS")
+
+    /** A range bar as fractions of [RANGE_SCALE]: the hard sets, and the target band (null = no target). */
+    data class RangeBar(val fill: Float, val lo: Float?, val hi: Float?)
+
+    fun rangeBar(m: ProgramBodyMuscle): RangeBar {
+        val f = { x: Double -> (x / RANGE_SCALE).coerceIn(0.0, 1.0).toFloat() }
+        val t = m.target?.takeIf { it.size == 2 }
+        return RangeBar(f(m.hardSets), t?.let { f(it[0]) }, t?.let { f(it[1]) })
+    }
+
+    /** "BELOW" · "IN RANGE" · "ABOVE" · "NONE" · "INDIRECT" */
+    fun bodyStatus(status: String): String = when (status) {
+        "low" -> "BELOW"
+        "ok" -> "IN RANGE"
+        "high" -> "ABOVE"
+        "n/a" -> "INDIRECT"
+        else -> "NONE"
+    }
+
+    /** Muscles worth listing (a target range, or trained at all), by body group, most hard sets first. */
+    fun bodyGroups(b: ProgramBody): List<Pair<String, List<ProgramBodyMuscle>>> =
+        GROUPS.mapNotNull { (g, label) ->
+            val rows = b.muscles.filter { it.group == g && (it.target != null || it.sets >= 0.5) }.sortedByDescending { it.hardSets }
+            if (rows.isEmpty()) null else label to rows
+        }
+
+    /** Overlaps of 1-based [week]. */
+    fun overlapsIn(b: ProgramBody, week: Int): List<ProgramBodyOverlap> = b.overlaps.filter { it.week == week }
+
+    /** "MON A1 → TUE B1 · SQUAT → DEADLIFT+OHP · 24h" */
+    fun overlapLine(o: ProgramBodyOverlap): String =
+        "${o.from} → ${o.to} · ${o.prev.take(2).joinToString("+")} → ${o.now.take(2).joinToString("+")} · ${o.gapH.toInt()}h"
+
     /** "5×95 · 5×110 · 5+×125" when the sets differ, else null (the scheme says it all). */
     fun setsLine(e: PlanExercise): String? {
         if (e.sets.size < 2 || e.sets.map { it.weight }.distinct().size < 2) return null

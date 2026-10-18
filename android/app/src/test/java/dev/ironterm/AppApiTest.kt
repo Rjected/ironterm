@@ -166,6 +166,22 @@ class AppModelsTest {
         assertEquals("10 reps → 525", p.slots[0].ifSuccess)
         assertEquals("miss → retest 5RM", p.slots[0].ifFail)
         assertNull(AppJson.json.decodeFromString(AppProgram.serializer(), """{"program":null}""").program)
+        assertNull(p.reentry)
+    }
+
+    @Test fun programReentryExplainsItself() {
+        val r = AppJson.json.decodeFromString(
+            dev.ironterm.data.app.Reentry.serializer(),
+            """{"done":1,"total":6,"gapDays":40,"headline":"Session 2 of 6 back after 40 days off","summary":"Squat ramps slower.",
+               "lifts":[{"short":"SQUAT","name":"Back Squat","load":0.85,"volume":0.5,"slower":true,"back":false}],
+               "suggest":[{"templateId":"comeback-squat","name":"Squat Comeback","weeks":"3"}]}""",
+        )
+        assertEquals(40, r.gapDays)
+        assertEquals("Squat ramps slower.", r.summary)
+        assertEquals("comeback-squat", r.suggest.single().templateId)
+        val old = AppJson.json.decodeFromString(dev.ironterm.data.app.Reentry.serializer(), """{"done":0,"total":3}""")
+        assertNull(old.summary)
+        assertTrue(old.suggest.isEmpty())
     }
 
     @Test fun body() {
