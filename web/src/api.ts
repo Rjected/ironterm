@@ -86,6 +86,8 @@ export const api = {
   /** the web draws the figure itself, so it skips the SVGs (svg=0) */
   programBody: (id: string, opts: Record<string, string> = {}, days: number[] | null = null) =>
     call<ProgramBody>(`/api/app/programs/${encodeURIComponent(id)}/body?svg=0${days?.length ? `&days=${days.join(",")}` : ""}${Object.entries(opts).map(([k, v]) => `&opt.${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("")}`),
+  /** do `to` instead of `lift` everywhere the program has it (null undoes the swap) */
+  swapLift: (lift: string, to: string | null) => call<{ ok: true; program: AppProgram }>("/api/app/program/swap", { method: "POST", body: JSON.stringify({ lift, to }) }),
   startProgram: (id: string, body: StartBody) => call<{ ok: true; program: AppProgram }>(`/api/app/programs/${encodeURIComponent(id)}/start`, { method: "POST", body: JSON.stringify(body) }),
 };
 export type { ProgramBody, ProgramDetail };

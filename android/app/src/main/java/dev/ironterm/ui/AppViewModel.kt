@@ -518,6 +518,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     override fun clearStartError() = setData { copy(startError = null) }
 
+    override fun swapLift(lift: String, to: String?) {
+        val api = repo.api() ?: run { setData { copy(toast = "Swapping exercises needs the server.") }; return }
+        viewModelScope.launch {
+            try {
+                val r = api.swapLift(lift, to)
+                // gym, home and program details all plan from the program, so they're stale
+                appCache.invalidateAfterWorkout()
+                appCache.write("program", AppProgram.serializer(), r.program)
+                val sw = r.program.program?.swaps?.firstOrNull { it.lift == lift }
+                setData {
+                    copy(
+                        program = Load.of(r.program, System.currentTimeMillis()), programDetail = emptyMap(), programBody = emptyMap(),
+                        toast = if (sw?.to != null) "${sw.name} → ${sw.to.name}" else "${sw?.name ?: "Exercise"} is back as written",
+                    )
+                }
+                load(Screens.GYM, force = true)
+                load(Screens.HOME, force = true)
+            } catch (e: Exception) {
+                setData { copy(toast = "Couldn't swap: ${friendly(e)}") }
+                if (e.isAuth()) reload { copy(status = status.copy(authError = true, lastError = friendly(e), lastAttemptAt = System.currentTimeMillis())) }
+            }
+        }
+    }
+
     override fun toastShown() = setData { copy(toast = null) }
 
     // ═════════════════════════════ social ═════════════════════════════

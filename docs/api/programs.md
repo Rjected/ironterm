@@ -140,3 +140,31 @@ given, is saved to settings. Works in live, local and demo modes (demo keeps its
 
 Replaces the active program (the UI confirms first). Past workouts are kept; the new program replays
 from `startDate` (default today).
+
+## `POST /api/app/program/swap`
+
+Do a different exercise wherever the running program has one ("push-ups instead of dips"). A swap is
+per exercise, not per slot, so it applies to every day the exercise appears on. It's stored in the
+program config (`swaps: { [originalLift]: replacementLift }`) and applied when the program is built,
+so replay, planning, GYM, Hevy routines and the BODY view all use it. The swapped slots' saved start
+weights are dropped, so the new exercise starts from your own history (e1RM) or the template default.
+
+```ts
+// body
+{ lift: string;            // one of the program's own exercises (a key from program.swaps[].lift)
+  to: string | null }      // any lift key, or null to go back to the program as written
+// → { ok: true; program: AppProgram }
+// errors: 400 {error} (no active program, lift not in the program, unknown or same `to`)
+```
+
+`GET /api/app/program` lists the choices in `program.swaps`:
+
+```ts
+{ lift: string; name: string;
+  to: null | { lift: string; name: string };             // the current swap
+  options: { lift: string; name: string; score: number }[] }[]   // most alike first, score 0–1
+```
+
+`score` comes from the overlap of the muscles each exercise trains (the profiles the BODY view
+uses), nudged by same equipment and a similar fatigue cost, so a face pull lists rear-delt flys and
+band pull-aparts first and a dip lists push-ups first.

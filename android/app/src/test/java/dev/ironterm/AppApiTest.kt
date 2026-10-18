@@ -155,6 +155,20 @@ class AppModelsTest {
         assertEquals(java.time.DayOfWeek.MONDAY, java.time.LocalDate.parse(c.days[0].date).dayOfWeek)
     }
 
+    @Test fun programSwaps() {
+        // the fixtures predate swaps: an older server's document still parses, with none
+        assertTrue(Fixtures.program.program!!.swaps.isEmpty())
+        val doc = AppJson.json.decodeFromString(AppProgram.serializer(), """{"program":{"name":"Building the Monolith","templateId":"531-monolith","swaps":[
+            {"lift":"facePull","name":"Face Pull","to":{"lift":"rearDeltFly","name":"Rear Delt Fly"},"options":[{"lift":"rearDeltFly","name":"Rear Delt Fly","score":0.998},{"lift":"bandPullApart","name":"Band Pull-Apart","score":0.971}]},
+            {"lift":"dip","name":"Dip","to":null,"options":[{"lift":"pushUp","name":"Push Up","score":1}],"future":"ignored"}]}}""")
+        val sw = doc.program!!.swaps
+        assertEquals(listOf("facePull", "dip"), sw.map { it.lift })
+        assertEquals("rearDeltFly", sw[0].to?.lift)
+        assertEquals("bandPullApart", sw[0].options[1].lift)
+        assertEquals(null, sw[1].to)
+        assertEquals(1.0, sw[1].options[0].score, 0.0)
+    }
+
     @Test fun program() {
         val p = Fixtures.program.program!!
         assertEquals("gzclp", p.templateId)

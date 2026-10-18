@@ -20,6 +20,7 @@ import { PEAKING_CLASSICS } from "./peaking-classics";
 import { HYPERTROPHY_CLASSICS } from "./hypertrophy-classics";
 import { COACH_TEMPLATES } from "./coaches";
 import { BODYWEIGHT_TEMPLATES } from "./bodyweight";
+import { applySwaps } from "../swaps";
 
 export const TEMPLATES: ProgramTemplate[] = [gzclp, ...gzclFamily, wendler531, wendlerBeginners, wendlerShort, fivesPro, monolith, bbbChallenge, nsuns, nsuns4, nsuns6Squat, nsuns6Deadlift, ...HYPERTROPHY_TEMPLATES, ...NOVICE_TEMPLATES, candito6, clarence14, complete16, calgary8, juggernaut, rtsGeneralized, sbsRtf, sbsRir, sbsHypertrophy, sbsNoviceHypertrophy, ...SHEIKO_TEMPLATES, ...SPECIALIZATION_TEMPLATES, ...LIFTVAULT_TEMPLATES, ...COMEBACK_TEMPLATES,
   // added families, one per line so parallel additions merge cleanly
@@ -36,7 +37,8 @@ export function getTemplate(id: string): ProgramTemplate | undefined {
 }
 
 export function buildProgram(cfg: ProgramConfig): ProgramDef | null {
-  return getTemplate(cfg.templateId)?.build(cfg.options) ?? null;
+  const def = getTemplate(cfg.templateId)?.build(cfg.options);
+  return def ? applySwaps(def, cfg.swaps) : null;
 }
 
 /** A fresh config for a template, prefilled with its defaults. */

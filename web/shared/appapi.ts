@@ -44,6 +44,9 @@ import { addDays, durationMin, localDate, repPRs, weekStart, workingSets, workou
 import { onTrip } from "./travel";
 import { fromKg, loadStep, roundTo, toKg, type Unit } from "./units";
 import { renderBodySvg } from "./anatomy-svg";
+import { programLifts } from "./swaps";
+import { programSwaps, type ProgramSwap } from "./swap-list";
+export { programSwaps, type ProgramSwap };
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
 const r2 = (x: number) => Math.round(x * 100) / 100;
@@ -325,7 +328,30 @@ export interface AppProgram {
     /** most recent program decisions, newest first */
     log: { date: string; dayId: string; results: { lift: string; tier: string; scheme: string; weight: number; outcome: Outcome; note: string }[] }[];
     pushed: boolean;
+    /** every exercise the program prescribes, what it's swapped to (if anything), and the
+     *  replacements most like it (POST /api/app/program/swap) */
+    swaps: ProgramSwap[];
   };
+}
+
+/**
+ * Swap one of the program's exercises for another everywhere it appears (`to: null` undoes it).
+ * The swapped slots' saved start weights are dropped so the new exercise starts from your own
+ * history (or the program's default) instead of the old exercise's weight.
+ */
+export function swapLift(b: Bootstrap, body: unknown): { cfg: ProgramConfig } | { error: string; status: number } {
+  const cfg = b.program;
+  if (!cfg) return { error: "no active program", status: 400 };
+  if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "body must be {lift, to}", status: 400 };
+  const { lift, to } = body as { lift?: unknown; to?: unknown };
+  const base = getTemplate(cfg.templateId)?.build(cfg.options);
+  if (!base || typeof lift !== "string" || !programLifts(base).includes(lift)) return { error: "lift must be one of the program's exercises", status: 400 };
+  if (to !== null && (typeof to !== "string" || !LIFTS[to] || to === lift)) return { error: "to must be another exercise (or null to undo the swap)", status: 400 };
+  const swaps = { ...(cfg.swaps ?? {}) };
+  if (to === null) delete swaps[lift]; else swaps[lift] = to;
+  const startWeights = { ...cfg.startWeights };
+  for (const d of base.days) for (const sl of d.slots) if (sl.lift === lift) delete startWeights[sl.id];
+  return { cfg: { ...cfg, swaps, startWeights } };
 }
 
 export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppProgram {
@@ -374,6 +400,7 @@ export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppP
       slots, upcoming: upcomingOut,
       log: [...st.log].reverse().slice(0, 20).map((e) => ({ date: e.date, dayId: e.dayId, results: e.results.map((r) => ({ lift: r.lift, tier: r.tier, scheme: r.scheme, weight: r.weight, outcome: r.outcome, note: r.note })) })),
       pushed: !!cfg.routineDays && Object.keys(cfg.routineDays).length > 0,
+      swaps: programSwaps(cfg),
     },
   };
 }

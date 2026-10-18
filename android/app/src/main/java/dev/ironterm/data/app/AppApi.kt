@@ -79,6 +79,9 @@ class AppApi(
     }
     suspend fun startProgram(id: String, body: ProgramStartBody): ProgramStartResult =
         call("POST", "/api/app/programs/${enc(id)}/start", AppJson.json.encodeToString(ProgramStartBody.serializer(), body), ProgramStartResult.serializer())!!
+    /** Do [to] instead of [lift] everywhere the program has it; null undoes the swap. */
+    suspend fun swapLift(lift: String, to: String?): ProgramStartResult =
+        call("POST", "/api/app/program/swap", AppJson.json.encodeToString(SwapBody.serializer(), SwapBody(lift, to)), ProgramStartResult.serializer())!!
     suspend fun body(mode: String) = get("/api/app/body?mode=${enc(mode)}", AppBody.serializer())
     suspend fun insights() = get("/api/app/insights", AppInsights.serializer())
     suspend fun stats() = get("/api/app/stats", AppStats.serializer())

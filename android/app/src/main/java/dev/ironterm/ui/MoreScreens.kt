@@ -4,6 +4,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.ui.semantics.selected
+import kotlin.math.roundToInt
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -191,7 +194,8 @@ private fun DaySheet(d: CalDay, onGo: (Route) -> Unit) {
 @Composable
 fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}, onOpenProgram: (String) -> Unit = {}) {
     LaunchedEffect(state.mode) { actions.load(Screens.PROGRAM) }
-    Pushed("Program", onBack) {
+    var swapping by remember { mutableStateOf<dev.ironterm.data.app.ProgramSwap?>(null) }
+    Pushed("Program", onBack) { Box(Modifier.fillMaxSize()) {
         Loaded(data.program, "Program", onRetry = { actions.load(Screens.PROGRAM, true) }, onSetup = onSetup,
             needsServerText = "Programs (GZCLP, 5/3/1, nSuns…) run on your server's program engine. Direct mode logs free workouts only.") { doc ->
             val p = doc.program
@@ -268,6 +272,22 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                         }
                     }
                 }
+                if (p.swaps.isNotEmpty()) {
+                    Section("Swap exercises", right = "TAP TO CHANGE") {
+                        Mono("Do something else wherever the program has an exercise. The closest matches are listed first.", size = 10.sp, color = T.faint)
+                        p.swaps.forEachIndexed { i, sw ->
+                            if (i > 0) Line()
+                            Row(
+                                Modifier.fillMaxWidth().clickable { swapping = sw }.padding(vertical = 10.dp).semantics(mergeDescendants = true) {},
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Mono(sw.name.uppercase(), Modifier.weight(1f), size = 12.sp, bold = true, maxLines = 1)
+                                Mono(sw.to?.let { "→ ${it.name.uppercase()}" } ?: "AS WRITTEN", size = 11.sp, color = if (sw.to != null) T.amber else T.faint, bold = sw.to != null, maxLines = 1)
+                                Mono("  ›", size = 12.sp, color = T.faint)
+                            }
+                        }
+                    }
+                }
                 if (p.upcoming.isNotEmpty()) {
                     Section("Upcoming") {
                         p.upcoming.forEachIndexed { i, u ->
@@ -302,6 +322,32 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                 }
             }
         }
+        Sheet(swapping != null, { swapping = null }) {
+            swapping?.let { sw -> SwapSheet(sw, onPick = { to -> actions.swapLift(sw.lift, to); swapping = null }) }
+        }
+    } }
+}
+
+@Composable
+private fun ColumnScope.SwapSheet(sw: dev.ironterm.data.app.ProgramSwap, onPick: (String?) -> Unit) {
+    Mono("SWAP ${sw.name.uppercase()}", size = 14.sp, color = T.amber, bold = true)
+    Spacer(Modifier.height(4.dp))
+    Mono("Everywhere the program has ${sw.name}. The new exercise starts from your own history, or a sensible default.", size = 10.sp, color = T.faint)
+    Spacer(Modifier.height(10.dp))
+    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+        SwapChoice(sw.name + " (as written)", null, sw.to == null) { onPick(null) }
+        sw.options.forEach { o -> Line(); SwapChoice(o.name, "${(o.score * 100).roundToInt()}% alike", sw.to?.lift == o.lift) { onPick(o.lift) } }
+        sw.to?.takeIf { t -> sw.options.none { it.lift == t.lift } }?.let { t -> Line(); SwapChoice(t.name, null, true) {} }
+    }
+}
+
+@Composable
+private fun SwapChoice(name: String, detail: String?, selected: Boolean, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp).semantics(mergeDescendants = true) { this.selected = selected }, verticalAlignment = Alignment.CenterVertically) {
+        Mono(if (selected) "●" else "○", size = 12.sp, color = if (selected) T.amber else T.faint)
+        Spacer(Modifier.width(10.dp))
+        Mono(name.uppercase(), Modifier.weight(1f), size = 12.sp, bold = selected, color = if (selected) T.amber else T.text, maxLines = 1)
+        detail?.let { Mono(it, size = 10.sp, color = T.dim) }
     }
 }
 

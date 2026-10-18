@@ -2,7 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, csrfBlock, OWNER, passwordMatches, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, swapLift, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken, tokenExists } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, safePath, type GoogleConfig } from "./google";
@@ -356,6 +356,12 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       // same as PUT /api/program (+ the training days, if given)
       await kvPut(env.DB, k(m, "program"), r.cfg);
       if (r.trainingDays) await kvPut(env.DB, k(m, "settings"), { ...(await settings(env, m)), trainingDays: r.trainingDays });
+      return json({ ok: true, program: appProgram(await bootstrap(env, authMode, m)) });
+    }
+    if (sub === "program/swap" && method === "POST") {
+      const r = swapLift(b, await readJson(req, true));
+      if ("error" in r) return json({ error: r.error }, { status: r.status });
+      await kvPut(env.DB, k(m, "program"), r.cfg);
       return json({ ok: true, program: appProgram(await bootstrap(env, authMode, m)) });
     }
     if (sub === "gym/start" && method === "POST") {
