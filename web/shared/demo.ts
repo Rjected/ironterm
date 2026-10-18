@@ -19,6 +19,7 @@ export function demoData(today: string): { workouts: HevyWorkout[]; config: Prog
   const r = rng(11);
   const start = addDays(weekStart(today), -7 * 51);
   const cfg = defaultConfig("gzclp", "lb", start + "T00:00:00Z");
+  cfg.options.curls = "on"; // the demo lifter does the optional curls
   for (const k of Object.keys(cfg.startWeights)) cfg.startWeights[k] = roundTo(cfg.startWeights[k] * 0.72, 5);
   const def = buildProgram(cfg)!;
   let state = initialState(def, cfg);
