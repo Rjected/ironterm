@@ -7,7 +7,7 @@ import { addDays, localDate } from "../../shared/stats";
 import type { Bootstrap } from "../api";
 import type { Nav } from "../app";
 import type { Derived } from "../derive";
-import { OutcomeTag, Panel, Seg, SessionTicket, shortDate } from "../ui";
+import { OutcomeTag, Panel, ReentryNote, Seg, SessionTicket, shortDate } from "../ui";
 import { onTrip, returnStats, travelDays, travelSessions, type GymAccess, type Trip } from "../../shared/travel";
 import { api } from "../api";
 
@@ -115,11 +115,9 @@ export function Calendar(props: { b: Bootstrap; d: Derived; nav: Nav; onSettings
         {d.def?.cycle?.finite && plan.length > 0 && <div class="note">At this schedule, {d.def.name} finishes around {shortDate(plan[plan.length - 1].date)}.</div>}
       </Panel>
 
-      {d.state?.reentry && (
+      {d.reentry && (
         <section class="pn span-12" style={{ paddingBlock: "8px" }}>
-          <div class="warnbox" style={{ borderColor: "var(--amber)", color: "var(--amber)" }}>
-            Coming back from {d.state.reentry.gapDays} days off: your next {d.state.reentry.total - d.state.reentry.done} session{d.state.reentry.total - d.state.reentry.done > 1 ? "s are" : " is"} a lighter ramp (mostly less volume). They can't count against your progression.
-          </div>
+          <ReentryNote info={d.reentry} onOpen={(id) => props.nav({ view: "set", tab: "programs", id })} />
         </section>
       )}
 

@@ -195,6 +195,13 @@ function percentWeeks(def: ProgramDef, slots: SlotDef[], wr: Writer): string {
     : "";
   const distinct = [...new Set(filled.map((r) => r.text))];
   if (distinct.length <= 1) {
+    // only some weeks, and not just "all but the deloads": name the weeks it's in (a 7th week, a phase)
+    if (empty.length && !empty.every((r) => isDeload(def, r.w))) {
+      const ws = filled.map((r) => r.w);
+      const named = ws.length === 1 ? weekLabel(def, ws[0]) : "";
+      const label = named && !/^week\s*\d/i.test(named) ? `${named} (week ${ws[0] + 1})` : cap(weekList(ws));
+      return `${label}: ${distinct[0] ?? ""}.`;
+    }
     const every = weeks.length === def.cycle!.weeks ? "Every week" : cap(weekList(filled.map((r) => r.w)));
     return `${every}: ${distinct[0] ?? ""}.${skipped}`;
   }
@@ -454,14 +461,17 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
   // ── overview
   const scheduled = def.days.some((d) => d.weeks);
   const n = def.sessionsPerWeek, nd = def.days.length;
+  const ids = (d: ProgramDef["days"][number]) => d.slots.map((x) => x.id).join(",");
+  const sameDays = !scheduled && def.days.every((d) => ids(d) === ids(def.days[0]));
   overview.push(
     scheduled ? `${plural(n, "session")} a week · different sessions each week`
+      : sameDays ? `${plural(n, "session")} a week · the same workout every session`
       : nd === n ? `${plural(n, "session")} a week · ${word(nd)} different days`
       : nd < n ? `${plural(n, "session")} a week · ${word(nd)} days that alternate, so the order shifts week to week`
       : `${plural(n, "session")} a week · ${word(nd)} days in rotation, so each week picks up where the last left off`,
   );
   const c = def.cycle;
-  if (c?.finite) overview.push(`A ${c.weeks}-week block that ends after week ${c.weeks}.`);
+  if (c?.finite) overview.push(`${/^8/.test(String(c.weeks)) || c.weeks === 11 || c.weeks === 18 ? "An" : "A"} ${c.weeks}-week block that ends after week ${c.weeks}.`);
   else if (c && c.weeks > 1) {
     const names = c.weekNames?.slice(0, c.weeks);
     overview.push(`Repeats in ${c.weeks}-week cycles${names?.length === c.weeks ? `: ${list(names)}` : ""}.`);
@@ -482,11 +492,26 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
 
   // ── rotation
   const many = scheduled && def.days.length > 8;
-  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : def.days;
-  const rotation = days.map((d) => ({
-    day: d.name + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
-    lifts: d.slots.map((s) => `${s.tier} ${short(s.lift)}`),
-  }));
+  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : sameDays ? def.days.slice(0, 1) : def.days;
+  // Slots that take turns (one per phase, never in the same week) show once: "MAIN SQUAT", not four times.
+  const nWeeks = c?.weeks ?? 1;
+  const activeWeeks = (s: SlotDef) => {
+    const p = s.progression;
+    return Array.from({ length: nWeeks }, (_, w) => w).filter((w) => p.kind !== "percent" || (p.weeks[w % p.weeks.length] ?? []).length > 0);
+  };
+  const rotation = days.map((d) => {
+    const seen: { label: string; weeks: Set<number> }[] = [];
+    for (const s of d.slots) {
+      const label = `${s.tier} ${short(s.lift)}`, ws = activeWeeks(s);
+      const twin = seen.find((x) => x.label === label && ws.every((w) => !x.weeks.has(w)));
+      if (twin) ws.forEach((w) => twin.weeks.add(w));
+      else seen.push({ label, weeks: new Set(ws) });
+    }
+    return {
+      day: (sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
+      lifts: seen.map((x) => x.label),
+    };
+  });
   if (many) overview.push(`Week 1's days are shown below; the ${plural(def.days.length, "session")} change week to week (see WORKOUTS).`);
 
   // ── tiers

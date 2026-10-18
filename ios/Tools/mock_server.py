@@ -61,7 +61,9 @@ class H(BaseHTTPRequestHandler):
         if path.startswith("/api/app/"):
             if not self.bearer_ok():
                 return self.unauthorized()
-            doc = app_doc(path)
+            # ?mode=gaps → <name>-gaps.json first (programs/gzclp/body?mode=gaps → programs-gzclp-body-gaps.json)
+            mode = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("mode", [""])[0]
+            doc = (app_doc(path + "-" + mode) if mode.isalpha() else None) or app_doc(path)
             return self.send(200, doc) if doc is not None else self.send(404, json.dumps({"error": "not found"}))
         if path in ("/", "/lifts"):
             signed = "ht_session=ok" in (self.headers.get("Cookie") or "")

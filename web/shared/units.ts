@@ -35,6 +35,15 @@ export function fmtInt(n: number): string {
   return Math.round(n).toLocaleString("en-US");
 }
 
+/** Volumes and tonnage: "850", "9,400", "66.1k", "1.9M" (not "1901.2k", not "0.4k"). */
+export function fmtBig(n: number): string {
+  const a = Math.abs(n);
+  if (a < 10_000) return fmtInt(n);
+  if (a < 999_500) return fmt(n / 1000, a < 100_000 ? 1 : 0) + "k";
+  return fmt(n / 1e6, a < 9_995_000 ? 2 : 1) + "M";
+}
+
+
 /** Plates per side for a barbell load. */
 export function plates(total: number, unit: Unit, bar = unit === "lb" ? 45 : 20): number[] {
   const avail = unit === "lb" ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25];

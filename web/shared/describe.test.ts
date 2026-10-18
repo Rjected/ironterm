@@ -63,7 +63,7 @@ describe("describeProgram", () => {
       title: "Main · % of training max", lifts: ["Overhead Press", "Deadlift", "Bench Press", "Back Squat"],
       text: "5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%.",
     });
-    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%. Skipped on deload weeks.");
+    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%."); // BBB stays in the deload week (jimwendler.com)
     expect(r.tiers[0].text).not.toMatch(/training max/); // the title already says it
   });
 
