@@ -73,7 +73,6 @@ export function demoData(today: string): { workouts: HevyWorkout[]; config: Prog
           const lb = roundTo(top * f, 5);
           sets.push({ type: "normal", weight_kg: kgOf(lb), reps: Math.min(5, doable(p.lift, wk, lb, 0)) });
         }
-
         return ex(p.lift, sets);
       }
       if (p.tier === "T1") for (const f of [0.5, 0.75]) sets.push({ type: "warmup", weight_kg: kgOf(roundTo(p.sets[0].weight * f, 5)), reps: 3 });
@@ -82,7 +81,6 @@ export function demoData(today: string): { workouts: HevyWorkout[]; config: Prog
         const reps = s.amrap ? can : Math.min(s.reps, can);
         sets.push({ type: "normal", weight_kg: kgOf(s.weight), reps, rpe: s.amrap ? 9 : null });
       });
-
       return ex(p.lift, sets);
     });
     const w: HevyWorkout = {
