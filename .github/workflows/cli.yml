@@ -6,10 +6,9 @@ on:
     paths: ["src/**", "Cargo.*", ".github/workflows/cli.yml"]
   pull_request:
     branches: [main]
-    paths: ["src/**", "Cargo.*", ".github/workflows/cli.yml"]
 
 jobs:
-  build:
+  cli:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

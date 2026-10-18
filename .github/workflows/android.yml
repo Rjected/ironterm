@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths: ["android/**", ".github/workflows/android.yml"]
+  # every PR runs it: it's a required check on main
   pull_request:
     branches: [main]
-    paths: ["android/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 jobs:
-  test:
+  android:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -46,7 +46,7 @@ jobs:
   # Every merge to main that touches the app ships a signed release. The app checks
   # GitHub Releases and updates itself over the air (see android/README.md → Updates).
   release:
-    needs: test
+    needs: android
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

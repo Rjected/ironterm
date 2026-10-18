@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  ios:
     # The project uses folder-synchronised groups (objectVersion 77): Xcode 16+.
     runs-on: macos-15
     defaults:
