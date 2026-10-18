@@ -37,8 +37,18 @@ export interface GoogleConfig {
   allowed: string[];
 }
 
-/** Only same-site paths: "/x" yes; "//host", "/\\host", "https://…" no. */
-export const safePath = (p: string) => (/^\/(?![\/\\])/.test(p) ? p : "/");
+const SELF = "https://ironterm.invalid";
+
+/**
+ * Only same-site paths: "/x" yes; "//host", "/\\host", "https://…" no. Browsers drop tabs and
+ * newlines from URLs, so "/\t/evil.com" would become "//evil.com": control characters and
+ * backslashes are refused outright, and whatever's left must still resolve to our own origin.
+ */
+export function safePath(p: string): string {
+  if (typeof p !== "string" || p.length > 2000 || !/^\/(?![\/\\])/.test(p) || /[\x00-\x20\x7f\\]/.test(p)) return "/";
+  const u = new URL(p, SELF);
+  return u.origin === SELF ? u.pathname + u.search + u.hash : "/";
+}
 
 /** Start sign-in: remember state + PKCE verifier in a short-lived signed cookie, then go to Google. */
 export async function loginRedirect(cfg: GoogleConfig, origin: string, returnTo = "/"): Promise<Response> {
