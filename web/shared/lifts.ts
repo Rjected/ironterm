@@ -59,6 +59,8 @@ export const LIFTS: Record<string, LiftDef> = {
   goodMorning: L("Good Morning", "GOOD AM", "barbell", "hamstrings", false, "Good Morning (Barbell)"),
   hipThrust: L("Hip Thrust", "HIP THRUST", "barbell", "glutes", false, "Hip Thrust (Barbell)", "Hip Thrust (Machine)"),
   legCurl: L("Leg Curl", "LEG CURL", "machine", "hamstrings", false, "Lying Leg Curl (Machine)", "Seated Leg Curl (Machine)", "Standing Leg Curls"),
+  // No Hevy catalog entry we can rely on (Hevy's "Nordic Hamstrings Curls" already counts as GHR): map in Setup.
+  nordicCurl: L("Nordic Curl", "NORDIC", "bodyweight", "hamstrings", false),
   gluteHamRaise: L("Glute Ham Raise", "GHR", "bodyweight", "hamstrings", false, "Glute Ham Raise", "Nordic Hamstrings Curls"),
   backExtension: L("Back Extension", "BACK EXT", "bodyweight", "back", false, "Back Extension (Hyperextension)", "Back Extension (Weighted Hyperextension)", "Back Extension (Machine)"),
   reverseHyper: L("Reverse Hyper", "REV HYPER", "machine", "glutes", false, "Reverse Hyperextension"),
@@ -138,6 +140,7 @@ export const LIFTS: Record<string, LiftDef> = {
   birdDog: L("Bird Dog", "BIRD DOG", "bodyweight", "abs", false, "Bird Dog"),
   sidePlank: L("Side Plank", "SIDE PLANK", "bodyweight", "abs", false, "Side Plank"),
   crunch: L("Crunch", "CRUNCH", "bodyweight", "abs", false, "Crunch", "Crunch (Weighted)", "Reverse Crunch", "Oblique Crunch", "Decline Crunch"),
+  pallofPress: L("Pallof Press", "PALLOF", "machine", "abs", false, "Pallof Press"),
   plank: L("Plank", "PLANK", "bodyweight", "abs", false, "Plank"),
   sitUp: L("Sit Up", "SIT UP", "bodyweight", "abs", false, "Sit Up", "Sit Up (Weighted)", "Decline Crunch (Weighted)"),
   farmersWalk: L("Farmer's Walk", "FARMERS", "dumbbell", "full", false, "Farmers Walk"),

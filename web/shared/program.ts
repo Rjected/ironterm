@@ -208,7 +208,7 @@ export interface Adjustment {
   note?: string;
 }
 
-export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "comeback";
+export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "bodyweight" | "comeback";
 
 export interface ProgramTemplate {
   id: string;
