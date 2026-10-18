@@ -20,7 +20,7 @@
 // Weights are in `unit`; dates are local YYYY-MM-DD. Fields are only ever added (see snapshot.ts).
 
 import type { Bootstrap } from "../src/api";
-import { derive, type Derived } from "../src/derive";
+import { bestAt, derive, type Derived } from "../src/derive";
 import { evaluateAchievements, recentUnlocks, sortAchievements, type Achievement } from "./achievements";
 import { cardioStats } from "./cardio";
 import type { HevyWorkout } from "./hevy";
@@ -62,10 +62,8 @@ export interface AppHome {
   recentPRs: { lift: string; short: string; kind: string; reps: number; weight: number; date: string }[];
 }
 
-function e1rmAt(points: { date: string; e1rm: number }[], date: string): number | null {
-  const before = points.filter((p) => p.date <= date && p.date > addDays(date, -28));
-  return before.length ? Math.max(...before.map((p) => p.e1rm)) : null;
-}
+const e1rmAt = (points: { date: string; e1rm: number }[], date: string) => bestAt(points, date);
+
 
 export function appHome(b: Bootstrap, d: Derived = derive(b, b.settings.graphMetric ?? "volume")): AppHome {
   const keys = d.liftKeys;
