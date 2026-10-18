@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addSet, completeSet, current, progress, sessionFromPlan, toHevyWorkout, warmups } from "./live";
+import { addSet, completeSet, emptySession, current, progress, sessionFromPlan, toHevyWorkout, warmups } from "./live";
 import { initialState, planDay, replay } from "./program";
 import { buildProgram, defaultConfig } from "./programs";
 
@@ -7,6 +7,13 @@ describe("live session", () => {
   const cfg = defaultConfig("gzclp", "lb", "2026-01-01T00:00:00Z");
   const def = buildProgram(cfg)!;
   const plan = planDay(def, cfg, initialState(def, cfg));
+
+  it("names an empty session by the lifter's time of day, not the server's", () => {
+    // 8 pm in New York is midnight UTC (where Workers run)
+    expect(emptySession("lb", "2026-10-16T00:30:00Z", "America/New_York").title).toBe("Evening workout");
+    expect(emptySession("kg", "2026-10-16T00:30:00Z", "Asia/Tokyo").title).toBe("Morning workout");
+    expect(emptySession("kg", "2026-10-16T05:30:00Z", "Asia/Tokyo").title).toBe("Afternoon workout");
+  });
 
   it("builds from the plan with warmups before the T1", () => {
     const s = sessionFromPlan(plan, "lb", def.name, "2026-01-02T15:00:00Z");

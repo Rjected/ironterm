@@ -9,7 +9,7 @@ import dev.ironterm.data.ConnectPrompt
 import dev.ironterm.data.Settings
 import dev.ironterm.data.SourceMode
 import dev.ironterm.ui.AppViewModel
-import okhttp3.mockwebserver.MockWebServer
+import dev.ironterm.testing.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

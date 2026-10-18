@@ -98,7 +98,6 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
                 const now = e1(l);
                 const best = Math.max(...pts.map((p) => p.e1rm));
                 const a4 = bestAt(pts, addDays(d.today, -28)), a12 = bestAt(pts, addDays(d.today, -84));
-
                 return (
                   <tr class="click" onClick={() => nav({ view: "lifts", lift: l })}>
                     <td>{LIFTS[l]?.short ?? l}</td>

@@ -36,6 +36,18 @@ describe("local mode", () => {
     expect((await call("GET", "/api/snapshot")).data.demo).toBe(true);
   });
 
+  it("demo: a save that lands after FINISH doesn't bring the session back", async () => {
+    const s = session("demo-sess");
+    await call("PUT", "/api/live", s);
+    expect((await call("POST", "/api/live/finish", s)).status).toBe(200);
+    expect((await call("PUT", "/api/live", s)).data.finished).toBe(true);
+    expect((await call("GET", "/api/bootstrap")).data.live).toBeNull();
+    // a new session still saves
+    await call("PUT", "/api/live", session("demo-next"));
+    expect((await call("GET", "/api/bootstrap")).data.live.id).toBe("demo-next");
+    await call("DELETE", "/api/live");
+  });
+
   it("previews an import without writing", async () => {
     const { status, data } = await call("POST", "/api/import/strong", { csv: SAMPLE, preview: true });
     expect(status).toBe(200);
@@ -91,6 +103,8 @@ describe("local mode", () => {
 
     const again = await call("POST", "/api/live/finish", s);
     expect(again.data.duplicate).toBe(true);
+    // a debounced save arriving after FINISH doesn't resurrect the session
+    expect((await call("PUT", "/api/live", s)).data).toMatchObject({ ok: true, finished: true });
     const { data: b } = await call("GET", "/api/bootstrap");
     expect(b.live).toBeNull();
     expect(b.workouts.filter((w: { id: string }) => w.id === "local-sess1")).toHaveLength(1);

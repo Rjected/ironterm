@@ -162,8 +162,19 @@ describe("share levels (§4, §5)", () => {
     expect(sqLb.e1rm! / sqKg.e1rm!).toBeCloseTo(2.2046, 2);
     expect(sqLb.best! / sqKg.best!).toBeCloseTo(2.2046, 2);
     for (const p of [kg, lb]) expect(p.lifts.every((l) => l.best! >= l.e1rm!)).toBe(true);
-    // the best e1RM ever, so above the heaviest single set (which the old field reported)
-    expect(lb.lifts.some((l) => l.best! > l.e1rm!)).toBe(true);
+    // `best` is the best e1RM ever, so a heavier squat day months ago shows in best but not in
+    // the current (28-day) e1rm. Built here, not taken from the demo lifter, whose history may
+    // happen to peak this month.
+    const sqId = demo.config.liftMap?.squat;
+    const recent = b.workouts.filter((w) => w.exercises.some((e) => e.exercise_template_id === sqId)).at(-1)!;
+    const longAgo = new Date(Date.parse(recent.start_time) - 200 * 864e5).toISOString();
+    const heavier = {
+      ...recent, id: "old-heavy-squat", start_time: longAgo, end_time: longAgo,
+      exercises: recent.exercises.map((e) => ({ ...e, sets: e.sets.map((x) => ({ ...x, weight_kg: x.weight_kg == null ? x.weight_kg : x.weight_kg * 1.3 })) })),
+    };
+    const withPeak = buildProfile({ ...lbBoot, workouts: [heavier, ...b.workouts] }, "full", who).lifts.find((l) => l.key === "squat")!;
+    expect(withPeak.best!).toBeGreaterThan(withPeak.e1rm!);
+    expect(withPeak.e1rm).toBe(sqLb.e1rm); // the old session doesn't move the current number
   });
 
   it("item ids are stable across builds and levels", () => {
