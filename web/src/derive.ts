@@ -10,7 +10,7 @@ import {
 } from "../shared/stats";
 import { fromKg, loadStep, roundTo, type Unit } from "../shared/units";
 import type { WhoopWorkout } from "../shared/whoop";
-import { applyRamp } from "../shared/travel";
+import { applyRamp, rampInfo, sessionMainLifts, type RampInfo } from "../shared/travel";
 import { detectStalls, programStalls, type LiftStall, type ProgramStall } from "../shared/stall";
 import { loadFor, personalChart, type RpeChart } from "../shared/rpe";
 import type { Bootstrap } from "./api";
@@ -45,6 +45,8 @@ export interface Derived {
   e1rmNow: (lift: string) => number | null;
   /** a program day's plan with RPE-only sets given loads from your chart */
   plan: (dayIndex?: number) => PlannedSession | null;
+  /** coming back from a break: what the ramp is doing to the next session, in words */
+  reentry: RampInfo | null;
 }
 
 export function derive(b: Bootstrap, metric: GraphMetric): Derived {
@@ -108,6 +110,7 @@ export function derive(b: Bootstrap, metric: GraphMetric): Derived {
     whoop: b.whoop?.workouts ?? [],
     progStalls: def && state ? programStalls(def, state, { unit }) : [],
     rpe, e1rmNow, plan,
+    reentry: state?.reentry ? rampInfo(state.reentry, sessionMainLifts(next), cfg?.templateId) : null,
     workouts: [...asc].reverse(),
     byId: new Map(asc.map((w) => [w.id, w])),
     cells, def, state, next, lifts, liftKeys,

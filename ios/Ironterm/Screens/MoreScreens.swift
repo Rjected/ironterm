@@ -345,7 +345,10 @@ struct ProgramScreen: View {
                     Badge(text: "WEEK \(p.week)\(p.weekName.map { " · \($0)" } ?? "")", color: T.up)
                     Badge(text: p.unit, color: T.faint)
                     if p.complete { Badge(text: "COMPLETE", color: T.amber) }
-                    if let r = p.reentry { Badge(text: "RE-ENTRY \(r.done)/\(r.total)") }
+                    if let r = p.reentry { Badge(text: "RE-ENTRY \(r.done + 1)/\(r.total)") }
+                }
+                if let summary: String = p.reentry?.summary {
+                    Text(summary).font(T.mono(10)).foregroundStyle(T.amber).fixedSize(horizontal: false, vertical: true)
                 }
             }
             TermButton(title: "BROWSE PROGRAMS") { model.morePath.append(AppModel.More.programs) }

@@ -304,7 +304,17 @@ export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived 
 export interface AppProgram {
   program: null | {
     name: string; author: string | null; templateId: string; unit: Unit; week: number; weekName: string | null; complete: boolean;
-    reentry: { done: number; total: number } | null;
+    reentry: null | {
+      done: number; total: number; gapDays: number;
+      /** "Session 2 of 6 back after 21 days off" */
+      headline: string;
+      /** the full explanation, one paragraph */
+      summary: string;
+      /** main lifts of the next session; load/volume are fractions of normal */
+      lifts: { short: string; name: string; load: number; volume: number; slower: boolean; back: boolean }[];
+      /** a long break: comeback blocks worth a look (GET /api/app/programs/{templateId}?opt.weeks=…) */
+      suggest: { templateId: string; name: string; weeks: string }[];
+    };
     /** every slot's current state */
     slots: { slotId: string; lift: string; name: string; tier: string; scheme: string; weight: number; stage: number; stages: string[]; ifSuccess: string | null; ifFail: string | null; note: string | null }[];
     /** next sessions with targets */
@@ -353,7 +363,11 @@ export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppP
     program: {
       name: def.name, author: getTemplate(cfg.templateId)?.author ?? null, templateId: cfg.templateId, unit: cfg.unit,
       week: wk + 1, weekName: weekNames?.[wk % weekNames.length] ?? null, complete: !!st.complete,
-      reentry: st.reentry ? { done: st.reentry.done, total: st.reentry.total } : null,
+      reentry: d.reentry ? {
+        done: d.reentry.done, total: d.reentry.total, gapDays: d.reentry.gapDays, headline: d.reentry.headline, summary: d.reentry.text,
+        lifts: d.reentry.lifts.map((x) => ({ short: LIFTS[x.lift]?.short ?? x.name, name: x.name, load: Math.round(x.load * 100) / 100, volume: Math.round(x.volume * 100) / 100, slower: x.slower, back: x.back })),
+        suggest: d.reentry.suggest,
+      } : null,
       slots, upcoming: upcomingOut,
       log: [...st.log].reverse().slice(0, 20).map((e) => ({ date: e.date, dayId: e.dayId, results: e.results.map((r) => ({ lift: r.lift, tier: r.tier, scheme: r.scheme, weight: r.weight, outcome: r.outcome, note: r.note })) })),
       pushed: !!cfg.routineDays && Object.keys(cfg.routineDays).length > 0,
