@@ -6,6 +6,7 @@ import { LIFTS } from "./lifts";
 import { MUSCLES } from "./muscles";
 import { TEMPLATES } from "./programs";
 import { demoData } from "./demo";
+import { history as dayHistory } from "./schedule";
 
 const today = "2026-10-15";
 const demo = demoData(today);
@@ -80,6 +81,8 @@ describe("app API", () => {
     expect(w.exercises[0].sets.length).toBeGreaterThan(0);
     await fixture("workout", w);
     expect(appWorkout(boot, "missing", d)).toBeNull();
+    // keys from the URL that only exist on Object.prototype used to throw (a 500)
+    for (const k of ["__proto__", "constructor", "toString", "hasOwnProperty"]) expect(appLift(boot, k, d)).toBeNull();
   });
 
   it("calendar month grid", async () => {
@@ -90,7 +93,10 @@ describe("app API", () => {
     expect(c.days.some((x) => x.status === "planned")).toBe(true);
     await fixture("calendar", c);
     // ?month=2026-13 used to throw "Invalid time value" (a 500); now it's this month
-    for (const bad of ["2026-13", "2026-00", "x"]) expect(appCalendar(boot, bad, d).month).toBe(today.slice(0, 7));
+    // ?month=0000-01 put the grid in year -1, where addDays stops advancing: the server hung
+    for (const bad of ["2026-13", "2026-00", "x", "0000-01", "0001-01", "1000-01"]) expect(appCalendar(boot, bad, d).month).toBe(today.slice(0, 7));
+    expect(appCalendar(boot, "1970-01", d).month).toBe("1970-01");
+    expect(dayHistory(boot.workouts, [], "UTC", [0], today, "-000001-12").size).toBeGreaterThanOrEqual(0);
   });
 
   it("program", async () => {

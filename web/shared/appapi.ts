@@ -175,8 +175,10 @@ export interface AppLiftDetail {
 }
 
 export function appLift(b: Bootstrap, key: string, d: Derived = derive(b, "volume")): AppLiftDetail | null {
-  const pts = d.lifts[key];
-  if (!pts?.length && !LIFTS[key]) return null;
+  // own keys only: "__proto__" or "constructor" from a URL must not reach Object.prototype
+  const known = Object.hasOwn(LIFTS, key);
+  const pts = Object.hasOwn(d.lifts, key) ? d.lifts[key] : undefined;
+  if (!pts?.length && !known) return null;
   const points = pts ?? [];
   const best = points.length ? points.reduce((a, p) => (p.e1rm > a.e1rm ? p : a), points[0]) : null;
   const asc = [...d.workouts].reverse();
@@ -275,7 +277,8 @@ export interface AppCalendar {
 }
 
 export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived = derive(b, "volume")): AppCalendar {
-  const m = /^\d{4}-(0[1-9]|1[0-2])$/.test(month ?? "") ? month! : d.today.slice(0, 7);
+  // a real month in a sane range (year 0000 made the grid start in year -1)
+  const m = /^(19[7-9]\d|2\d{3})-(0[1-9]|1[0-2])$/.test(month ?? "") ? month! : d.today.slice(0, 7);
   const first = `${m}-01`;
   const dowFirst = (new Date(first + "T12:00:00Z").getUTCDay() + 6) % 7;
   const gridStart = addDays(first, -dowFirst);
