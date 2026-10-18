@@ -68,7 +68,6 @@ export async function fetchFriend<T>(c: SocialCtx, f: FriendRow, what: string, f
   const data = raw != null ? safe(raw) : null;
   if (r?.ok && !data && !cached) throw new PeerError(`${f.server} sent a response this server can't read`);
   if (r?.ok && data) {
-
     await putCache(db, f.id, what, data);
     const share = (data as { share?: unknown }).share;
     await patchFriend(db, f.id, { last_seen: new Date().toISOString(), ...(isShare(share) ? { their_share: share } : {}) });

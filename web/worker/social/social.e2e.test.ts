@@ -337,7 +337,6 @@ describe("social end to end", () => {
   });
 
   it("C requests A; A rejects; C's request disappears on both sides", async () => {
-
     // add by server URL, no directory
     const r = await call<{ friend: Friend }>("C", "POST", "/api/social/friends", { server: "a.test" });
     expect(r.status).toBe(200);
