@@ -4,7 +4,7 @@
 
 # IRONTERM
 
-**A Bloomberg-terminal for your lifting.** A web app, Android and iOS apps, and home-screen widgets for people who log their training in [Hevy](https://hevy.com).
+**A Bloomberg-terminal for your lifting.** A web app, Android and iOS apps, and home-screen widgets for people who log their training in [Hevy](https://hevy.com), come from Strong, or want to log in Ironterm itself.
 
 [![Web](https://github.com/Rjected/ironterm/actions/workflows/web.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/web.yml)
 [![Android](https://github.com/Rjected/ironterm/actions/workflows/android.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/android.yml)
@@ -16,7 +16,7 @@
 
 </div>
 
-> **Unofficial.** Ironterm uses Hevy's public API with *your own* API key. It is not affiliated with or endorsed by Hevy. Ironterm has no backend of its own: you run the server, or use the phone apps on their own.
+> **Unofficial.** With Hevy, Ironterm uses Hevy's public API with *your own* API key. It is not affiliated with or endorsed by Hevy. Ironterm has no backend of its own: you run the server, or use the phone apps on their own.
 
 ## What it does
 
@@ -25,7 +25,8 @@
 - **Body map.** Per-muscle weekly load and recovery from a detailed anatomical figure (male / female), with overlaps where a muscle is hit before it has recovered.
 - **Nerd stuff.** e1RM formula shootout, INOL / Prilepin, lift ratios, strength projections, landmarks, sleep and recovery vs. performance (WHOOP), and program what-ifs.
 - **Life happens.** A calendar, trips that pause your program instead of failing it, hotel-gym sessions, and a re-entry ramp after a break.
-- **Notes** on workouts and exercises, synced back to Hevy.
+- **Notes** on workouts and exercises, synced back to Hevy (or kept in Ironterm without it).
+- **Not tied to Hevy.** Import a full Strong export, or start an empty log and record sessions in gym mode: Ironterm then keeps the workouts itself, and every screen works the same.
 - **Native Android and iOS apps.** Full apps rather than web wrappers:
   - **Gym mode** for logging at the bar: big steppers, a plate loader, and a rest timer that keeps running on the lock screen (an Android notification, an iOS Live Activity).
   - **Works offline.** A session survives a basement gym and a killed app, and syncs when you're back online.
@@ -57,6 +58,7 @@ More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget a
  Hevy ──API──▶ server (web/) ──/api/snapshot──▶ Android / iOS apps + widgets
    ▲            Cloudflare Workers + D1          (or Direct mode: phone ↔ Hevy API,
    └─push/notes─ or Node + SQLite (Docker)        no server at all)
+ Strong CSV ──import──▶ ┘  ▲ gym mode logs here when there's no Hevy key
 ```
 
 | Directory | |
@@ -69,12 +71,18 @@ More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget a
 
 ## Get started
 
-**1. A Hevy API key.** In Hevy go to Settings → Developer (needs Hevy Pro).
+**1. Pick where your workouts come from.** Any one of:
+
+- **Hevy:** an API key from Settings → Developer (needs Hevy Pro). Hevy stays your log.
+- **Strong:** export your data (Strong → Settings → Export Strong Data), then import the CSV in **SETUP → IMPORT**. Ironterm becomes your log.
+- **Nothing yet:** press **START FRESH (NO HEVY)** in SETUP and log sessions in GYM mode.
+
+See [Where the workouts come from](web/SELF_HOSTING.md#where-the-workouts-come-from).
 
 **2. Run the web app.**
 
 ```bash
-cd web && pnpm install && pnpm dev     # http://localhost:5173, demo data until you add a key
+cd web && pnpm install && pnpm dev     # http://localhost:5173, demo data until you add a key or import
 ```
 
 Then host it on one of these:

@@ -7,6 +7,7 @@ import { Panel, Seg, Tier, ago } from "../ui";
 import { ProgramBrowser, ProgramPreview } from "./browser";
 import { Picker } from "../components/picker";
 import { AppsPanel } from "./apps";
+import { ImportPanel } from "./import";
 
 // First session matching the GZCLP sheet's starting weights (squat 185 × 5×3+) in Hevy.
 
@@ -19,6 +20,12 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
   const def = buildProgram(cfg);
   const tpl = getTemplate(cfg.templateId);
   const live = b.mode === "live";
+  const local = b.mode === "local";
+  const startFresh = async () => {
+    if (!confirm("Start fresh without Hevy? The demo data goes away and Ironterm keeps your own log: import a Strong export or log sessions in GYM.")) return;
+    await api.setMode("local");
+    props.onSaved("Local mode: Ironterm is now your training log");
+  };
 
   useEffect(() => { if (live) api.templates().then(setTemplates).catch(() => {}); }, [live]);
 
@@ -125,7 +132,7 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
         </Panel>
       )}
 
-      <Panel n="5" title="LIFT MAPPING" span={6} sub="which Hevy exercise counts as each lift">
+      <Panel n="5" title="LIFT MAPPING" span={6} sub={live ? "which Hevy exercise counts as each lift" : "logged exercise names that count as each lift"}>
         <div class="tbl-wrap">
           <table class="t">
             <tbody>
@@ -152,10 +159,12 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
             <label for="tz">TIME ZONE</label>
             <input class="inp" id="tz" value={s.tz} onInput={(e) => { setS({ ...s, tz: (e.target as HTMLInputElement).value }); setDirty(true); }} />
           </div>
-          <div class="field">
-            <label>AUTO-UPDATE HEVY ROUTINES AFTER EACH WORKOUT</label>
-            <Seg value={s.autoPush ? "on" : "off"} options={[["on", "ON"], ["off", "OFF"]]} onChange={(v) => { setS({ ...s, autoPush: v === "on" }); setDirty(true); }} />
-          </div>
+          {live && (
+            <div class="field">
+              <label>AUTO-UPDATE HEVY ROUTINES AFTER EACH WORKOUT</label>
+              <Seg value={s.autoPush ? "on" : "off"} options={[["on", "ON"], ["off", "OFF"]]} onChange={(v) => { setS({ ...s, autoPush: v === "on" }); setDirty(true); }} />
+            </div>
+          )}
         </div>
       </Panel>
 
@@ -163,21 +172,39 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
         <div class="form" style={{ maxWidth: "none", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <div class="field">
             <label>MODE</label>
-            <div>{live ? <span class="up">LIVE · {b.sync.count ?? 0} workouts · synced {ago(b.sync.at)}</span> : <span class="am">DEMO · add HEVY_API_KEY to .dev.vars</span>}</div>
+            <div>{live ? <span class="up">LIVE · {b.sync.count ?? 0} workouts · synced {ago(b.sync.at)}</span>
+              : local ? <span class="hi">LOCAL · {b.workouts.length} workouts · no Hevy, Ironterm is the log</span>
+              : <span class="am">DEMO · sample data</span>}</div>
             {b.sync.error && <div class="warnbox">{b.sync.error}</div>}
+            {b.mode === "demo" && (
+              <>
+                <p class="note" style={{ margin: 0 }}>Use it with Hevy (set HEVY_API_KEY), import a Strong export below, or start with an empty log and record sessions in GYM.</p>
+                <div><button class="btn" id="start-fresh" onClick={startFresh}>START FRESH (NO HEVY)</button></div>
+              </>
+            )}
+            {local && <p class="note" style={{ margin: 0 }}>Set HEVY_API_KEY to switch to Hevy later; what's logged here stays.</p>}
           </div>
           <div class="field">
             <label>ACCESS</label>
             <div>{b.auth === "google" ? <span class="up">Google sign-in</span> : b.auth === "access" ? <span class="up">Cloudflare Access (Google)</span> : b.auth === "password" ? <span class="up">Password</span> : <span class="down">NONE: anyone with the URL can read this</span>}</div>
           </div>
-          <div class="field">
-            <label>HEVY WEBHOOK (Settings › Developer › Webhooks)</label>
-            <div class="code">URL     {origin}/api/hevy/webhook{"\n"}Header  Bearer &lt;WEBHOOK_SECRET&gt;</div>
-          </div>
+          {live ? (
+            <div class="field">
+              <label>HEVY WEBHOOK (Settings › Developer › Webhooks)</label>
+              <div class="code">URL     {origin}/api/hevy/webhook{"\n"}Header  Bearer &lt;WEBHOOK_SECRET&gt;</div>
+            </div>
+          ) : (
+            <div class="field">
+              <label>HEVY WEBHOOK</label>
+              <div class="dim">Only used with Hevy: set HEVY_API_KEY, then point Hevy's webhook (Settings › Developer › Webhooks) at {origin}/api/hevy/webhook.</div>
+            </div>
+          )}
         </div>
       </Panel>
 
-      <AppsPanel n="8" />
+      <ImportPanel n="8" unit={s.unit} onDone={props.onSaved} />
+
+      <AppsPanel n="9" />
     </div>
   );
 }

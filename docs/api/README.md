@@ -47,6 +47,7 @@ The native apps render each screen from one document. The server builds them fro
 Type: `web/shared/snapshot.ts`. Sample: [`snapshot.sample.json`](snapshot.sample.json) (demo data).
 Fields are only ever added. A breaking change bumps `v`.
 
+- `source`: `"hevy"`, `"local"` (Strong import or logged in Ironterm, no Hevy) or `"demo"`. Use it for wording such as "saved to Hevy" vs "saved".
 - `unit`: `"lb"` or `"kg"`. Every weight is already in this unit.
 - `graph.days`: 53 Monday-first weeks ending today, oldest first, each `{date, level 0–4, value}`. Level 0 means no workout; 1–4 are quartiles of training days.
   - Colours (index = level): `#16181d`, `#8cb4ff`, `#5082dc`, `#285ab4`, `#0f3278`. Level 1 is the lightest and 4 the darkest, the same as the original widgets.

@@ -49,3 +49,14 @@ export async function allWorkouts(db: D1Database): Promise<HevyWorkout[]> {
 export async function workoutCount(db: D1Database): Promise<number> {
   return (await db.prepare("SELECT COUNT(*) AS n FROM workouts").first<{ n: number }>())?.n ?? 0;
 }
+
+/** Stored JSON for the given ids that exist (chunked: SQLite caps bound parameters). */
+export async function workoutJson(db: D1Database, ids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (let i = 0; i < ids.length; i += 90) {
+    const part = ids.slice(i, i + 90);
+    const { results } = await db.prepare(`SELECT id, json FROM workouts WHERE id IN (${part.map(() => "?").join(",")})`).bind(...part).all<{ id: string; json: string }>();
+    for (const r of results) out.set(r.id, r.json);
+  }
+  return out;
+}

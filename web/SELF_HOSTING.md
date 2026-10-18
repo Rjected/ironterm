@@ -12,13 +12,15 @@ The app is one codebase with two ways to run it. Pick whichever suits you. Same 
 
 The Node server (`server/main.ts`) runs the exact same `worker/index.ts`. It swaps D1 for SQLite (`server/d1.ts`) and serves the built files itself, so nothing is Cloudflare-only.
 
+It works three ways: **with Hevy** (an API key; Hevy stays your log), **with a Strong export** (import the CSV; Ironterm becomes your log), or **on its own** (log sessions in GYM mode). See [Where the workouts come from](#where-the-workouts-come-from).
+
 The phone apps work with any of these, and also without a server at all: their **Direct** mode only needs a Hevy API key. Server mode adds the program, the next session, recovery and the full web app.
 
 ## Docker (recommended)
 
 ```sh
 git clone <this repo> && cd hevy-github-graph/web
-cp .env.example .env            # fill in HEVY_API_KEY, SESSION_SECRET, and a login
+cp .env.example .env            # fill in SESSION_SECRET and a login (HEVY_API_KEY if you use Hevy)
 docker compose up -d --build
 open http://localhost:8787
 ```
@@ -39,9 +41,9 @@ pnpm start                      # PORT=8787, DATA_DIR=./data by default
 
 | Variable | |
 |---|---|
-| `HEVY_API_KEY` | Hevy → Settings → Developer (needs Hevy Pro). Without it you get demo data. |
+| `HEVY_API_KEY` | Optional. Hevy → Settings → Developer (needs Hevy Pro). Without it: demo data until you import a Strong export or press START FRESH, then local mode. |
 | `SESSION_SECRET` | Long random string (`openssl rand -base64 32`). Signs login cookies. |
-| `TIMEZONE` | e.g. `Europe/London`. Decides what "today" is. |
+| `TIMEZONE` | e.g. `Europe/London`. Decides what "today" is, and how a Strong export's times are read. |
 | `APP_PASSWORD` | Simplest login: one shared password. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `ALLOWED_EMAILS` | Google sign-in instead. Create a *Web application* OAuth client and add `https://<your host>/auth/callback` as a redirect URI. Only the listed emails get in. |
 | `WEBHOOK_SECRET` | Optional. Hevy webhook for instant sync: URL `https://<host>/api/hevy/webhook`, header `Bearer <secret>`. |
@@ -50,6 +52,32 @@ pnpm start                      # PORT=8787, DATA_DIR=./data by default
 | `PORT`, `HOST`, `DATA_DIR` | Defaults: 8787, 0.0.0.0, ./data. |
 
 **No login configured means local only.** If neither a password nor Google sign-in is set, the server answers only requests from the same machine that didn't come through a proxy. Anything else gets 403. Set a login before exposing it.
+
+## Where the workouts come from
+
+The top bar says which mode you're in:
+
+| Mode | When | Workouts | GYM → FINISH |
+|---|---|---|---|
+| **LIVE** | `HEVY_API_KEY` is set | Synced from Hevy | Saved to Hevy as a workout |
+| **LOCAL** | No key, and you imported something, logged a session, or pressed START FRESH | Stored in Ironterm's own database | Saved in Ironterm |
+| **DEMO** | No key and nothing real yet | Generated sample data (kept apart from real settings) | Kept with the demo data |
+
+### Coming from Strong
+
+Strong has no API, but it exports everything as a CSV.
+
+1. In Strong: **Settings → Export Strong Data**. Send the file to yourself.
+2. In Ironterm: **F10 SETUP → IMPORT → CHOOSE FILE**. The preview shows how many workouts, the date range, and any exercise names that don't count as a library lift (those still import and count for volume and the body map).
+3. Pick the unit your Strong weights are in if the file doesn't say (newer exports don't), then **IMPORT**. Ironterm switches to LOCAL.
+
+Times in the export are read in your `TIMEZONE` (or SETUP → TIME ZONE). Importing a newer export later adds only the new sessions; workouts you've already imported aren't duplicated, and notes you edited in Ironterm are kept. Then pick a program in SETUP, which replays your history through it, and log from GYM (web or the phone apps) from then on.
+
+The same import is an API call if you prefer: `POST /api/import/strong` with `{"csv": "<file text>", "unit": "lb"}` (add `"preview": true` for a dry run).
+
+### No app at all
+
+Press **START FRESH (NO HEVY)** in SETUP → CONNECTION, pick a program, and log in F2 GYM. Workouts, notes and PRs all live in the SQLite file (or D1). Hevy-only features (SYNC, PUSH routines, the webhook) are hidden or explain themselves. If you add a Hevy key later, the mode becomes LIVE and the workouts logged here stay in the history.
 
 ## Connecting Hevy
 

@@ -12,7 +12,11 @@ const boot: Bootstrap = {
 };
 const d = derive(boot, "volume");
 
+// Regenerate docs/api/app with WRITE_FIXTURES=1 pnpm test (ids are random, so not on every run).
+const WRITE = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.WRITE_FIXTURES === "1";
+
 async function fixture(name: string, data: unknown) {
+  if (!WRITE) return;
   const fs = "node:fs";
   const { writeFileSync } = (await import(/* @vite-ignore */ fs)) as { writeFileSync: (u: URL, s: string) => void };
   writeFileSync(new URL(`../../docs/api/app/${name}.json`, import.meta.url), JSON.stringify(data, null, 2) + "\n");
