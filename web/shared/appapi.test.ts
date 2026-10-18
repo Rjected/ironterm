@@ -172,7 +172,7 @@ describe("app API", () => {
       const p = detail(boot, "531");
       expect(p.basis).toBe("e1rm");
       expect(p.weeks.map((w) => w.name)).toEqual(["5s week", "3s week", "5/3/1 week", "Deload"]);
-      expect(p.weeks[3].days[0].exercises).toHaveLength(1); // BBB skipped on deload
+      expect(p.weeks[3].days[0].exercises).toHaveLength(2); // BBB kept on deload ("as normal")
       expect(p.start.trainingMaxes.squat).toBeGreaterThan(0);
       expect(p.start.labels.squat).toBe("Back Squat");
       expect(p.weeks[0].days[3].exercises[0].sets[2]).toMatchObject({ reps: 5, amrap: true });
