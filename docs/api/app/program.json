@@ -21,7 +21,10 @@
           "5×3+",
           "6×2+",
           "10×1+"
-        ]
+        ],
+        "ifSuccess": "10 reps → 525",
+        "ifFail": "miss → retest 5RM",
+        "note": null
       },
       {
         "slotId": "a1-t2",
@@ -35,7 +38,10 @@
           "3×10",
           "3×8",
           "3×6"
-        ]
+        ],
+        "ifSuccess": "24 reps → 175",
+        "ifFail": "miss → 3×6 @ 170",
+        "note": null
       },
       {
         "slotId": "a1-t3",
@@ -47,7 +53,10 @@
         "stage": 0,
         "stages": [
           "3×15+"
-        ]
+        ],
+        "ifSuccess": "25+ on last set → 85",
+        "ifFail": "fewer → stay at 80",
+        "note": null
       },
       {
         "slotId": "a1-t3b",
@@ -59,7 +68,10 @@
         "stage": 0,
         "stages": [
           "4×12+"
-        ]
+        ],
+        "ifSuccess": "18+ on last set → 240",
+        "ifFail": "fewer → stay at 235",
+        "note": null
       },
       {
         "slotId": "b1-t1",
@@ -73,7 +85,10 @@
           "5×3+",
           "6×2+",
           "10×1+"
-        ]
+        ],
+        "ifSuccess": "10 reps → 275",
+        "ifFail": "miss → retest 5RM",
+        "note": null
       },
       {
         "slotId": "b1-t2",
@@ -87,7 +102,10 @@
           "3×10",
           "3×8",
           "3×6"
-        ]
+        ],
+        "ifSuccess": "24 reps → 205",
+        "ifFail": "miss → 3×6 @ 195",
+        "note": null
       },
       {
         "slotId": "b1-t3",
@@ -99,7 +117,10 @@
         "stage": 0,
         "stages": [
           "3×15+"
-        ]
+        ],
+        "ifSuccess": "25+ on last set → 85",
+        "ifFail": "fewer → stay at 80",
+        "note": null
       },
       {
         "slotId": "a2-t1",
@@ -113,7 +134,10 @@
           "5×3+",
           "6×2+",
           "10×1+"
-        ]
+        ],
+        "ifSuccess": "10 reps → 330",
+        "ifFail": "miss → retest 5RM",
+        "note": null
       },
       {
         "slotId": "a2-t2",
@@ -127,7 +151,10 @@
           "3×10",
           "3×8",
           "3×6"
-        ]
+        ],
+        "ifSuccess": "24 reps → 195",
+        "ifFail": "miss → 3×6 @ 190",
+        "note": null
       },
       {
         "slotId": "a2-t3",
@@ -139,7 +166,10 @@
         "stage": 0,
         "stages": [
           "3×15+"
-        ]
+        ],
+        "ifSuccess": "25+ on last set → 100",
+        "ifFail": "fewer → stay at 95",
+        "note": null
       },
       {
         "slotId": "b2-t1",
@@ -153,7 +183,10 @@
           "5×3+",
           "6×2+",
           "10×1+"
-        ]
+        ],
+        "ifSuccess": "10 reps → 560",
+        "ifFail": "miss → retest 5RM",
+        "note": null
       },
       {
         "slotId": "b2-t2",
@@ -167,7 +200,10 @@
           "3×10",
           "3×8",
           "3×6"
-        ]
+        ],
+        "ifSuccess": "24 reps → 100",
+        "ifFail": "miss → 3×6 @ 95",
+        "note": null
       },
       {
         "slotId": "b2-t3",
@@ -179,7 +215,10 @@
         "stage": 0,
         "stages": [
           "3×15+"
-        ]
+        ],
+        "ifSuccess": "25+ on last set → 85",
+        "ifFail": "fewer → stay at 80",
+        "note": null
       }
     ],
     "upcoming": [

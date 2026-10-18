@@ -2,7 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
@@ -278,12 +278,25 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       const extra = (await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? [];
       await kvPut(env.DB, "demo:extra", [...extra.filter((x) => x.id !== w.id), w]);
       await kvPut(env.DB, k(env, "live"), null);
-      return json({ workout: w, demo: true });
+      return json({ workout: w, demo: true, prs: finishPRs(await bootstrap(env, authMode), w.id) });
     }
-    const w = await finishLive(env.DB, env.HEVY_API_KEY!, session, await program(env));
+    // Idempotent per session: a retry after a lost response must not log the workout twice.
+    const doneKey = `finished:${session.id}`;
+    const prior = await kvGet<{ pending?: string; workout?: HevyWorkout }>(env.DB, doneKey);
+    if (prior?.workout) return json({ workout: prior.workout, prs: finishPRs(await bootstrap(env, authMode), prior.workout.id), duplicate: true });
+    if (prior?.pending && Date.now() - Date.parse(prior.pending) < 120_000) return json({ error: "This workout is still being saved. Try again in a moment." }, { status: 409 });
+    await kvPut(env.DB, doneKey, { pending: new Date().toISOString() });
+    let w: HevyWorkout;
+    try {
+      w = await finishLive(env.DB, env.HEVY_API_KEY!, session, await program(env));
+    } catch (e) {
+      await kvPut(env.DB, doneKey, null);
+      throw e;
+    }
+    await kvPut(env.DB, doneKey, { workout: { id: w.id, title: w.title, start_time: w.start_time, end_time: w.end_time, exercises: [] } });
     await kvPut(env.DB, "live", null);
     ctx.waitUntil(afterSync(env).catch((e) => console.error("autopush", e)));
-    return json({ workout: w });
+    return json({ workout: w, prs: finishPRs(await bootstrap(env, authMode), w.id) });
   }
 
   // ── trips

@@ -123,6 +123,127 @@
       }
     ]
   },
+  "plan": {
+    "dayIndex": 2,
+    "dayId": "A2",
+    "dayName": "Day A2 · Bench",
+    "week": 0,
+    "exercises": [
+      {
+        "slotId": "a2-t1",
+        "lift": "bench",
+        "tier": "T1",
+        "restSeconds": 180,
+        "scheme": "10×1+",
+        "sets": [
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          },
+          {
+            "weight": 325,
+            "reps": 1,
+            "amrap": true
+          }
+        ],
+        "ifSuccess": "10 reps → 330",
+        "ifFail": "miss → retest 5RM"
+      },
+      {
+        "slotId": "a2-t2",
+        "lift": "squat",
+        "tier": "T2",
+        "restSeconds": 120,
+        "scheme": "3×8",
+        "sets": [
+          {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          },
+          {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          },
+          {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          }
+        ],
+        "ifSuccess": "24 reps → 195",
+        "ifFail": "miss → 3×6 @ 190"
+      },
+      {
+        "slotId": "a2-t3",
+        "lift": "latPulldown",
+        "tier": "T3",
+        "restSeconds": 75,
+        "scheme": "3×15+",
+        "sets": [
+          {
+            "weight": 95,
+            "reps": 15,
+            "amrap": false
+          },
+          {
+            "weight": 95,
+            "reps": 15,
+            "amrap": false
+          },
+          {
+            "weight": 95,
+            "reps": 15,
+            "amrap": true
+          }
+        ],
+        "ifSuccess": "25+ on last set → 100",
+        "ifFail": "fewer → stay at 95"
+      }
+    ]
+  },
   "days": [
     {
       "dayIndex": 0,

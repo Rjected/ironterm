@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Bootstrap } from "../src/api";
 import { derive } from "../src/derive";
-import { appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "./appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "./appapi";
 import { demoData } from "./demo";
 
 const today = "2026-10-15";
@@ -34,6 +34,8 @@ describe("app API", () => {
     expect(g.next?.exercises.length).toBeGreaterThan(1);
     expect(g.days.length).toBe(4);
     expect(g.catalog.length).toBeGreaterThan(50);
+    expect(g.plan?.exercises[0].restSeconds).toBeGreaterThan(0);
+    expect(g.plan?.exercises[0].slotId).toBeTruthy();
     await fixture("gym", g);
     const s = startSession(boot, {}, "2026-10-15T22:00:00.000Z", d);
     expect(s.exercises[0].sets.some((x) => x.target)).toBe(true);
@@ -85,6 +87,7 @@ describe("app API", () => {
     expect(p.slots.length).toBeGreaterThan(4);
     expect(p.upcoming.length).toBeGreaterThan(2);
     expect(p.log.length).toBeGreaterThan(0);
+    expect(p.slots.some((x) => x.ifSuccess)).toBe(true);
     await fixture("program", appProgram(boot, d));
   });
 
@@ -100,6 +103,14 @@ describe("app API", () => {
     const f = appBody({ ...boot, settings: { ...boot.settings, sex: "female" } }, "ready", d);
     expect(f.sex).toBe("f");
     expect(f.svgFront).toContain("xmlns");
+  });
+
+  it("finish PRs: records set by one workout", () => {
+    // the demo history's best squat session should hold at least one record
+    const best = d.lifts.squat.reduce((a, p) => (p.e1rm > a.e1rm ? p : a));
+    const prs = finishPRs(boot, best.workoutId, d);
+    expect(prs.some((p) => p.lift === "squat")).toBe(true);
+    expect(finishPRs(boot, "missing", d)).toEqual([]);
   });
 
   it("insights and stats", async () => {

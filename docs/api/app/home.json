@@ -1,7 +1,7 @@
 {
   "snapshot": {
     "v": 1,
-    "generatedAt": "2026-10-18T01:40:36.331Z",
+    "generatedAt": "2026-10-18T02:32:46.346Z",
     "today": "2026-10-15",
     "unit": "lb",
     "tz": "America/New_York",
@@ -2203,7 +2203,7 @@
         {
           "id": "gluteMax",
           "name": "GLUTE MAX",
-          "readiness": 0.94,
+          "readiness": 0.95,
           "readyInH": 0
         },
         {

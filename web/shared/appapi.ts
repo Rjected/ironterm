@@ -24,7 +24,7 @@ import type { HevyWorkout } from "./hevy";
 import { BIG_FOUR, LIFTS, liftName, matchLift } from "./lifts";
 import { emptySession, sessionFromPlan, type LiveSession } from "./live";
 import { MUSCLE, MUSCLES, type MuscleId } from "./muscles";
-import { schemeLabel, type Outcome } from "./program";
+import { schemeLabel, type Outcome, type PlannedSession } from "./program";
 import { getTemplate } from "./programs";
 import { projectLift } from "./projection";
 import { prWall, recentPRs } from "./prwall";
@@ -104,6 +104,8 @@ export interface AppGym {
   live: LiveSession | null;
   /** the next program session with targets (null without a program) */
   next: NextSession | null;
+  /** the same session in full (rest, slot ids, what happens next): enough to start it offline */
+  plan: PlannedSession | null;
   /** every program day, to start a different one */
   days: { dayIndex: number; dayId: string; dayName: string }[];
   /** exercises you can add: the lift library (Hevy titles for matching) */
@@ -115,6 +117,7 @@ export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
   return {
     unit: d.unit, programName: d.def?.name ?? null, live: (b.live as LiveSession | null | undefined) ?? null,
     next: snap.program?.next ?? null,
+    plan: d.next,
     days: d.def ? d.def.days.map((x, i) => ({ dayIndex: i, dayId: x.id, dayName: x.name })) : [],
     catalog: Object.entries(LIFTS).map(([key, l]) => ({ key, name: l.name, kind: l.kind, hevy: l.hevy[0] ?? null })),
   };
@@ -296,7 +299,7 @@ export interface AppProgram {
     name: string; author: string | null; templateId: string; unit: Unit; week: number; weekName: string | null; complete: boolean;
     reentry: { done: number; total: number } | null;
     /** every slot's current state */
-    slots: { slotId: string; lift: string; name: string; tier: string; scheme: string; weight: number; stage: number; stages: string[] }[];
+    slots: { slotId: string; lift: string; name: string; tier: string; scheme: string; weight: number; stage: number; stages: string[]; ifSuccess: string | null; ifFail: string | null; note: string | null }[];
     /** next sessions with targets */
     upcoming: { date: string; dayId: string; dayName: string; exercises: { short: string; tier: string; summary: string }[] }[];
     /** most recent program decisions, newest first */
@@ -310,6 +313,9 @@ export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppP
   const def = d.def, st = d.state, cfg = b.program;
   const slots: NonNullable<AppProgram["program"]>["slots"] = [];
   const seen = new Set<string>();
+  // what happens next for each slot comes from the plan of a day it appears on
+  const planned = new Map<string, PlannedSession["exercises"][number]>();
+  def.days.forEach((_, i) => { for (const e of d.plan(i)?.exercises ?? []) if (!planned.has(e.slotId)) planned.set(e.slotId, e); });
   for (const day of def.days) for (const s of day.slots) {
     if (seen.has(s.id)) continue;
     seen.add(s.id);
@@ -318,6 +324,7 @@ export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppP
     slots.push({
       slotId: s.id, lift: s.lift, name: liftName(s.lift), tier: s.tier, scheme: stages[ss?.stage ?? 0] ?? s.progression.kind,
       weight: r1(ss?.weight ?? st.tms[s.lift] ?? 0), stage: ss?.stage ?? 0, stages,
+      ifSuccess: planned.get(s.id)?.ifSuccess ?? null, ifFail: planned.get(s.id)?.ifFail ?? null, note: planned.get(s.id)?.note ?? null,
     });
   }
   const days = trainingDays(b.settings.trainingDays, def);
@@ -443,4 +450,18 @@ export function appStats(b: Bootstrap, d: Derived = derive(b, "volume")): AppSta
     totals: { workouts: d.workouts.length, sessions52: d.sessions52, avgMin: Math.round(d.avgMin), streak: d.streak },
     cardio,
   };
+}
+
+// ───────────────────────── finish ─────────────────────────
+
+export interface FinishPr { lift: string; short: string; kind: string; reps: number; weight: number; prev: number | null }
+
+/** Records set by one workout (call after it is stored). */
+export function finishPRs(b: Bootstrap, workoutId: string, d: Derived = derive(b, "volume")): FinishPr[] {
+  const w = d.byId.get(workoutId);
+  if (!w) return [];
+  const date = localDate(w.start_time, d.tz);
+  return recentPRs([...d.workouts].reverse(), date, { unit: d.unit, tz: d.tz, map: d.liftMap })
+    .filter((p) => p.workoutId === workoutId)
+    .map((p) => ({ lift: p.lift, short: LIFTS[p.lift]?.short ?? p.lift, kind: p.kind, reps: p.reps, weight: r1(p.weight), prev: p.prev != null ? r1(p.prev) : null }));
 }
