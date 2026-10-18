@@ -249,7 +249,6 @@ function BodyRecovery(props: { d: Derived; b: Bootstrap; nav: Nav; onReload: () 
           <input class="inp num" id="wi-w" inputMode="decimal" placeholder={u} value={w} onInput={(e) => setW((e.target as HTMLInputElement).value)} onKeyDown={(e) => e.key === "Enter" && save()} />
           <button class="btn pri" onClick={save}>LOG WEIGHT</button>
           {err && <span class="down" role="alert">{err}</span>}
-
           <span class="faint" style={{ fontSize: "var(--fs-s)" }}>Also reads Hevy's measurements and WHOOP. Trend: Hacker's Diet moving average.</span>
         </div>
       </Panel>

@@ -31,7 +31,6 @@ export function parseWeightInput(s: string): number | null {
 }
 
 export function fmtInt(n: number): string {
-
   return Math.round(n).toLocaleString("en-US");
 }
 
