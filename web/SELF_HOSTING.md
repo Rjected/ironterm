@@ -50,6 +50,7 @@ pnpm start                      # PORT=8787, DATA_DIR=./data by default
 | `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | Optional WHOOP integration. |
 | `SYNC_MINUTES` | Background sync interval, default 15. `0` turns it off. |
 | `PORT`, `HOST`, `DATA_DIR` | Defaults: 8787, 0.0.0.0, ./data. |
+| `TRUST_PROXY` | `1` behind a reverse proxy: wrong-password limits (10 per 15 min per address) then count the client address from `X-Forwarded-For` instead of the proxy's. Leave it off when the server is reachable directly, or clients could fake their address. |
 | `SOCIAL_DIRECTORY` | Optional. Directory for FRIENDS handles, e.g. `https://directory.example.com`. No default; without it friends add each other by server URL. |
 | `SOCIAL_ORIGIN` | Optional. This server's public origin, if requests reach it under another URL (normally it comes from the request and `X-Forwarded-*`). |
 | `SOCIAL_ALLOW_HTTP` | `1` allows `http://` peers. Local testing only. |

@@ -18,6 +18,15 @@ export function safeEqual(a: string, b: string): boolean {
   return d === 0;
 }
 
+/** Password check that leaks neither the password's length nor where a guess first differs. */
+export async function passwordMatches(guess: string, password: string): Promise<boolean> {
+  const h = async (x: string) => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(x)));
+  const [a, b] = await Promise.all([h(guess), h(password)]);
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a[i] ^ b[i];
+  return d === 0;
+}
+
 export async function sessionCookie(secret: string): Promise<string> {
   const exp = Math.floor(Date.now() / 1000) + TTL;
   return `${COOKIE}=${exp}.${await hmac(secret, String(exp))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${TTL}`;

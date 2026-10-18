@@ -1,6 +1,6 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, csrfBlock, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, isAuthed, passwordMatches, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
@@ -17,6 +17,7 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { clientIp, loginBlocked, loginFailed, loginSucceeded } from "./ratelimit";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 
 export interface Env {
@@ -189,8 +190,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ error: "No login configured for this deployment." }, { status: 403 });
   }
   if (path === "/api/login" && method === "POST") {
-    const { password } = await req.json<{ password: string }>();
-    if (!env.APP_PASSWORD || !safeEqual(password ?? "", env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
+    if (!env.APP_PASSWORD) return json({ error: "Password sign-in isn't configured." }, { status: 404 });
+    const ip = clientIp(req);
+    const wait = await loginBlocked(env.DB, ip);
+    if (wait) return json({ error: `Too many wrong passwords. Try again in ${Math.ceil(wait / 60)} min.` }, { status: 429, headers: { "retry-after": String(wait) } });
+    const body = await req.json<{ password?: unknown }>().catch(() => null);
+    const password = typeof body?.password === "string" ? body.password : "";
+    if (!(await passwordMatches(password, env.APP_PASSWORD))) {
+      await loginFailed(env.DB, ip);
+      return json({ error: "Wrong password" }, { status: 401 });
+    }
+    await loginSucceeded(env.DB, ip);
     return json({ ok: true }, { headers: { "set-cookie": await sessionCookie(sessionSecret!) } });
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
