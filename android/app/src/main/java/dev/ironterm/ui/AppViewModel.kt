@@ -467,6 +467,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         }
     }
 
+    override fun loadProgramBody(id: String, options: Map<String, String>, mode: String, force: Boolean) {
+        val key = ProgramBrowse.bodyKey(id, options, mode)
+        run({ programBody[key] ?: Load() }, { copy(programBody = programBody + (key to it)) }, force) { f ->
+            repo.load("programbody_$key", ProgramBody.serializer(), f, 30 * 60_000L, null) { it.programBody(id, options, mode) }
+        }
+    }
+
     override fun startProgram(id: String, body: ProgramStartBody, onDone: () -> Unit) {
         if (_data.value.startingProgram) return
         val api = repo.api() ?: run { setData { copy(startError = "Starting a program needs the server.") }; return }
@@ -482,7 +489,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
                     copy(
                         startingProgram = false, program = Load.of(r.program, System.currentTimeMillis()),
                         programs = programs.data?.let { programs.copy(data = it.copy(active = r.program.program?.templateId?.ifBlank { null } ?: id)) } ?: programs,
-                        programDetail = emptyMap(),
+                        programDetail = emptyMap(), programBody = emptyMap(),
                         toast = "Started ${name ?: "the program"}",
                     )
                 }

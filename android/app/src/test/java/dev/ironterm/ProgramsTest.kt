@@ -2,6 +2,7 @@ package dev.ironterm
 
 import dev.ironterm.data.app.AppApi
 import dev.ironterm.data.app.AppJson
+import dev.ironterm.data.app.ProgramBody
 import dev.ironterm.data.app.ProgramBrowse
 import dev.ironterm.data.app.ProgramCatalog
 import dev.ironterm.data.app.ProgramDetail
@@ -28,6 +29,10 @@ object ProgramFixtures {
     val pct: ProgramDetail by lazy { Fixtures.parse("programs-531", ProgramDetailSerializer) }
     /** a finite percent-of-1RM block */
     val smolov: ProgramDetail by lazy { Fixtures.parse("programs-smolov-jr", ProgramDetailSerializer) }
+    val gzclpBody: ProgramBody by lazy { Fixtures.parse("programs-gzclp-body", ProgramBody.serializer()) }
+    val gzclpBodyGaps: ProgramBody by lazy { Fixtures.parse("programs-gzclp-body-gaps", ProgramBody.serializer()) }
+    /** 4 weeks, sent with svg=0 */
+    val pctBodyGaps: ProgramBody by lazy { Fixtures.parse("programs-531-body-gaps", ProgramBody.serializer()) }
 }
 
 /** /api/app/programs* documents (docs/api/app/programs*.json) parse field by field. */
@@ -289,6 +294,82 @@ class ProgramStartTest {
             val err = runCatching { api.startProgram("nope", ProgramStartBody()) }.exceptionOrNull()
             assertTrue(err is dev.ironterm.data.app.ApiException && err.code == 400 && err.message == "unknown program")
             assertEquals("{}", server.takeRequest().body.readUtf8())
+        } finally { server.shutdown() }
+    }
+}
+
+/** GET /api/app/programs/{id}/body (docs/api/app/programs-*-body*.json): parsing, the tab's helpers, the request. */
+class ProgramBodyTest {
+    private val load get() = ProgramFixtures.gzclpBody
+    private val gaps get() = ProgramFixtures.gzclpBodyGaps
+    private val pct get() = ProgramFixtures.pctBodyGaps
+
+    @Test fun parses() {
+        val b = load
+        assertEquals("gzclp", b.id)
+        assertEquals("load", b.mode)
+        assertTrue(b.svgFront.startsWith("<svg") && b.svgBack.contains("</svg>"))
+        assertEquals(2, b.legend.size)
+        assertTrue(b.muscles.size > 20)
+        assertTrue(b.muscles.zipWithNext().all { (a, c) -> a.load >= c.load })
+        assertTrue(b.muscles.all { it.status in setOf("none", "low", "ok", "high", "n/a") })
+        assertTrue(b.muscles.filter { it.target != null }.all { it.target!!.size == 2 })
+        assertEquals(b.weeks, b.overlapsByWeek.size)
+        assertEquals(b.overlaps.size, b.overlapsByWeek.sum())
+        assertEquals(3, b.summary.lines.size)
+        assertEquals(3, b.summary.mostTrained.size)
+        assertTrue(b.summary.gaps.all { g -> g.target != null && g.hardSets < g.target!![0] })
+        assertTrue(b.overlaps.all { it.from.isNotBlank() && it.to.isNotBlank() && it.share > 0 })
+        // gaps: least recovered first, other colours
+        assertEquals("gaps", gaps.mode)
+        assertTrue(gaps.muscles.zipWithNext().all { (a, c) -> a.gap >= c.gap })
+        assertFalse(gaps.svgFront == b.svgFront)
+        // svg=0 sample: no figures, several weeks
+        assertEquals("", pct.svgFront)
+        assertTrue(pct.weeks > 1)
+    }
+
+    @Test fun helpers() {
+        assertEquals("gzclp#load", ProgramBrowse.bodyKey("gzclp", emptyMap(), "load"))
+        assertEquals("531?deload=off&supp=fsl#gaps", ProgramBrowse.bodyKey("531", mapOf("supp" to "fsl", "deload" to "off"), "gaps"))
+        val m = load.muscles.first { it.target != null && it.hardSets > 0 }
+        val bar = ProgramBrowse.rangeBar(m)
+        assertEquals((m.hardSets / 30).toFloat(), bar.fill, 1e-4f)
+        assertEquals((m.target!![0] / 30).toFloat(), bar.lo!!, 1e-4f)
+        assertEquals((m.target!![1] / 30).toFloat(), bar.hi!!, 1e-4f)
+        assertEquals(1f, ProgramBrowse.rangeBar(m.copy(hardSets = 99.0)).fill, 0f)
+        assertNull(ProgramBrowse.rangeBar(m.copy(target = null)).lo)
+        assertEquals("BELOW", ProgramBrowse.bodyStatus("low"))
+        assertEquals("IN RANGE", ProgramBrowse.bodyStatus("ok"))
+        assertEquals("ABOVE", ProgramBrowse.bodyStatus("high"))
+        assertEquals("INDIRECT", ProgramBrowse.bodyStatus("n/a"))
+        assertEquals("NONE", ProgramBrowse.bodyStatus("none"))
+        // groups in body order, each sorted by hard sets, untrained stabilisers left out
+        val groups = ProgramBrowse.bodyGroups(load)
+        assertEquals(ProgramBrowse.GROUPS.map { it.second }.filter { g -> groups.any { it.first == g } }, groups.map { it.first })
+        assertTrue(groups.all { (_, rows) -> rows.zipWithNext().all { (a, c) -> a.hardSets >= c.hardSets } })
+        assertTrue(groups.flatMap { it.second }.all { it.target != null || it.sets >= 0.5 })
+        // overlaps per week
+        assertEquals(load.overlaps.size, ProgramBrowse.overlapsIn(load, 1).size)
+        assertTrue(ProgramBrowse.overlapsIn(load, 2).isEmpty())
+        val o = load.overlaps.first()
+        assertEquals("${o.from} → ${o.to} · ${o.prev.take(2).joinToString("+")} → ${o.now.take(2).joinToString("+")} · ${o.gapH.toInt()}h", ProgramBrowse.overlapLine(o))
+    }
+
+    @Test fun request() = runBlocking {
+        val server = MockWebServer()
+        server.enqueue(MockResponse().setBody(Fixtures.text("programs-gzclp-body-gaps")))
+        server.enqueue(MockResponse().setBody("""{"id":"x","future":1,"muscles":[{"id":"lats","hardSets":12.5,"extra":true}]}"""))
+        server.start()
+        try {
+            val api = AppApi(server.url("/").toString(), "ht_test")
+            assertEquals(gaps, api.programBody("gzclp", mapOf("t3" to "3x12", "days" to "4"), "gaps"))
+            assertEquals("/api/app/programs/gzclp/body?mode=gaps&opt.days=4&opt.t3=3x12", server.takeRequest().path)
+            // unknown fields are ignored, missing ones default
+            val lenient = api.programBody("x")
+            assertEquals("load", lenient.mode)
+            assertEquals(12.5, lenient.muscles[0].hardSets, 0.0)
+            assertEquals("/api/app/programs/x/body?mode=load", server.takeRequest().path)
         } finally { server.shutdown() }
     }
 }

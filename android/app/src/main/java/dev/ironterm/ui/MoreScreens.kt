@@ -327,8 +327,8 @@ fun BodyScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> 
 }
 
 /** The figure's colour scales (web/shared/anatomy-svg.ts): warn = near-black → red, load = navy → light blue. */
-private val WARN_SCALE = listOf(androidx.compose.ui.graphics.Color(0xFF16181D), androidx.compose.ui.graphics.Color(0xFFFF6B5E))
-private val LOAD_SCALE = listOf(0xFF0F3278, 0xFF285AB4, 0xFF5082DC, 0xFF8CB4FF).map { androidx.compose.ui.graphics.Color(it) }
+internal val WARN_SCALE = listOf(androidx.compose.ui.graphics.Color(0xFF16181D), androidx.compose.ui.graphics.Color(0xFFFF6B5E))
+internal val LOAD_SCALE = listOf(0xFF0F3278, 0xFF285AB4, 0xFF5082DC, 0xFF8CB4FF).map { androidx.compose.ui.graphics.Color(it) }
 
 /** One muscle: short label + bars; tap shows the anatomical name, sets and target range. */
 @Composable
