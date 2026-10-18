@@ -471,7 +471,7 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
       : `${plural(n, "session")} a week · ${word(nd)} days in rotation, so each week picks up where the last left off`,
   );
   const c = def.cycle;
-  if (c?.finite) overview.push(`A ${c.weeks}-week block that ends after week ${c.weeks}.`);
+  if (c?.finite) overview.push(`${/^8/.test(String(c.weeks)) || c.weeks === 11 || c.weeks === 18 ? "An" : "A"} ${c.weeks}-week block that ends after week ${c.weeks}.`);
   else if (c && c.weeks > 1) {
     const names = c.weekNames?.slice(0, c.weeks);
     overview.push(`Repeats in ${c.weeks}-week cycles${names?.length === c.weeks ? `: ${list(names)}` : ""}.`);
