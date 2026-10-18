@@ -18,6 +18,8 @@ class Settings(private val prefs: SharedPreferences, private val box: SecretBox 
         private const val FILE = "ironterm_settings"
         /** Before Keystore: EncryptedSharedPreferences (androidx.security-crypto). Migrated once, then deleted. */
         private const val LEGACY_FILE = "ironterm_prefs"
+        /** Where EncryptedSharedPreferences kept its Tink keysets. */
+        private const val LEGACY_KEYSETS = "__androidx_security_crypto_encrypted_prefs__"
         private val SECRETS = setOf("app_token", "api_key")
         private const val K_MODE = "mode"
         private const val K_SERVER = "server_url"
@@ -52,9 +54,9 @@ class Settings(private val prefs: SharedPreferences, private val box: SecretBox 
          * switch. TODO: remove with the androidx.security-crypto dependency once every installed
          * app has run this (the app updates itself, so a few releases are enough).
          */
-        private fun migrateLegacy(context: Context, settings: Settings) {
-            val legacyXml = java.io.File(context.applicationInfo.dataDir, "shared_prefs/$LEGACY_FILE.xml")
-            if (!legacyXml.exists()) return
+        internal fun migrateLegacy(context: Context, settings: Settings) {
+            val raw = context.getSharedPreferences(LEGACY_FILE, Context.MODE_PRIVATE)
+            if (raw.all.isEmpty()) return
             try {
                 val key = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
                 val legacy = EncryptedSharedPreferences.create(
@@ -67,7 +69,12 @@ class Settings(private val prefs: SharedPreferences, private val box: SecretBox 
                 // Keystore key lost (e.g. restored backup): the old file is unreadable. Start over.
                 Log.w("Settings", "legacy encrypted prefs unreadable, dropping them", e)
             }
-            context.deleteSharedPreferences(LEGACY_FILE)
+            // clear before deleting: a SharedPreferences object cached in this process would otherwise
+            // keep the old values
+            for (file in listOf(LEGACY_FILE, LEGACY_KEYSETS)) {
+                context.getSharedPreferences(file, Context.MODE_PRIVATE).edit().clear().commit()
+                context.deleteSharedPreferences(file)
+            }
             runCatching { java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry(MasterKey.DEFAULT_MASTER_KEY_ALIAS) }
         }
 
