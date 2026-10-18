@@ -74,10 +74,16 @@ export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved
   };
 
   const save = async () => {
-    await api.saveSettings(s);
-    if (b.program) await api.saveProgram(cfg);
+    try {
+      await api.saveSettings(s);
+      if (b.program) await api.saveProgram(cfg);
+    } catch (e) {
+      props.onSaved(`Couldn't save: ${(e as Error).message}`);
+      return false;
+    }
     setDirty(false);
     props.onSaved(b.program ? "Saved. Program replayed from " + cfg.startDate.slice(0, 10) : "Saved");
+    return true;
   };
 
   const slots = def ? allSlots(def) : [];
@@ -99,7 +105,8 @@ export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved
         </div>
       </div>
       <div class="pp-acts">
-        <button class={`btn ${dirty ? "pri" : ""}`} id="save-setup" onClick={async () => { await save(); close(); }}><em>⏎</em>SAVE{dirty ? " *" : ""}</button>
+        <button class={`btn ${dirty ? "pri" : ""}`} id="save-setup" onClick={async () => { if (await save()) close(); }}
+><em>⏎</em>SAVE{dirty ? " *" : ""}</button>
         <button class="btn" onClick={() => { setCfg(b.program ?? cfg); setS(b.settings); setDirty(false); close(); }}>CANCEL</button>
       </div>
     </div>
