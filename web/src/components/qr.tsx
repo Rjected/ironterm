@@ -1,5 +1,5 @@
-import qrcode from "qrcode-generator";
 import { useMemo } from "preact/hooks";
+import { encodeQr, qrPath } from "../../packages/qr";
 
 /**
  * QR code as crisp SVG. Dark modules on white with a 4-module quiet zone: inverted or
@@ -7,13 +7,8 @@ import { useMemo } from "preact/hooks";
  */
 export function QrCode(props: { text: string; size?: number; label?: string }) {
   const { path, n } = useMemo(() => {
-    const qr = qrcode(0, "M");
-    qr.addData(props.text);
-    qr.make();
-    const count = qr.getModuleCount();
-    let d = "";
-    for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) d += `M${c + 4} ${r + 4}h1v1h-1z`;
-    return { path: d, n: count + 8 };
+    const qr = encodeQr(props.text);
+    return { path: qrPath(qr, 4), n: qr.size + 8 };
   }, [props.text]);
   const size = props.size ?? 220;
   return (

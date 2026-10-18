@@ -21,6 +21,8 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 const DATA = resolve(process.env.DATA_DIR ?? "./data");
 const STATIC = resolve(process.env.STATIC_DIR ?? join(here, "../client"));
 const SYNC_MIN = Number(process.env.SYNC_MINUTES ?? 15);
+/** behind a reverse proxy: take the client address from X-Forwarded-For */
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 
 mkdirSync(DATA, { recursive: true });
 const DB = new NodeD1(join(DATA, "hevy.sqlite"));
@@ -78,7 +80,11 @@ function toRequest(req: IncomingMessage): Request {
   const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] ?? "http";
   const host = (req.headers["x-forwarded-host"] as string) ?? req.headers.host ?? `localhost:${PORT}`;
   const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) if (v != null) for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  for (const [k, v] of Object.entries(req.headers)) if (v != null && k !== "cf-connecting-ip") for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  // The client address for rate limits (password sign-in). Clients can't set it: from the socket,
+  // or with TRUST_PROXY=1 from the proxy's X-Forwarded-For.
+  const fwd = TRUST_PROXY ? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() : null;
+  headers.set("cf-connecting-ip", fwd || req.socket.remoteAddress || "unknown");
   const body = req.method === "GET" || req.method === "HEAD" ? undefined : (Readable.toWeb(req) as ReadableStream);
   return new Request(`${proto}://${host}${req.url}`, { method: req.method, headers, body, duplex: "half" } as RequestInit);
 }
