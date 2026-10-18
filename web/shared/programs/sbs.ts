@@ -1,8 +1,8 @@
 // Stronger By Science (Greg Nuckols) program bundle: Strength RTF, Strength RIR, Hypertrophy,
 // and the Novice Hypertrophy program.
 //
-// Numbers below come from the "Quick Setup" tab of Dan's copies in Drive (the only tab the Drive
-// export exposes):
+// Numbers below come from the "Quick Setup" tab of the program spreadsheets (the only tab the export
+// exposes):
 //   - weekly intensity (% of max) for main lifts and auxiliaries, weeks 1–21
 //   - "normal set rep target" and "last set rep target" (RTF / Hypertrophy) or "last set RIR
 //     target" (RIR) by intensity, 50–100% in 2.5% steps
@@ -169,7 +169,7 @@ export const sbsRtf: ProgramTemplate = {
   id: "sbsRtf",
   name: "SBS Strength (Reps to Failure)",
   author: "Greg Nuckols (Stronger By Science)",
-  source: "Dan's Drive: SBS Strength Program reps to failure (Quick Setup tab); day layout from a community port",
+  source: "SBS Strength Program reps to failure (Quick Setup tab); day layout from a community port",
   summary: "21 weeks in three 7-week blocks. Four sets at a weekly % and rep target, then one set to failure; beating or missing the target nudges that lift's max.",
   category: "strength",
   level: "intermediate",
@@ -184,7 +184,7 @@ export const sbsRir: ProgramTemplate = {
   id: "sbsRir",
   name: "SBS Strength (Last Set RIR)",
   author: "Greg Nuckols (Stronger By Science)",
-  source: "Dan's Drive: SBS Strength Program last set RIR (Quick Setup tab); day layout from a community port",
+  source: "SBS Strength Program last set RIR (Quick Setup tab); day layout from a community port",
   summary: "21 weeks in three 7-week blocks. Five sets at a weekly % and rep target, the last stopped at a reps-in-reserve target; how much you had left moves that lift's max.",
   category: "strength",
   level: "intermediate",
@@ -199,7 +199,7 @@ export const sbsHypertrophy: ProgramTemplate = {
   id: "sbsHypertrophy",
   name: "SBS Hypertrophy",
   author: "Greg Nuckols (Stronger By Science)",
-  source: "Dan's Drive: SBS Hypertrophy Template (Quick Setup tab); day layout reconstructed",
+  source: "SBS Hypertrophy Template (Quick Setup tab); day layout reconstructed",
   summary: "21-week hypertrophy version: three sets of 6–12ish reps at 70–82.5%, then a set to failure that adjusts the max.",
   category: "hypertrophy",
   level: "intermediate",
@@ -227,7 +227,7 @@ export const sbsNoviceHypertrophy: ProgramTemplate = {
   id: "sbsNoviceHypertrophy",
   name: "SBS Novice Hypertrophy",
   author: "Greg Nuckols (Stronger By Science)",
-  source: "Dan's Drive: SBS Novice hypertrophy program (Quick Setup tab: lifts and progression); A/B days reconstructed",
+  source: "SBS Novice hypertrophy program (Quick Setup tab: lifts and progression); A/B days reconstructed",
   summary: "Beginner full-body hypertrophy: compound lifts plus accessories for 3×8–12, adding weight once every set reaches 12.",
   category: "hypertrophy",
   level: "beginner",

@@ -1,14 +1,14 @@
-// Fixed-length blocks built from the copies in Dan's Google Drive. Every week has its own days
+// Fixed-length blocks built from the programs' own spreadsheets. Every week has its own days
 // (one DayDef per week × day, ids "W3D2"), generated from compact spec strings so the tables
 // below can be read side by side with the source sheets.
 //
-//   candito6    Candito 6 Week Strength Program (Jonnie Candito). Percentages backed out of Dan's
+//   candito6    Candito 6 Week Strength Program (Jonnie Candito). Percentages backed out of the
 //               "Candito 6 Week Program.xlsx" (1RMs 250/185/295 lb, loads rounded to 5 lb) and the
 //               rules from the program PDF / sheet notes.
-//   clarence14  14 Week Powerlifting by Clarence0. RPE-based; sets/reps/RPEs copied from Dan's
-//               copy of the sheet plus the program guide doc.
+//   clarence14  14 Week Powerlifting by Clarence0. RPE-based; sets/reps/RPEs copied from the
+//               sheet plus the program guide doc.
 //   complete16  "Complete 16-week Program" (the Calgary Barbell 16-week program, Bryce Krawczyk).
-//               % of the sheet's maxes and RPE targets copied from Dan's xlsx.
+//               % of the sheet's maxes and RPE targets copied from the spreadsheet.
 //
 // Spec mini-language (one string per week, segments joined with ";"):
 //   "4x6@80%"        4 sets of 6 at 80% of the slot's max
@@ -169,7 +169,7 @@ const same = (n: number, spec: string) => Array.from({ length: n }, () => spec);
 
 // ───────────────────────── Candito 6 Week ─────────────────────────
 //
-// Source: Dan's Drive "Candito 6 Week Program.xlsx" (computed loads for 1RMs B185/S250/D295 lb,
+// Source: "Candito 6 Week Program.xlsx" (computed loads for 1RMs B185/S250/D295 lb,
 // percentages recovered by dividing and checking the sheet's 5-lb rounding) and "Candito 6 Week
 // Strength Program.pdf". Where a load fits two percentages the 2.5%-step pattern was used:
 //   W2 bench set 3 (82.5 or 85 → 82.5), W3 day 2 bench (82.5 or 85 → 85), W4 day 2 bench set 1
@@ -187,8 +187,8 @@ const C_OPT_LO = "4x8-12|optional: hypertrophy 8–12 (leg curl, calves…) or e
 const C_DLV = "deadlift variation: stiff-leg, snatch-grip, deficit or pause DL, moderate";
 
 const upperAcc = (row: string, press: string, opt: string | null): Row[] => [
-  ["cableRow", null, [row], { note: "upper back #1 (horizontal pull): machine row in Dan's sheet" }],
-  ["ohp", null, [press], { note: "shoulders: military press in Dan's sheet" }],
+  ["cableRow", null, [row], { note: "upper back #1 (horizontal pull): machine row in the source sheet" }],
+  ["ohp", null, [press], { note: "shoulders: military press in the source sheet" }],
   ["pullUp", null, [press], { note: "upper back #2 (vertical pull): weighted pull-up" }],
   ...(opt ? ([["lateralRaise", null, [opt]], ["overheadTricep", null, [opt]]] as Row[]) : []),
 ];
@@ -268,7 +268,7 @@ export const candito6: ProgramTemplate = {
   id: "candito6",
   name: "Candito 6 Week Strength",
   author: "Jonnie Candito",
-  source: "Dan's Drive: Candito 6 Week Program.xlsx + Candito 6 Week Strength Program.pdf",
+  source: "Candito 6 Week Program.xlsx + Candito 6 Week Strength Program.pdf",
   summary: "Six-week upper/lower block off your 1RMs: conditioning, hypertrophy, linear max OT, heavy acclimation, then 1–4 rep max sets and a max test. 3–5 sessions a week.",
   category: "strength",
   level: "intermediate",
@@ -312,8 +312,8 @@ export const candito6: ProgramTemplate = {
 
 // ───────────────────────── Clarence0 14 Week ─────────────────────────
 //
-// Source: Dan's Drive "Copy of 14 Week Powerlifting by Clarence0.xlsx" (all sets / reps / RPEs)
-// and the guide doc "Copy of Powerlifting Program by Clarence0". RPE-based: pick a weight in the
+// Source: "14 Week Powerlifting by Clarence0.xlsx" (all sets / reps / RPEs)
+// and the guide doc "Powerlifting Program by Clarence0". RPE-based: pick a weight in the
 // RPE range, add weight week to week when you can. "Go for an X rep max" sets are an AMRAP with a
 // weight you think you can do X with; those and the week-14 1RMs update the lift's max here.
 // Only strict press uses percentages (of your OHP max). Phases: high volume (1–6, 6 = deload),
@@ -469,7 +469,7 @@ export const clarence14: ProgramTemplate = {
   id: "clarence14",
   name: "Clarence0 14 Week Powerlifting",
   author: "Clarence0",
-  source: "Dan's Drive: Copy of 14 Week Powerlifting by Clarence0.xlsx + program guide doc",
+  source: "14 Week Powerlifting by Clarence0.xlsx + program guide doc",
   summary: "RPE-based 4-day powerlifting block: high volume (weeks 1–6), strength (7–11), peaking with a 1RM test in week 14.",
   category: "powerlifting",
   level: "intermediate",
@@ -502,7 +502,7 @@ export const clarence14: ProgramTemplate = {
 
 // ───────────────────────── Complete 16 Week (Calgary Barbell) ─────────────────────────
 //
-// Source: Dan's Drive "Complete+16-week+Program.xlsx" — the Calgary Barbell 16-week program (Bryce
+// Source: "Complete+16-week+Program.xlsx" — the Calgary Barbell 16-week program (Bryce
 // Krawczyk; identified from the title, layout and LiftVault's description, the sheet has no byline).
 // Blocks: weeks 1–4, 5–8, 9–11, 12–15, then a taper week of four sessions (5/4/3/2 days out).
 // % are of the sheet's maxes (it calls them training maxes; loads like 67% × 255 = 170 match).
@@ -625,7 +625,7 @@ export const complete16: ProgramTemplate = {
   id: "complete16",
   name: "Calgary Barbell 16 Week",
   author: "Bryce Krawczyk (Calgary Barbell)",
-  source: "Dan's Drive: Complete+16-week+Program.xlsx",
+  source: "Complete+16-week+Program.xlsx",
   summary: "16-week, 4-day powerlifting peak: % of max plus RPE work with lots of paused variations, finishing with a meet taper.",
   category: "powerlifting",
   level: "intermediate",

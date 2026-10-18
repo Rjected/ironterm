@@ -1,6 +1,6 @@
 import type { ProgramConfig, ProgramDef, ProgramTemplate } from "../program";
 import { calgary8, juggernaut, rtsGeneralized } from "./advanced";
-import { candito6, clarence14, complete16 } from "./drive-blocks";
+import { candito6, clarence14, complete16 } from "./sheet-blocks";
 import { gzclp } from "./gzclp";
 import { LIFTVAULT_TEMPLATES } from "./liftvault";
 import { gzclFamily } from "./gzcl-family";

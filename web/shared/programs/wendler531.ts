@@ -1,6 +1,6 @@
 // Wendler 5/3/1, 4-day, with a supplemental template. Percentages are of the training max (TM),
 // which starts around 90% of your 1RM. TM goes up once per cycle: +5 lb upper, +10 lb lower.
-// Checked against Dan's "Copy of Wendler 5-3-1 v1.3.xlsx" (Jon K's sheet): same set percentages
+// Checked against "Wendler 5-3-1 v1.3.xlsx" (Jon K's sheet): same set percentages
 // (65/75/85, 70/80/90, 75/85/95, deload 40/50/60), TM = 90% of 1RM, BBB 5×10 @ 50% of TM. That
 // sheet also keeps BBB in the deload week; here (as in Forever) the deload week drops it.
 

@@ -1,6 +1,6 @@
 // Travel: trips, hotel-gym maintenance sessions, and the ramp back after a break.
 //
-// Why the ramp is mostly about volume: in Dan's history, the first squat session after 9–17 days
+// Why the ramp is mostly about volume: in one long-term training log, the first squat session after 9–17 days
 // off averages only ~3% below the pre-break e1RM and recovers within 2–3 sessions — strength
 // barely moves. The post-trip soreness is the "repeated bout effect" wearing off (protection
 // against eccentric damage fades over a couple of weeks without the stimulus; McHugh 2003,

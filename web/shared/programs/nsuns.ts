@@ -1,7 +1,7 @@
 // nSuns 5/3/1 LP, 5-day. Every week is the same; the reps you get on the 1+ set decide how much
 // that lift's TM goes up next week.
 //
-// Verified against the "5 Day LP" tab of the LiftVault nSuns LP Complete Bundle (Dan's Drive copy
+// Verified against the "5 Day LP" tab of the LiftVault nSuns LP Complete Bundle (spreadsheet copy
 // and the public original): every set's weight / TM matches these percentages at 5 lb rounding.
 // TM rule from the sheet: 0-1 reps on the 1+ set → no change, 2-3 → +5 lb, 4-5 → +5-10 lb,
 // 6+ → +10-15 lb (low end for upper-body lifts, high end for lower).

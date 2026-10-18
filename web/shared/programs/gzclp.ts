@@ -1,5 +1,5 @@
-// GZCLP, from "GZCLP 3 or 4-Day (12 Week) v4.5b5 by /u/Blacknoir" (LiftVault), the sheet in
-// Dan's Drive. The rules below come from the sheet's Start tab:
+// GZCLP, from "GZCLP 3 or 4-Day (12 Week) v4.5b5 by /u/Blacknoir" (LiftVault). The rules
+// below come from the sheet's Start tab:
 //
 //   T1  5×3+ → 6×2+ → 10×1+ (modified 3×5+ → 4×3+ → 5×2+). Add weight each success.
 //       Missing base volume (15 / 12 / 10) drops a stage at the SAME weight. Failing the last

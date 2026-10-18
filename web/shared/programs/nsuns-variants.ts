@@ -1,7 +1,7 @@
 // nSuns 5/3/1 LP: 4-day, 6-day squat-focus and 6-day deadlift-focus layouts. Same set tables and
 // weekly TM rule as the 5-day program (see nsuns.ts); only the day layout changes.
 //
-// Source: LiftVault "nSuns Linear Progression (LP) Complete Bundle" (Dan's Drive copy + the public
+// Source: LiftVault "nSuns Linear Progression (LP) Complete Bundle" (the spreadsheet + the public
 // original it was copied from). Every Mon–Fri set in the "4 Day LP", "6 Day Deadlift Focus" and
 // unnamed squat-focus tab ("Sheet3") divides back to the 5-day percentages at 5 lb rounding.
 //
@@ -47,7 +47,7 @@ export const nsuns4: ProgramTemplate = {
   id: "nsuns-4day",
   name: "nSuns LP 4-Day",
   author: "/u/nSuns",
-  source: "Dan's Drive: nSuns Linear Progression (LP) Complete Bundle | LiftVault.com (4 Day LP tab)",
+  source: "nSuns Linear Progression (LP) Complete Bundle | LiftVault.com (4 Day LP tab)",
   summary: "The 5-day nSuns LP minus the OHP day: two bench days, one squat day, one deadlift day, weekly TM bumps from the 1+ sets.",
   category: "strength",
   level: "intermediate",
@@ -86,7 +86,7 @@ function sixDay(focus: "squat" | "deadlift"): ProgramTemplate {
     id,
     name,
     author: "/u/nSuns",
-    source: `Dan's Drive / LiftVault: nSuns LP Complete Bundle (${focus === "squat" ? "squat-focus tab" : "6 Day Deadlift Focus tab"})`,
+    source: `LiftVault: nSuns LP Complete Bundle (${focus === "squat" ? "squat-focus tab" : "6 Day Deadlift Focus tab"})`,
     summary: `The 5-day nSuns LP plus a sixth day of extra ${focus} volume (8×3 at a moderate weight, plus 6×3 on a variation).`,
     category: "strength",
     level: "intermediate",

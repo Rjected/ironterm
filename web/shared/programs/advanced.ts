@@ -11,7 +11,7 @@
 // LiftVault ("8 Week" and "16 Week (original)"), exported tab by tab: exact sets, reps, %1RM /
 // RPE, rest and accessories. The 8 week is the 16 week's weeks 5–8 and 12–15 plus the taper
 // (checked row by row), so the 16-week data is kept here as the source table. (The 16 week
-// itself is `complete16` in drive-blocks.ts.) In weeks 5–8 the back-off sets are "% of E1RM" from
+// itself is `complete16` in sheet-blocks.ts.) In weeks 5–8 the back-off sets are "% of E1RM" from
 // that day's RPE top set (`ofTop` sets); an e1rm rule also resets the 1RM from that top set so
 // later % work (the taper) runs off the latest e1RM.
 // The sheets write "1+2F" / "1+2R" (top set + 2 more sets) without defining F and R.

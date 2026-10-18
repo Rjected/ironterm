@@ -1,7 +1,7 @@
 // Hypertrophy / upper-lower programs: Reddit PPL, PHUL, PHAT, Lyle McDonald's Generic Bulking
 // Routine, Ivysaur 4-4-8 and the Candito Linear Program.
 //
-// None of these are in Dan's Drive. Sources are published write-ups (original pages were often
+// No source spreadsheets for these. Sources are published write-ups (original pages were often
 // blocked, so most numbers come from faithful secondary copies, cross-checked):
 //   Reddit PPL   /u/Metallicadpa's r/Fitness post, via LiftVault, Liftosaur and Boostcamp copies.
 //                Pull: deadlift 1×5+ / barbell row 4×5,1×5+ (alternating), pulldown 3×8–12, cable
