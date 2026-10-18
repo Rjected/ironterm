@@ -44,8 +44,7 @@ import { addDays, durationMin, localDate, repPRs, weekStart, workingSets, workou
 import { onTrip } from "./travel";
 import { fromKg, loadStep, roundTo, toKg, type Unit } from "./units";
 import { renderBodySvg } from "./anatomy-svg";
-import { programLifts } from "./swaps";
-import { programSwaps, type ProgramSwap } from "./swap-list";
+import { programSwaps, withSwap, type ProgramSwap } from "./swap-list";
 export { programSwaps, type ProgramSwap };
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
@@ -344,14 +343,12 @@ export function swapLift(b: Bootstrap, body: unknown): { cfg: ProgramConfig } | 
   if (!cfg) return { error: "no active program", status: 400 };
   if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "body must be {lift, to}", status: 400 };
   const { lift, to } = body as { lift?: unknown; to?: unknown };
-  const base = getTemplate(cfg.templateId)?.build(cfg.options);
-  if (!base || typeof lift !== "string" || !programLifts(base).includes(lift)) return { error: "lift must be one of the program's exercises", status: 400 };
-  if (to !== null && (typeof to !== "string" || !LIFTS[to] || to === lift)) return { error: "to must be another exercise (or null to undo the swap)", status: 400 };
-  const swaps = { ...(cfg.swaps ?? {}) };
-  if (to === null) delete swaps[lift]; else swaps[lift] = to;
-  const startWeights = { ...cfg.startWeights };
-  for (const d of base.days) for (const sl of d.slots) if (sl.lift === lift) delete startWeights[sl.id];
-  return { cfg: { ...cfg, swaps, startWeights } };
+  if (typeof lift !== "string" || (to !== null && typeof to !== "string")) return { error: "body must be {lift: string, to: string | null}", status: 400 };
+  try {
+    return { cfg: withSwap(cfg, lift, to) };
+  } catch (e) {
+    return { error: (e as Error).message, status: 400 };
+  }
 }
 
 export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppProgram {
