@@ -10,12 +10,24 @@ object ProgramBrowse {
     const val MAX_NUMBER = 2000.0
     val DOW = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
 
-    /** "4 days · 12 weeks · beginner", "3–4 days · open-ended · intermediate" */
+    /** "4 days · 12-week block · beginner", "4 days · cycles forever · intermediate", "3–4 days · ongoing · beginner" */
     fun tags(p: ProgramSummary): String = listOfNotNull(
         days(p.daysPerWeek),
-        p.weeks?.let { if (it == 1) "1 week" else "$it weeks" } ?: "open-ended",
+        length(p),
         p.level.ifBlank { null },
     ).joinToString(" · ")
+
+    /**
+     * How long it runs: a block ends ("12-week block"), cycles repeat forever with the maxes rising
+     * ("cycles forever"), ongoing programs have no weeks at all ("ongoing"). Older servers send only
+     * the week count: "12 weeks" / "open-ended".
+     */
+    fun length(p: ProgramSummary): String = when (p.length) {
+        "cycles" -> "cycles forever"
+        "ongoing" -> "ongoing"
+        "block" -> (p.weeks ?: p.cycleWeeks)?.let { "$it-week block" } ?: "block"
+        else -> p.weeks?.let { if (it == 1) "1 week" else "$it weeks" } ?: "open-ended"
+    }
 
     fun days(d: List<Int>): String? {
         val s = d.distinct().sorted()
@@ -29,7 +41,7 @@ object ProgramBrowse {
 
     /** Header line: "GZCL · 4 DAYS · OPEN-ENDED" */
     fun header(p: ProgramSummary): String = listOfNotNull(
-        p.category.ifBlank { null }, days(p.daysPerWeek), p.weeks?.let { "$it weeks" } ?: "open-ended",
+        p.category.ifBlank { null }, days(p.daysPerWeek), length(p),
     ).joinToString(" · ").uppercase()
 
     data class Filter(val query: String = "", val days: Int? = null, val level: String? = null) {

@@ -24,6 +24,10 @@ struct ProgramSummary: Codable, Equatable, Identifiable, Hashable, Sendable {
     /// length of one run in weeks; nil = open-ended
     var weekCount: Int?
     var summary: String
+    /// block (ends after weekCount weeks) | cycles (repeats forever) | ongoing (no weeks); nil from older servers
+    var length: String? = nil
+    /// weeks per cycle (cycles) or the block length (block)
+    var cycleWeeks: Int? = nil
 }
 
 /// GET /api/app/programs/{id}
@@ -37,6 +41,9 @@ struct ProgramDetail: Codable, Equatable, Sendable {
     /// length of one run in weeks; nil = open-ended
     var weekCount: Int?
     var summary: String
+    /// block | cycles | ongoing (see ProgramSummary)
+    var length: String?
+    var cycleWeeks: Int?
     var source: String
     var notes: [String]
     var options: [Option]
@@ -51,7 +58,7 @@ struct ProgramDetail: Codable, Equatable, Sendable {
     var start: Start
 
     enum CodingKeys: String, CodingKey {
-        case id, name, author, category, level, daysPerWeek, weekCount, summary, source, notes, options, unit, basis, rules, start
+        case id, name, author, category, level, daysPerWeek, weekCount, summary, length, cycleWeeks, source, notes, options, unit, basis, rules, start
         case plan = "weeks"
     }
 
@@ -123,7 +130,7 @@ struct ProgramDetail: Codable, Equatable, Sendable {
 
 extension ProgramDetail {
     var summaryRow: ProgramSummary {
-        ProgramSummary(id: id, name: name, author: author, category: category, level: level, daysPerWeek: daysPerWeek, weekCount: weekCount, summary: summary)
+        ProgramSummary(id: id, name: name, author: author, category: category, level: level, daysPerWeek: daysPerWeek, weekCount: weekCount, summary: summary, length: length, cycleWeeks: cycleWeeks)
     }
 
     /// lift key → display name, from the planned workouts
@@ -305,9 +312,22 @@ enum ProgramText {
         return w == 1 ? "1 week" : "\(w) weeks"
     }
 
-    /// "4 days · open-ended · beginner"
+    /// How long it runs: "12-week block" (ends), "cycles forever" (repeats, maxes rising), "ongoing"
+    /// (no weeks). Older servers send only the week count: "12 weeks" / "open-ended".
+    static func length(_ w: Int?, kind: String?, cycleWeeks: Int? = nil) -> String {
+        switch kind {
+        case "cycles": return "cycles forever"
+        case "ongoing": return "ongoing"
+        case "block":
+            let n: Int? = w ?? cycleWeeks
+            return n.map { "\($0)-week block" } ?? "block"
+        default: return length(w)
+        }
+    }
+
+    /// "4 days · cycles forever · beginner"
     static func tags(_ p: ProgramSummary) -> String {
-        [days(p.daysPerWeek), length(p.weekCount), p.level].filter { !$0.isEmpty }.joined(separator: " · ")
+        [days(p.daysPerWeek), length(p.weekCount, kind: p.length, cycleWeeks: p.cycleWeeks), p.level].filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     static func category(_ c: String) -> String {
