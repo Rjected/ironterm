@@ -1,6 +1,6 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, csrfBlock, OWNER, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, OWNER, passwordMatches, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
@@ -17,6 +17,7 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { clientIp, loginBlocked, loginFailed, loginSucceeded } from "./ratelimit";
 import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 import { BadRequest, liveSession, notesEdit, programConfig, readJson, readObject, settingsPatch, trips as tripsBody, validTz, weighIn } from "./validate";
@@ -113,7 +114,7 @@ async function afterSync(env: Env) {
   if (!env.HEVY_API_KEY) return;
   const [s, cfg] = await Promise.all([settings(env, "live"), program(env, "live")]);
   if (!s.autoPush || !cfg || !cfg.routineDays || !Object.keys(cfg.routineDays).length) return;
-  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg);
+  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, undefined, { today: today(s.tz), reentry: s.reentry });
   await kvPut(env.DB, "program", r.cfg);
 }
 
@@ -196,8 +197,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ error: "No login configured for this deployment." }, { status: 403 });
   }
   if (path === "/api/login" && method === "POST") {
-    const { password } = await readObject(req, true);
-    if (!env.APP_PASSWORD || typeof password !== "string" || !safeEqual(password, env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
+    if (!env.APP_PASSWORD) return json({ error: "Password sign-in isn't configured." }, { status: 404 });
+    const ip = clientIp(req);
+    const wait = await loginBlocked(env.DB, ip);
+    if (wait) return json({ error: `Too many wrong passwords. Try again in ${Math.ceil(wait / 60)} min.` }, { status: 429, headers: { "retry-after": String(wait) } });
+    const { password: pw } = await readObject(req, true);
+    const password = typeof pw === "string" ? pw : "";
+    if (!(await passwordMatches(password, env.APP_PASSWORD))) {
+      await loginFailed(env.DB, ip);
+      return json({ error: "Wrong password" }, { status: 401 });
+    }
+    await loginSucceeded(env.DB, ip);
     return json({ ok: true }, { headers: { "set-cookie": await sessionCookie(sessionSecret!) } });
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
@@ -390,12 +400,16 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const cfg = await program(env, m);
     if (!cfg) return json({ error: "Set up a program first." }, { status: 400 });
     const dayIndex = checkDayIndex(body.dayIndex, cfg);
-    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex);
+    const s = await settings(env, m);
+    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex, { today: today(s.tz), reentry: s.reentry });
     await kvPut(env.DB, "program", r.cfg);
     return json(r);
   }
 
   // ── gym mode: the in-progress session lives server-side so a phone refresh never loses it
+  // A debounced save that lands after FINISH (or a retry from another device) must not bring
+  // the finished session back as the live one.
+  if (path === "/api/live" && method === "PUT" && (await alreadyFinished(env, m, req.clone() as Request))) return json({ ok: true, finished: true });
   if (path === "/api/live" && method === "PUT") {
     await kvPut(env.DB, k(m, "live"), liveSession(await readJson(req)));
     return json({ ok: true });
@@ -489,6 +503,14 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   return json({ error: "not found" }, { status: 404 });
 }
 
+/** Is this PUT /api/live body a session that was already saved as a workout? */
+async function alreadyFinished(env: Env, m: Mode, req: Request): Promise<boolean> {
+  const s = await req.json<{ id?: unknown }>().catch(() => null);
+  if (!s || typeof s.id !== "string") return false;
+  if (m === "demo") return ((await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? []).some((w) => w.id === `demo-live-${s.id}`);
+  return !!(await kvGet<{ workout?: unknown }>(env.DB, `finished:${s.id}`))?.workout;
+}
+
 /** An optional program day index: absent, or a day of the current program. */
 function checkDayIndex(v: unknown, cfg: ProgramConfig | null): number | undefined {
   if (v == null) return undefined;
@@ -497,8 +519,7 @@ function checkDayIndex(v: unknown, cfg: ProgramConfig | null): number | undefine
   return v as number;
 }
 
-function socialCtx(
-req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
+function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
   return {
     env, self: socialOrigin(env, new URL(req.url)),
     boot: async () => bootstrap(env, authMode, await mode(env)),

@@ -259,7 +259,8 @@ function tmRuleText(rule: TmRule, slots: SlotDef[], def: ProgramDef, wr: Writer,
   const weeks = slotWeeks(def, s0);
   const lifts = slots.map((s) => (s.progression as Percent).tmLift);
   const incs = wr.perLift(lifts.map((l) => ({ lift: l, v: wr.tmInc(l) })));
-  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week." : "";
+  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week."
+    : "applyAt" in rule && rule.applyAt === "afterNextWeek" ? " The change applies after the following week." : "";
   const amt = (n: number) => incs.uniform ? wr.signed(wr.tmInc(lifts[0]), n) : `${n < 0 ? "−" : "+"}${plural(Math.abs(n), "step")}`;
   const legend = incs.uniform ? "" : ` One step is ${incs.text}.`;
   switch (rule.type) {
@@ -369,7 +370,9 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const n = p.failsBeforeAction ?? 1;
   const out: string[] = [];
   if (p.advance.type === "amrapAtLeast") {
-    out.push(`${st[0]}. When the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
+    const s0 = p.stages[0];
+    const others = s0.sets > 1 ? `the first ${s0.sets === 2 ? "set gets" : `${word(s0.sets - 1)} sets get`} ${s0.reps} and ` : "";
+    out.push(`${st[0]}. When ${others}the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
     return { title: st.join(" → "), text: out.join(" ") };
   }
   if (p.climb) {
@@ -387,7 +390,7 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const f = p.onFinalFail;
   const bump = f.type === "reset" ? wr.perLift(slots.map((s) => ({ lift: s.lift, v: wr.slotInc(s)! })), f.bumpIncrements) : null;
   const final = f.type === "retest" ? `test a new ${f.rmReps}-rep max and restart at ${pct(f.pct)} of it`
-    : f.type === "reset" ? `go back to ${st[0]} at the weight you last started it with, plus ${bump!.text}`
+    : f.type === "reset" ? `go back to ${st[0]} at the weight you last did it with, plus ${bump!.text}`
     : f.type === "deload" ? `drop the weight ${pct(f.pct)} and build back up`
     : f.type === "deloadBy" ? `drop ${wr.w(f.amount)} and build back up`
     : "";
@@ -508,7 +511,7 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
       else seen.push({ label, weeks: new Set(ws) });
     }
     return {
-      day: (sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
+      day: (sameDays && def.days.length > 3 ? "Every session" : sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
       lifts: seen.map((x) => x.label),
     };
   });

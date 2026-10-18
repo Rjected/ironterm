@@ -7,27 +7,31 @@ every dependency, what we decided for each one, and why.
 Decisions:
 
 - **remove**: not needed.
-- **platform**: replace with what the platform or standard library already ships (WebCrypto,
-  `node:test`, `HttpURLConnection`, Android Keystore, `org.json`…).
+- **platform**: replace with what the platform or standard library already ships (`node:test`,
+  `HttpURLConnection`, the Android Keystore, corepack…).
 - **in-repo**: reimplement just the part we use, with tests, under [`web/packages/`](../web/packages)
   or next to the code that uses it.
 - **keep**: the reason is given. Usually it is the platform itself (Kotlin, Compose, AndroidX),
   a compiler, or something whose in-repo replacement would be *worse*, such as cryptography or TLS.
   We never write our own crypto.
 
-Counts were measured on `main` at `0254df9` (October 2026). "Transitive" means every package that
-ends up installed or on the classpath, including the direct ones.
+"Transitive" means every package that ends up installed or on the classpath, including the direct
+ones.
 
 ## Summary
 
-| Area | Direct | Transitive | After this plan |
-|---|---:|---:|---|
-| web (`web/pnpm-lock.yaml`) | 10 | 154 packages, 414 MB `node_modules` | 4 direct: preact, typescript, esbuild, @types/node (+ `@cloudflare/workers-types`, types only); wrangler only via `npx` when deploying |
-| Android runtime (`releaseRuntimeClasspath`) | 17 | 150 artifacts | about 135: OkHttp, Okio, kotlinx.serialization, androidsvg, security-crypto, Tink, Gson and androidx.browser removed |
-| Android unit tests (`debugUnitTestRuntimeClasspath`) | +9 | 223 artifacts | MockWebServer removed; Robolectric and Roborazzi kept (test-only) |
-| iOS | 0 | 0 | 0. Only Apple frameworks; there is no Swift Package Manager dependency. |
-| Rust CLI (`cargo tree`) | 7 | 164 crates | 0. The CLI becomes a Node script that reuses `web/shared`. |
-| GitHub Actions | 9 | | 5 first-party `actions/*` |
+Before is `main` at `0254df9` (October 2026); after is with every pull request below merged.
+
+| Area | Before | After |
+|---|---|---|
+| web (`web/pnpm-lock.yaml`) | 10 direct, 154 packages, 414 MB `node_modules` | 5 direct (preact, typescript, esbuild, @types/node, @cloudflare/workers-types), 33 packages of which about 26 are esbuild's per-platform binaries (10 installed), 50 MB |
+| web runtime (shipped to browsers) | preact, qrcode-generator | preact |
+| Cloudflare deploy tooling | wrangler in the dev dependencies | `web/deploy/` with its own lockfile (same versions), installed only by `pnpm wrangler` / `pnpm deploy` |
+| Android runtime (`releaseRuntimeClasspath`) | 150 artifacts | 145; about 140 once security-crypto (with Tink and Gson) is removed after its migration has shipped |
+| Android unit tests (`debugUnitTestRuntimeClasspath`) | 223 artifacts | 217 |
+| iOS | 0 | 0 (Apple frameworks only, no Swift packages) |
+| CLI | Rust, 164 crates (`cargo tree`) | Node, no runtime dependencies (`web/cli`) |
+| GitHub Actions | 9 distinct, 4 of them third-party | 4, all GitHub's own `actions/*` |
 
 ## web
 
@@ -36,14 +40,14 @@ ends up installed or on the classpath, including the direct ones.
 | Package | Kind | Transitive deps | Decision |
 |---|---|---:|---|
 | `preact` 10.29.8 | runtime | 0 | **keep** (see [Preact](#preact)) |
-| `qrcode-generator` 1.4.4 | runtime | 0 | **in-repo**: `web/packages/qr`, byte mode with ECC M, versions 1–10 (the connect link is under 200 bytes). It is tested against the old library's output and decoded by an independent reference decoder in the tests. |
-| `vitest` 5.0.3 | test | 88 | **platform**: `node:test` + `node:assert` and a small `describe`/`it`/`expect` shim in `web/packages/test`, so the 466 existing tests keep their shape. Snapshot tests use a small file-based `toMatchSnapshot`. |
-| `vite` 8.3.1 | build | 68 | **in-repo**: `web/scripts/build.mjs` (esbuild) bundles the client, the Worker and the Node server; `web/scripts/dev.mjs` is a dev server that rebuilds on change and reloads the page. |
-| `@cloudflare/vite-plugin` 1.62.3 | build | 132 (shares most with wrangler) | **remove** with vite. The build writes the same `dist/ironterm/wrangler.json` + `.wrangler/deploy/config.json` that the plugin wrote, so `wrangler deploy` keeps working with your existing `wrangler.jsonc`. |
-| `wrangler` 4.145.0 | deploy | 93 | **keep, deploy-only**: run as `npx wrangler@<pinned>` from the deploy scripts, so it isn't installed for development, tests or CI. It is Cloudflare's own tool and the only way to deploy there. |
-| `esbuild` 0.28.1 | build | 1 (+ one platform binary) | **keep**: one Go binary with no npm dependencies; it replaces vite, rolldown and the vitest transform. Dropping it would mean running TypeScript through `tsc` emit and writing our own bundler, which is slower and not safer. |
+| `qrcode-generator` 1.4.4 | runtime | 0 | **in-repo** (#93): `web/packages/qr`, byte mode, level M, versions 1–40. Its matrices are identical to the old library's for 86 inputs across all 40 versions, and the tests decode them with an independent decoder. 5.5 KB minified instead of 21.4 KB. |
+| `vitest` 5.0.3 | test | 88 | **platform** (#82): Node's test runner. `web/scripts/test.mjs` bundles the tests with esbuild and runs them with `node --test`; `web/packages/test` is the part of the vitest API the tests use (`describe`/`it`/`expect`, hooks, `vi.fn`, `vi.stubGlobal`, fake `Date`, snapshots, timeouts), so the test files didn't change. |
+| `vite` 8.3.1 | build | 68 | **in-repo** (#96): `web/scripts/build.mjs` (esbuild) bundles the client, the Worker and the Node server in about 0.2 s; `web/scripts/dev.mjs` watches and reloads the page. |
+| `@cloudflare/vite-plugin` 1.62.3 | build | 132 (shares most with wrangler) | **remove** (#96). The build writes the same redirected deploy config the plugin wrote, and `wrangler deploy --dry-run` prints the same thing. |
+| `wrangler` 4.145.0 | deploy | 93 | **keep, deploy-only** (#96): Cloudflare's own CLI, and the only way to deploy there. It lives in `web/deploy/` with its own lockfile and is installed the first time you run `pnpm wrangler`. `npx wrangler@x` would avoid the extra folder but would resolve its 90 dependencies fresh each time, with no lockfile. |
+| `esbuild` 0.28.1 | build | 1 (+ one platform binary) | **keep**: one Go binary with no npm dependencies; it replaces vite, rolldown and the vitest transform. Node can strip TypeScript types by itself now, but the code imports without file extensions, uses JSX and code-splits the client, so dropping esbuild would mean writing a bundler. That is not worth it, and not safer. |
 | `typescript` 5.9.3 | compiler | 0 | **keep**: the compiler; it has no dependencies. |
-| `@types/node` 22.13.0 | types | 1 (`undici-types`) | **keep**: types only, never runs. It is used by `web/server` and the tests. |
+| `@types/node` 22.13.0 | types | 1 (`undici-types`) | **keep**: types only, never runs. Used by `web/server`, the CLI and the tests. |
 | `@cloudflare/workers-types` | types | 0 | **keep**: types only, never runs. |
 
 ### Preact
@@ -68,27 +72,27 @@ Direct dependencies from `android/app/build.gradle.kts` (`./gradlew :app:depende
 | `androidx.glance:glance-appwidget` | **keep**: platform (home screen widgets). |
 | `androidx.work:work-runtime-ktx` | **keep**: platform (background refresh). It pulls in Room/SQLite, but there is no lighter correct way to schedule periodic work. |
 | `kotlinx-coroutines-android` (+ `-test`) | **keep**: Kotlin's own library, already required by Compose and lifecycle. |
-| `com.squareup.okhttp3:okhttp` (+ Okio) | **platform**: `HttpURLConnection`. The app makes a handful of JSON GET/POST calls; TLS comes from the platform. |
-| `com.squareup.okhttp3:mockwebserver` (tests) | **platform**: a tiny test server on the JDK's built-in `com.sun.net.httpserver`. |
-| `kotlinx-serialization-json` + its compiler plugin | **in-repo**: a small JSON reader/writer (`data/Json.kt`) and explicit decoders for each model. They behave the same in JVM tests and on the device, unlike `org.json`, which is a stub in plain JVM tests. |
-| `com.caverock:androidsvg-aar` | **in-repo**: an SVG path renderer for the body figure, ported from the iOS parser in `ios/Ironterm/Body/SVG.swift`. |
-| `androidx.security:security-crypto` (deprecated; pulls in Tink and Gson) | **platform**: an AES-GCM key in the Android Keystore that encrypts the stored credentials. Existing encrypted preferences are migrated once on first launch. The crypto itself is the platform's; we only call it. |
-| `androidx.browser` | **platform**: a plain `ACTION_VIEW` `Intent`. |
+| `com.squareup.okhttp3:okhttp` (+ Okio) | **platform** (#59): `HttpURLConnection`, wrapped in `Net.send` / `Net.exchange`. Calls are cancellable, and redirects follow our rules: never https → http, and credentials are dropped when a redirect leaves the origin. TLS comes from the platform. |
+| `com.squareup.okhttp3:mockwebserver` (tests) | **in-repo** (#59): a ~170-line HTTP/1.1 test server on a `ServerSocket` with the same API. (`com.sun.net.httpserver` isn't on the Android unit-test classpath.) |
+| `kotlinx-serialization-json` + its compiler plugin | **keep**. There are 184 `@Serializable` classes. Hand-written codecs would be thousands of lines that every model change has to keep in sync, a bigger correctness risk than the library. It comes from JetBrains (the Kotlin vendor), the plugin ships with the compiler, and the runtime is two artifacts with no third-party dependencies. |
+| `com.caverock:androidsvg-aar` | **in-repo** (#50): `ui/Svg.kt`, a port of the iOS renderer in `ios/Ironterm/Body/SVG.swift`. It also fixed the Android figure being drawn narrower than on iOS and the web. |
+| `androidx.security:security-crypto` (deprecated; pulls in Tink and Gson) | **platform** (#72): an AES-256-GCM key in the Android Keystore seals the stored credentials. The old encrypted file is migrated once on first launch, so the library stays **only for that one read**. Remove it, and `Settings.migrateLegacy`, after a few releases. |
+| `androidx.browser` | **platform** (#23): the Custom Tabs extras set directly on an `ACTION_VIEW` `Intent`. |
 | `play-services-code-scanner` | **keep**: QR scanning without the CAMERA permission. It accounts for about 25 artifacts (Firebase, ML Kit, datatransport, legacy support libraries). Replacing it means asking for the camera permission, writing a camera pipeline and a QR *decoder* (much harder than an encoder). Filling in the fields by hand, or tapping "Open in app" on the phone, already works without it. This is a candidate for later. |
 | `junit` | **keep** (tests). |
-| Robolectric, `androidx.test:*`, `compose ui-test-junit4` | **keep, test-only**: runs Android framework code on the JVM so 280+ tests don't need an emulator. Never shipped in the APK. |
+| Robolectric, `androidx.test:*`, `compose ui-test-junit4` | **keep, test-only**: runs Android framework code on the JVM so 300+ tests don't need an emulator. Never shipped in the APK. |
 | Roborazzi (+ Differ) | **keep, test-only**: it renders `docs/screens/android` and the widget previews. Never shipped. |
-| Gradle plugins: AGP 8.7.3, Kotlin 2.0.21, Compose compiler | **keep**: the toolchain. The serialization plugin is removed with kotlinx.serialization. |
+| Gradle plugins: AGP 8.7.3, Kotlin 2.0.21, Compose compiler, kotlinx.serialization | **keep**: the toolchain. CI checks the Gradle wrapper jar and distribution against Gradle's published checksums (#19). |
 
 ## iOS
 
 No third-party code: SwiftUI, WidgetKit, Foundation, Security and CryptoKit only. The body figure
 already uses an in-repo SVG parser. Nothing to do.
 
-## Rust CLI (`src/`)
+## CLI
 
-`reqwest`, `tokio`, `serde`, `serde_json`, `chrono`, `clap`, `crossterm`: 164 crates in `cargo tree`
-for a 500-line program that fetches workouts and prints a graph.
+The Rust CLI used `reqwest`, `tokio`, `serde`, `serde_json`, `chrono`, `clap` and `crossterm`: 164
+crates in `cargo tree` for a 500-line program that fetches workouts and prints a graph.
 
 Options:
 
@@ -98,8 +102,8 @@ Options:
 2. **A zero-dependency Node CLI** that reuses `web/shared` (Hevy types, `dailyCells`, the same
    quartile levels the web app, Android and iOS use) and Node's built-in `fetch` and `Intl` time zones.
 
-**Decision: option 2.** The Node CLI drops all 164 crates and the Rust toolchain from CI, and its
-graph can't drift from the web app's, because it runs the same code. TLS comes from Node's
+**Decision: option 2** (#16). The Node CLI drops all 164 crates and the Rust toolchain from CI, and
+its graph can't drift from the web app's, because it runs the same code. TLS comes from Node's
 bundled OpenSSL, not from code we wrote. The trade-off: it needs Node 22 instead of being a single
 static binary. Node is already required to develop the web app.
 
@@ -108,25 +112,30 @@ static binary. Node is already required to develop the web app.
 | Action | Used by | Decision |
 |---|---|---|
 | `actions/checkout`, `actions/setup-node`, `actions/setup-java`, `actions/upload-artifact` | all | **keep**: GitHub's own. |
-| `pnpm/action-setup` | web | **platform**: `corepack enable`, which ships with Node, reading `packageManager` in `web/package.json`. |
-| `gradle/actions/setup-gradle` | android | **platform**: `actions/setup-java` with `cache: gradle` and the checked-in Gradle wrapper. |
-| `maxim-lobanov/setup-xcode` | ios | **platform**: a shell step that picks the newest `/Applications/Xcode_*.app` with `xcode-select`. |
-| `dtolnay/rust-toolchain`, `Swatinem/rust-cache` | cli | **remove** with the Rust CLI. |
+| `pnpm/action-setup` | web | **platform** (#19): `corepack enable`, which ships with Node, with pnpm pinned by version and sha512 in `web/package.json`. |
+| `gradle/actions/setup-gradle` | android | **platform** (#19): `actions/setup-java` with `cache: gradle`; the wrapper jar is checked against Gradle's published checksum and the distribution by `distributionSha256Sum`. |
+| `maxim-lobanov/setup-xcode` | ios | **platform** (#19): a shell step that picks the newest `/Applications/Xcode_*.app` with `xcode-select`. |
+| `dtolnay/rust-toolchain`, `Swatinem/rust-cache` | cli | **remove** with the Rust CLI (#16). |
 
-## Order of work
+## Pull requests
 
-Each step is one small PR that keeps every test green:
+| # | Change |
+|---|---|
+| #10 | This inventory |
+| #16 | CLI: Rust → zero-dependency Node CLI (`web/cli`) |
+| #19 | CI: corepack, setup-java's Gradle cache and wrapper checksum, xcode-select |
+| #23 | Android: `androidx.browser` → Custom Tabs intent extras |
+| #50 | Android: androidsvg → in-repo SVG renderer |
+| #59 | Android: OkHttp + MockWebServer → `HttpURLConnection` + an in-repo test server |
+| #72 | Android: security-crypto → Android Keystore, with a migration |
+| #82 | web: vitest → `node:test` + `web/packages/test` |
+| #93 | web: qrcode-generator → `web/packages/qr` |
+| #96 | web: vite + plugin → esbuild build and dev server; wrangler deploy-only |
 
-1. This inventory.
-2. CLI: Rust → zero-dependency Node CLI (`web/cli`), README and CI.
-3. CI: drop the third-party actions (corepack, setup-java gradle cache, xcode-select).
-4. Android: `androidx.browser` → `Intent`.
-5. Android: OkHttp + MockWebServer → `HttpURLConnection` + a JDK test server.
-6. Android: security-crypto → Android Keystore, with a migration.
-7. Android: androidsvg → in-repo SVG path renderer.
-8. Android: kotlinx.serialization → in-repo JSON codec.
-9. web: vitest → `node:test` + an `expect` shim (`web/packages/test`).
-10. web: qrcode-generator → `web/packages/qr`.
-11. web: vite + `@cloudflare/vite-plugin` → esbuild build + dev server; wrangler via `npx`.
+## Later
 
-The web steps go last because other work changes web code every day.
+- Remove `androidx.security:security-crypto` (with Tink and Gson) once the Keystore migration has
+  shipped for a few releases.
+- `play-services-code-scanner` (about 25 artifacts) is the biggest remaining Android subtree; see
+  above.
+- Preact: see above.

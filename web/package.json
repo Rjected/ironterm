@@ -23,8 +23,7 @@
     "deploy:directory": "wrangler d1 migrations apply ironterm-directory --remote --config wrangler.directory.jsonc && wrangler deploy --config wrangler.directory.jsonc"
   },
   "dependencies": {
-    "preact": "10.29.8",
-    "qrcode-generator": "1.4.4"
+    "preact": "10.29.8"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.62.3",

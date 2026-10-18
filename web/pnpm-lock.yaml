@@ -11,9 +11,6 @@ importers:
       preact:
         specifier: 10.29.8
         version: 10.29.8
-      qrcode-generator:
-        specifier: 1.4.4
-        version: 1.4.4
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: 1.62.3
@@ -667,9 +664,6 @@ packages:
       preact-render-to-string:
         optional: true
 
-  qrcode-generator@1.4.4:
-    resolution: {integrity: sha512-HM7yY8O2ilqhmULxGMpcHSF1EhJJ9yBj8gvDEuZ6M+KGJ0YY2hKpnXvRD+hZPLrDVck3ExIGhmPtSdcjC+guuw==}
-
   rolldown@1.2.14:
     resolution: {integrity: sha512-eTBTTqMR6uHKLgcUqpJP8ntzDI6V4LYA8negAMBEI7gkgVvOdrx6VsvS2Ym+83KhOPdLCHWJu0w7UQFJZhHKNw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1232,8 +1226,6 @@ snapshots:
       source-map-js: 1.2.2
 
   preact@10.29.8: {}
-
-  qrcode-generator@1.4.4: {}
 
   rolldown@1.2.14:
     dependencies:

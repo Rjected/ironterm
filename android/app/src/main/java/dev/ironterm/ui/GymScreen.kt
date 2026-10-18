@@ -75,7 +75,7 @@ fun rememberNow(start: Long, ticking: Boolean): Long {
 }
 
 @Composable
-fun GymScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now0: Long, onSetup: () -> Unit, ticking: Boolean = true) {
+fun GymScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now0: Long, onSetup: () -> Unit, ticking: Boolean = true, onBrowse: () -> Unit = {}) {
     LaunchedEffect(state.mode) { actions.load(Screens.GYM) }
     val now = rememberNow(now0, ticking)
     val s = gym.state.session
@@ -104,7 +104,7 @@ fun GymScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now
             when {
                 s != null -> LiveScreen(s, state, data, gym, actions, now)
                 sum != null -> FinishSummaryScreen(sum, gym, actions)
-                else -> StartScreen(state, data, actions, onSetup)
+                else -> StartScreen(state, data, actions, onSetup, onBrowse)
             }
         }
     }
@@ -114,7 +114,7 @@ fun GymScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSetup: () -> Unit) {
+private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSetup: () -> Unit, onBrowse: () -> Unit) {
     val load = data.gym
     val g: AppGym? = load.data
     if (g == null && load.error == null && state.mode == SourceMode.SERVER) { LoadingState("Gym"); return }
@@ -172,9 +172,9 @@ private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSet
             }
         } else if (state.mode == SourceMode.SERVER && g != null) {
             Section("No active program") {
-                Mono("Pick a program in SETUP → Advanced setup (web), or just start logging.", size = 12.sp, color = T.dim)
+                Mono("Pick one from the catalog (GZCLP, 5/3/1, nSuns…) and start it from here, or just start logging.", size = 12.sp, color = T.dim)
                 Spacer(Modifier.height(10.dp))
-                TButton("Open setup", onClick = onSetup)
+                TButton("Browse programs", primary = true, onClick = onBrowse)
             }
         } else if (state.mode == SourceMode.DIRECT) {
             Section("Direct mode") {
@@ -581,7 +581,7 @@ private fun FocusPanel(ex: LiveExercise, i: Int, unit: String, isCurrent: Boolea
             Spacer(Modifier.weight(1f))
             if (!x.done && x.target == null) {
                 Box(Modifier.clickable { actions.gym { Live.removeSet(it, ex.id, i) } }.size(40.dp), contentAlignment = Alignment.Center) {
-                    Mono("×", size = 18.sp, color = T.down, bold = true)
+                    Mono("×", Modifier.semantics { contentDescription = "Remove set" }, size = 18.sp, color = T.down, bold = true)
                 }
             }
         }
@@ -748,7 +748,8 @@ private fun Keypad(k: KeypadTarget, onDone: (Double?) -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
         }
-        BigButton("OK") { onDone(text.toDoubleOrNull()) }
+        // Untouched: keep the exact value (the display rounds to 0.1, e.g. 1.25 shows as 1.3).
+        BigButton("OK") { onDone(if (fresh) k.initial else text.toDoubleOrNull()) }
     }
 }
 

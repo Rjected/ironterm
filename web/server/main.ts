@@ -14,6 +14,15 @@ import { setPeerFetch } from "../worker/social/net";
 import { peerFetch } from "./peerfetch";
 import { PAGE_HEADERS } from "../worker/headers";
 import { isLocal } from "./local";
+import { checkServerConfig, dataDirError, listenError } from "./config";
+
+// Configuration mistakes stop here with a sentence, before anything else runs.
+const report = checkServerConfig(process.env);
+for (const w of report.warnings) console.warn(`config: ${w}`);
+if (report.errors.length) {
+  for (const e of report.errors) console.error(`config: ${e}`);
+  process.exit(1);
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8787);
@@ -21,9 +30,18 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 const DATA = resolve(process.env.DATA_DIR ?? "./data");
 const STATIC = resolve(process.env.STATIC_DIR ?? join(here, "../client"));
 const SYNC_MIN = Number(process.env.SYNC_MINUTES ?? 15);
+/** behind a reverse proxy: take the client address from X-Forwarded-For */
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 
-mkdirSync(DATA, { recursive: true });
-const DB = new NodeD1(join(DATA, "hevy.sqlite"));
+let DB!: NodeD1;
+try {
+  mkdirSync(DATA, { recursive: true });
+  DB = new NodeD1(join(DATA, "hevy.sqlite"));
+} catch (e) {
+  console.error(`config: ${dataDirError(e as NodeJS.ErrnoException, DATA)}`);
+  process.exit(1);
+}
+if (!existsSync(join(STATIC, "index.html"))) console.warn(`No web app in ${STATIC}: run \`pnpm build:node\` (or set STATIC_DIR). The API still works.`);
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
@@ -78,7 +96,11 @@ function toRequest(req: IncomingMessage): Request {
   const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] ?? "http";
   const host = (req.headers["x-forwarded-host"] as string) ?? req.headers.host ?? `localhost:${PORT}`;
   const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) if (v != null) for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  for (const [k, v] of Object.entries(req.headers)) if (v != null && k !== "cf-connecting-ip") for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  // The client address for rate limits (password sign-in). Clients can't set it: from the socket,
+  // or with TRUST_PROXY=1 from the proxy's X-Forwarded-For.
+  const fwd = TRUST_PROXY ? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() : null;
+  headers.set("cf-connecting-ip", fwd || req.socket.remoteAddress || "unknown");
   const body = req.method === "GET" || req.method === "HEAD" ? undefined : (Readable.toWeb(req) as ReadableStream);
   return new Request(`${proto}://${host}${req.url}`, { method: req.method, headers, body, duplex: "half" } as RequestInit);
 }
@@ -115,6 +137,9 @@ createServer(async (req, res) => {
     if (!res.headersSent) res.writeHead(500, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "internal error" }));
   }
+}).on("error", (e: NodeJS.ErrnoException) => {
+  console.error(listenError(e, PORT, HOST));
+  process.exit(1);
 }).listen(PORT, HOST, () => console.log(`ironterm on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT} · data ${DATA}`));
 
 // The worker's cron, on a timer: sync Hevy (and WHOOP) every SYNC_MINUTES.

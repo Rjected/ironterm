@@ -15,7 +15,8 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class BackupRulesTest {
-    private val secrets = setOf("ironterm_prefs.xml", "__androidx_security_crypto_encrypted_prefs__.xml")
+    // ironterm_settings.xml: settings + Keystore-sealed credentials; the other two: the legacy EncryptedSharedPreferences
+    private val secrets = setOf("ironterm_settings.xml", "ironterm_prefs.xml", "__androidx_security_crypto_encrypted_prefs__.xml")
 
     /** section name ("cloud-backup", "device-transfer", or the root for full-backup-content) → excluded sharedpref paths */
     private fun excludes(res: Int): Map<String, Set<String>> {

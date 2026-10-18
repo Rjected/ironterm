@@ -66,7 +66,6 @@ export interface AppHome {
 
 const e1rmAt = (points: { date: string; e1rm: number }[], date: string) => bestAt(points, date);
 
-
 export function appHome(b: Bootstrap, d: Derived = derive(b, b.settings.graphMetric ?? "volume")): AppHome {
   const keys = d.liftKeys;
   const e1rm = keys.slice(0, 10).flatMap((k) => {
@@ -132,9 +131,9 @@ export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
 
 /** The session the app starts: today's plan (or another day / empty), same as the web GYM view. */
 export function startSession(b: Bootstrap, opts: { dayIndex?: number; empty?: boolean }, now = new Date().toISOString(), d: Derived = derive(b, "volume")): LiveSession {
-  if (opts.empty || !d.def) return emptySession(d.unit, now);
+  if (opts.empty || !d.def) return emptySession(d.unit, now, d.tz);
   const plan = d.plan(opts.dayIndex);
-  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now);
+  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now, d.tz);
 }
 
 // ───────────────────────── lifts ─────────────────────────
@@ -175,8 +174,10 @@ export interface AppLiftDetail {
 }
 
 export function appLift(b: Bootstrap, key: string, d: Derived = derive(b, "volume")): AppLiftDetail | null {
-  const pts = d.lifts[key];
-  if (!pts?.length && !LIFTS[key]) return null;
+  // own keys only: "__proto__" or "constructor" from a URL must not reach Object.prototype
+  const known = Object.hasOwn(LIFTS, key);
+  const pts = Object.hasOwn(d.lifts, key) ? d.lifts[key] : undefined;
+  if (!pts?.length && !known) return null;
   const points = pts ?? [];
   const best = points.length ? points.reduce((a, p) => (p.e1rm > a.e1rm ? p : a), points[0]) : null;
   const asc = [...d.workouts].reverse();
@@ -223,7 +224,8 @@ function summary(w: HevyWorkout, d: Derived): AppWorkoutSummary {
 }
 
 export function appHistory(b: Bootstrap, opts: { cursor?: string | null; limit?: number; q?: string }, d: Derived = derive(b, "volume")): AppHistory {
-  const limit = Math.min(100, Math.max(1, opts.limit ?? 30));
+  // ?limit=abc (NaN) or 2.5 from a client must not turn into an empty page
+  const limit = Math.min(100, Math.max(1, Math.floor(Number.isFinite(opts.limit) ? opts.limit! : 30)));
   const q = opts.q?.trim().toLowerCase();
   const all = q ? d.workouts.filter((w) => w.title.toLowerCase().includes(q) || w.exercises.some((e) => e.title.toLowerCase().includes(q))) : d.workouts;
   const start = opts.cursor ? all.findIndex((w) => w.id === opts.cursor) + 1 : 0;
@@ -274,7 +276,8 @@ export interface AppCalendar {
 }
 
 export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived = derive(b, "volume")): AppCalendar {
-  const m = /^\d{4}-\d\d$/.test(month ?? "") ? month! : d.today.slice(0, 7);
+  // a real month in a sane range (year 0000 made the grid start in year -1)
+  const m = /^(19[7-9]\d|2\d{3})-(0[1-9]|1[0-2])$/.test(month ?? "") ? month! : d.today.slice(0, 7);
   const first = `${m}-01`;
   const dowFirst = (new Date(first + "T12:00:00Z").getUTCDay() + 6) % 7;
   const gridStart = addDays(first, -dowFirst);
