@@ -118,3 +118,45 @@ describe("withSwap (EDIT SETUP and the swap endpoint)", () => {
     expect(withSwap(cfg, "dip", null).swaps).toEqual({});
   });
 });
+
+import { estimateE1rm, similarLift } from "./simulate";
+import { fillMissing, e1rmsFrom } from "./fill";
+import type { HevyWorkout } from "./hevy";
+import { toKg } from "./units";
+
+describe("start weights for swapped and never-logged exercises", () => {
+  it("your own history wins, then a close relative you've logged, then the population ratio", () => {
+    const main = { squat: 300, bench: 225, deadlift: 365, ohp: 150 };
+    const ratioOnly = estimateE1rm("rearDeltFly", main, "lb");
+    const fromFacePull = estimateE1rm("rearDeltFly", { ...main, facePull: 120 }, "lb");
+    expect(similarLift("rearDeltFly", { ...main, facePull: 120 })).toBe("facePull");
+    expect(fromFacePull).not.toBeCloseTo(ratioOnly, 1);
+    // scales by how the two typically compare: a heavier face pull means a heavier rear delt fly
+    expect(estimateE1rm("rearDeltFly", { ...main, facePull: 160 }, "lb")).toBeGreaterThan(fromFacePull);
+    expect(estimateE1rm("rearDeltFly", { ...main, facePull: 120, rearDeltFly: 50 }, "lb")).toBe(50);
+    // a loosely related lift doesn't count (a row is nothing like a rear delt fly in load)
+    expect(similarLift("rearDeltFly", { ...main, row: 200 })).toBeNull();
+  });
+
+  it("a swapped slot starts from your log of the new exercise, not the old one's estimate", () => {
+    const fly = (kg: number, i: number): HevyWorkout => ({
+      id: `fly${i}`, title: "Arms", start_time: `2026-10-${10 + i}T12:00:00Z`, end_time: `2026-10-${10 + i}T13:00:00Z`,
+      exercises: [{ title: "Rear Delt Reverse Fly (Dumbbell)", exercise_template_id: "rdf", sets: [{ type: "normal", weight_kg: kg, reps: 15 }] }],
+    } as HevyWorkout);
+    const cfg = withSwap(monolith(), "facePull", "rearDeltFly");
+    const def = buildProgram(cfg)!;
+    const flySlots = def.days.flatMap((d) => d.slots).filter((s) => s.lift === "rearDeltFly").map((s) => s.id);
+    const weightFor = (workouts: HevyWorkout[]) => {
+      const filled = fillMissing(cfg, (need) => e1rmsFrom([...demo.workouts, ...workouts], "lb", today, need));
+      return filled.startWeights[flySlots[0]];
+    };
+    const none = weightFor([]);
+    const light = weightFor([fly(toKg(15, "lb"), 1)]);
+    const heavy = weightFor([fly(toKg(35, "lb"), 2)]);
+    expect(flySlots.length).toBe(2);
+    expect(heavy).toBeGreaterThan(light);
+    expect(light).not.toBe(none);
+    // a set of 15 at 35 lb: the start weight is a working weight below that e1RM
+    expect(heavy).toBeLessThanOrEqual(35 * (1 + 15 / 30));
+  });
+});

@@ -72,6 +72,7 @@ import { allSlots, applyWorkout, initialState, planDay, type Outcome, type Plann
 import { buildProgram, defaultConfig, getTemplate } from "./programs";
 import { standardPct } from "./rpe";
 import { loadStep, roundTo, toKg, type Unit } from "./units";
+import { similarLifts } from "./swaps";
 
 // ───────────────────────── types ─────────────────────────
 
@@ -223,9 +224,32 @@ function mainE1rms(current: Record<string, number>, unit: Unit): Record<MainLift
 export function estimateE1rm(lift: string, currentE1rms: Record<string, number>, unit: Unit = "lb"): number {
   if ((currentE1rms[lift] ?? 0) > 0) return currentE1rms[lift];
   if (isBodyweight(lift)) return 0;
+  // a close relative you've logged beats a population ratio: scale its e1RM by how the two
+  // compare (both expressed against squat), e.g. your face pulls → a rear delt fly weight
+  const kin = similarLift(lift, currentE1rms);
+  if (kin) return currentE1rms[kin] * squatShare(lift) / squatShare(kin);
   const [base, ratio] = ratioOf(lift);
   return mainE1rms(currentE1rms, unit)[base] * ratio;
 }
+
+/** How alike a logged lift must be to stand in for one you haven't logged. */
+export const KIN_SCORE = 0.9;
+
+/** The most alike lift (≥ KIN_SCORE) you have an e1RM for, if any. Not the big four: those are what the ratio fallback already uses. */
+export function similarLift(lift: string, currentE1rms: Record<string, number>): string | null {
+  for (const o of similarLifts(lift, 12)) {
+    if (o.score < KIN_SCORE) break;
+    if ((currentE1rms[o.lift] ?? 0) > 0 && !isBodyweight(o.lift) && !(BIG_FOUR as readonly string[]).includes(o.lift)) return o.lift;
+  }
+  return null;
+}
+
+/** A lift's typical e1RM as a fraction of squat. */
+const squatShare = (lift: string): number => {
+  if ((BIG_FOUR as readonly string[]).includes(lift)) return MAIN_TO_SQUAT[lift as MainLift];
+  const [base, ratio] = ratioOf(lift);
+  return ratio * MAIN_TO_SQUAT[base];
+};
 
 /** Fraction of 1RM you can lift for n reps (RTS chart at RPE 10). */
 const rmFrac = (n: number) => standardPct(Math.max(1, n), 10);
@@ -292,11 +316,12 @@ function slotStart(slot: SlotDef, e1rm: number): number {
  * A ProgramConfig whose starting weights / training maxes follow the program's conventions,
  * derived from your current e1RMs (in `unit`). Doubles as "switch programs, keep your maxes".
  */
-export function startingConfig(templateId: string, options: Record<string, string>, currentE1rms: Record<string, number>, unit: Unit, startDate: string): ProgramConfig {
+export function startingConfig(templateId: string, options: Record<string, string>, currentE1rms: Record<string, number>, unit: Unit, startDate: string, swaps?: Record<string, string>): ProgramConfig {
   const t = getTemplate(templateId);
   if (!t) throw new Error(`unknown template ${templateId}`);
   const base = defaultConfig(templateId, unit, startDate);
-  const cfg: ProgramConfig = { ...base, options: { ...base.options, ...options }, startWeights: {}, trainingMaxes: {} };
+  // with the swaps applied, a swapped slot is estimated for the exercise actually done
+  const cfg: ProgramConfig = { ...base, options: { ...base.options, ...options }, startWeights: {}, trainingMaxes: {}, ...(swaps ? { swaps } : {}) };
   const def = buildProgram(cfg)!;
   const tmLifts = new Set<string>();
   for (const s of allSlots(def)) {
