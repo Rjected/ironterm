@@ -18,6 +18,12 @@ struct Snapshot: Codable, Equatable {
     var program: Program?
     var lifts: [Lift]
     var recovery: Recovery?
+    /// Where the workouts come from: "hevy", "local" (no Hevy connected: a Strong import and sessions
+    /// logged in GYM live on the server) or "demo". nil from older servers and in Direct mode.
+    var source: String?
+
+    /// The server has no Hevy key: it is the training log and nothing goes to Hevy.
+    var isLocal: Bool { source == "local" }
 
     struct Graph: Codable, Equatable {
         var start: String
