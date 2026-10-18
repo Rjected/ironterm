@@ -86,6 +86,11 @@ export type Progression =
       increment: Weights;
       /** Consecutive failed sessions before stepping down / deloading (StrongLifts: 3). Default 1. */
       failsBeforeAction?: number;
+      /** How a baseVolume session passes. "capped" (default): every set reaches its reps.
+       *  "total": raw reps across the sets reach sets×reps, so a big AMRAP can cover a short set
+       *  (r/Fitness GSLP / BBR: "at least 15 reps combined"). "lastSet": only the last set must
+       *  reach its reps (GreySkull: "when reps on the last set fall below 5"). */
+      count?: "capped" | "total" | "lastSet";
       /** GreySkull: AMRAP of at least `reps` on the last set earns `increments` jumps instead of one. */
       amrapBonus?: { reps: number; increments: number };
     }
@@ -443,7 +448,7 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
         ifSuccess = `${p.advance.reps}+ on last set → ${fmt(s.weight + i)}`;
         ifFail = `fewer → stay at ${fmt(s.weight)}`;
       } else {
-        ifSuccess = `${st.sets * st.reps} reps → ${fmt(s.weight + i)}`;
+        ifSuccess = p.count === "lastSet" ? `${st.reps}+ on the last set → ${fmt(s.weight + i)}` : `${st.sets * st.reps} reps${p.count === "total" ? " in total" : ""} → ${fmt(s.weight + i)}`;
         if (p.amrapBonus) ifSuccess += ` (${p.amrapBonus.reps}+ on last → ${fmt(s.weight + i * p.amrapBonus.increments)})`;
         if (fails + 1 < allowed) ifFail = `miss → retry ${fmt(s.weight)} (${fails + 1}/${allowed})`;
         else if (!last) ifFail = `miss → ${schemeLabel(p.stages[s.stage + 1])} @ ${fmt(s.weight)}`;
@@ -625,9 +630,12 @@ function evalStages(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, s: SlotS
     // Not an attempt at this scheme (different rep range, a single set…): log it, change nothing.
     return { next: s, res: { ...base, outcome: "hold", amrapReps, note: `off-scheme (${work.length}×${medianReps(work)}), not counted` } };
   }
-  // Base volume: each of the first `sets` working sets counts up to its prescribed reps.
-  const vol = work.slice(0, st.sets).reduce((a, x) => a + Math.min(x.reps, st.reps), 0);
-  const need = st.sets * st.reps;
+  // Base volume: each of the first `sets` working sets counts up to its prescribed reps
+  // (or uncapped / last set only, per `count`).
+  const counted = work.slice(0, st.sets);
+  const vol = p.count === "lastSet" ? (counted.length >= st.sets ? Math.min(counted[counted.length - 1].reps, st.reps) : 0)
+    : counted.reduce((a, x) => a + (p.count === "total" ? x.reps : Math.min(x.reps, st.reps)), 0);
+  const need = p.count === "lastSet" ? st.reps : st.sets * st.reps;
   if (vol >= need) {
     const n = p.amrapBonus && st.amrap && (amrapReps ?? 0) >= p.amrapBonus.reps ? p.amrapBonus.increments : 1;
     return { next: { ...cur, weight: w + i * n, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${vol}/${need}${off} → ${fmt(w + i * n)}${n > 1 ? ` (${amrapReps} on AMRAP: ×${n})` : ""}` } };

@@ -3,7 +3,7 @@ import type { HevyWorkout } from "../hevy";
 import { LIFTS } from "../lifts";
 import { allSlots, applyWorkout, initialState, matchDay, planDay, type ProgramConfig, type ProgramState, type ProgramTemplate } from "../program";
 import { toKg } from "../units";
-import { NOVICE_TEMPLATES, allpro, billStarr, greyskull, icf55, madcow, redditBbr, startingStrength, stronglifts, texasMethod } from "./novice";
+import { NOVICE_TEMPLATES, allpro, billStarr, fierce5, greyskull, icf55, madcow, phrakGslp, redditBbr, startingStrength, stronglifts, texasMethod } from "./novice";
 
 const W = (id: string, date: string, ex: [string, [number, number][]][]): HevyWorkout => ({
   id, title: id, start_time: `${date}T12:00:00Z`, end_time: `${date}T13:00:00Z`,
@@ -73,63 +73,144 @@ describe("Starting Strength", () => {
     const n = applyWorkout(def, cfg, s, W("a", "2026-01-02", [["Squat (Barbell)", rep(3, 135, 5)], ["Overhead Press (Barbell)", rep(3, 65, 5)], ["Deadlift (Barbell)", rep(1, 155, 5)]]), 0);
     expect(n.slots).toMatchObject({ sq: { weight: 140 }, press: { weight: 70 }, dl: { weight: 165 } });
   });
+
+  // startingstrength.com "The Reset: Why and How": a lift that fails for the second time in a row
+  // gets a 5% reset.
+  it("second failed session in a row → 5% reset", () => {
+    const { cfg, def } = setup(startingStrength);
+    let s: ProgramState = { ...initialState(def, cfg), slots: { ...initialState(def, cfg).slots, sq: { weight: 300, stage: 0, stage0Weight: 300, retest: false, fails: 0 } } };
+    s = applyWorkout(def, cfg, s, W("a", "2026-03-02", [["Squat (Barbell)", [[300, 5], [300, 5], [300, 3]]]]), 0);
+    expect(s.slots.sq).toMatchObject({ weight: 300, fails: 1 });
+    s = applyWorkout(def, cfg, s, W("b", "2026-03-04", [["Squat (Barbell)", [[300, 5], [300, 4], [300, 3]]]]), 1);
+    expect(s.slots.sq.weight).toBe(285); // 300 × 0.95
+  });
 });
 
 describe("GreySkull family", () => {
-  it("10+ on the AMRAP doubles the jump; a miss resets 10%", () => {
+  // Original GreySkull post: last set under 5 → −10%; extra reps on the AMRAP don't save a short set
+  // only because the LAST set is what's judged.
+  it("GreySkull: 10+ on the AMRAP doubles the jump; the last set under 5 resets 10%", () => {
     const { cfg, def } = setup(greyskull, { arms: "off" });
     let s = initialState(def, cfg);
     s = applyWorkout(def, cfg, s, W("a", "2026-01-02", [["Bench Press (Barbell)", rep(3, 95, 5, 12)]]), 0);
     expect(s.slots.bench.weight).toBe(100); // +2.5 × 2
-    s = applyWorkout(def, cfg, s, W("a2", "2026-01-06", [["Bench Press (Barbell)", rep(3, 100, 5, 7)]]), 0);
-    expect(s.slots.bench.weight).toBe(102.5);
-    s = applyWorkout(def, cfg, s, W("a3", "2026-01-09", [["Bench Press (Barbell)", rep(3, 102.5, 5, 3)]]), 0);
+    s = applyWorkout(def, cfg, s, W("a2", "2026-01-06", [["Bench Press (Barbell)", [[100, 5], [100, 4], [100, 7]]]]), 0);
+    expect(s.slots.bench.weight).toBe(102.5); // only the last set counts
+    s = applyWorkout(def, cfg, s, W("a3", "2026-01-09", [["Bench Press (Barbell)", rep(3, 102.5, 5, 4)]]), 0);
     expect(s.slots.bench.weight).toBe(92.5); // 102.5 × 0.9 = 92.25 → 92.5 (microplates)
   });
 
-  it("BBR: deadlift 1×5 gets +5, bodyweight chin-ups earn added weight", () => {
+  it("GreySkull: presses alternate every session; squat Mon/Fri, deadlift Wed; curls on bench days", () => {
+    const { def } = setup(greyskull);
+    expect(def.days.map((d) => d.slots.map((x) => x.lift))).toEqual([
+      ["bench", "barbellCurl", "squat"], ["ohp", "chinUp", "deadlift"], ["bench", "barbellCurl", "squat"],
+      ["ohp", "chinUp", "squat"], ["bench", "barbellCurl", "deadlift"], ["ohp", "chinUp", "squat"],
+    ]);
+  });
+
+  // r/Fitness wiki, Phrak's GSLP: Mon chins/OHP or rows/bench + squat, Wed + deadlift, Fri + squat,
+  // upper pair alternating every workout; "fail to perform at least 15 reps combined" → −10%;
+  // "more than 10 reps on your AMRAP set" → double.
+  it("Phrak: six-session rotation, 15 total reps passes, 11+ doubles", () => {
+    const { cfg, def } = setup(phrakGslp);
+    expect(def.days.map((d) => d.slots.map((x) => x.lift))).toEqual([
+      ["ohp", "chinUp", "squat"], ["bench", "row", "deadlift"], ["ohp", "chinUp", "squat"],
+      ["bench", "row", "squat"], ["ohp", "chinUp", "deadlift"], ["bench", "row", "squat"],
+    ]);
+    const s0 = initialState(def, cfg);
+    const at = (sets: [number, number][]) => applyWorkout(def, cfg, s0, W("a", "2026-01-02", [["Overhead Press (Barbell)", sets]]), 0).slots.ohp.weight;
+    expect(at([[65, 5], [65, 4], [65, 6]])).toBe(67.5); // 15 total: passes
+    expect(at([[65, 5], [65, 4], [65, 5]])).toBe(57.5); // 14 total: 65 × 0.9 = 58.5 → 57.5 (2.5 lb steps, nearest)
+    expect(at(rep(3, 65, 5, 10))).toBe(67.5); // 10 isn't "more than 10"
+    expect(at(rep(3, 65, 5, 11))).toBe(70);
+  });
+
+  it("BBR: deadlift is 3×5+ like everything else; chin-ups earn added weight", () => {
     const { cfg, def, s } = setup(redditBbr);
-    expect(planDay(def, cfg, s, 1).exercises[2].scheme).toBe("1×5+");
-    const n = applyWorkout(def, cfg, s, W("b", "2026-01-02", [["Chin Up", rep(3, 0, 5, 8)], ["Overhead Press (Barbell)", rep(3, 65, 5, 6)], ["Deadlift (Barbell)", rep(1, 155, 5)]]), 1);
-    expect(n.slots).toMatchObject({ chin: { weight: 2.5 }, ohp: { weight: 67.5 }, dl: { weight: 160 } });
+    expect(planDay(def, cfg, s, 1).exercises[2].scheme).toBe("3×5+");
+    const n = applyWorkout(def, cfg, s, W("b", "2026-01-02", [["Chin Up", rep(3, 0, 5, 8)], ["Overhead Press (Barbell)", rep(3, 65, 5, 6)], ["Deadlift (Barbell)", rep(3, 135, 5, 11)]]), 1);
+    expect(n.slots).toMatchObject({ chin: { weight: 2.5 }, ohp: { weight: 67.5 }, dl: { weight: 145 } }); // 11 on the AMRAP → +10
   });
 });
 
 describe("Ice Cream Fitness 5×5", () => {
-  it("rows are one progression across both days; accessories add 5 lb", () => {
+  // ICF 1.0 calculator: deadlift +5 lb, OHP +2.5 lb, B-day rows their own lighter progression.
+  it("increments per the calculator sheet; B-day rows are separate", () => {
     const { cfg, def } = setup(icf55);
     let s = initialState(def, cfg);
     s = applyWorkout(def, cfg, s, W("a", "2026-01-02", [["Bent Over Row (Barbell)", rep(5, 85, 5)], ["Bicep Curl (Barbell)", rep(3, 45, 8)]]), 0);
-    expect(planDay(def, cfg, s, 1).exercises.find((e) => e.slotId === "row")!.sets[0].weight).toBe(90);
-    expect(s.slots.curl.weight).toBe(50);
+    expect(s.slots.row.weight).toBe(90);
+    expect(planDay(def, cfg, s, 1).exercises.find((e) => e.slotId === "row-b")!.sets[0].weight).toBe(75);
+    expect(s.slots.curl.weight).toBe(47.5);
+    s = applyWorkout(def, cfg, s, W("b", "2026-01-04", [["Deadlift (Barbell)", rep(1, 155, 5)], ["Overhead Press (Barbell)", rep(5, 65, 5)]]), 1);
+    expect(s.slots).toMatchObject({ dl: { weight: 160 }, ohp: { weight: 67.5 } });
+  });
+});
+
+describe("Fierce 5", () => {
+  // Original post: "Each week you'll add 5 lbs to all of your upper body lifts and 10lbs to all of
+  // your lower body lifts." Weeks run A B A, then B A B.
+  it("ABA / BAB weeks; main lifts +5 upper / +10 lower every week", () => {
+    const { cfg, def } = setup(fierce5);
+    let s = initialState(def, cfg);
+    const seq: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const p = planDay(def, cfg, s);
+      seq.push(p.dayName.slice(-1));
+      s = applyWorkout(def, cfg, s, W(`w${i}`, "2026-01-02", [[LIFTS[p.exercises[0].lift].hevy[0], [[p.exercises[0].sets[0].weight, 5]]]]), s.dayIndex);
+      if (i === 2) expect(s.tms).toMatchObject({ squat: 145, bench: 100, frontSquat: 105, ohp: 70, rdl: 125, pendlayRow: 90 });
+    }
+    expect(seq).toEqual(["A", "B", "A", "B", "A", "B"]);
+    expect(s.tms.squat).toBe(155);
   });
 });
 
 describe("Madcow 5×5", () => {
-  it("ramps to the 5RM in week 4 with a +2.5% Friday triple, and completes after 12 weeks", () => {
+  // Madcow's original Linear 5x5 page: Monday ramps in 12.5% steps; Wednesday squat repeats the
+  // 3rd set; Friday triple = next Monday's top set, then 1×8 at the 3rd set; +2.5% a week, the 5RM
+  // is hit in week 4; "if you miss reps, keep the weight constant the next week".
+  it("week 1 at ~93% of the 5RM, the 5RM in week 4, Friday +2.5% triple", () => {
     const { cfg, def } = setup(madcow);
     let s: ProgramState = initialState(def, cfg);
     // week 1: top = 245 × 1.025^-3 = 227.5 → 230
     expect(weights(planDay(def, cfg, s, 0).exercises[0])).toEqual([[115, 5], [140, 5], [170, 5], [200, 5], [230, 5]]);
-    for (let i = 0; i < 9; i++) s = applyWorkout(def, cfg, s, W(`w${i}`, "2026-01-02", [["Squat (Barbell)", rep(5, 200, 5)]]), s.dayIndex);
+    const week = () => {
+      for (let d = 0; d < 3; d++) {
+        const p = planDay(def, cfg, s, d);
+        s = applyWorkout(def, cfg, s, W(`w${s.rotations}${d}`, "2026-01-02", [["Squat (Barbell)", p.exercises[0].sets.map((x) => [x.weight, x.reps] as [number, number])]]), d);
+      }
+    };
+    week(); week(); week();
     expect(s.rotations).toBe(3);
     expect(weights(planDay(def, cfg, s, 0).exercises[0])).toEqual([[125, 5], [155, 5], [185, 5], [215, 5], [245, 5]]);
     expect(weights(planDay(def, cfg, s, 1).exercises[0])).toEqual([[125, 5], [155, 5], [185, 5], [185, 5]]);
     expect(weights(planDay(def, cfg, s, 2).exercises[0])).toEqual([[125, 5], [155, 5], [185, 5], [215, 5], [250, 3], [185, 8]]);
-    for (let i = 9; i < 36; i++) s = applyWorkout(def, cfg, s, W(`w${i}`, "2026-01-02", [["Squat (Barbell)", rep(5, 200, 5)]]), s.dayIndex);
-    expect(s.complete).toBe(true);
+    expect(s.complete).toBeFalsy(); // open-ended
+  });
+
+  it("a missed top set holds next week's weights", () => {
+    const { cfg, def } = setup(madcow);
+    let s = initialState(def, cfg);
+    s = applyWorkout(def, cfg, s, W("m", "2026-01-05", [["Squat (Barbell)", [[115, 5], [140, 5], [170, 5], [200, 5], [230, 3]]], ["Bench Press (Barbell)", rep(5, 172.5, 5)]]), 0);
+    s = applyWorkout(def, cfg, s, W("w", "2026-01-07", [["Deadlift (Barbell)", rep(4, 275, 5)]]), 1);
+    s = applyWorkout(def, cfg, s, W("f", "2026-01-09", [["Squat (Barbell)", rep(4, 200, 5)]]), 2);
+    expect(s.tms.squat).toBe(245);
+    expect(s.tms.bench).toBeCloseTo(189.63, 2); // 185 × 1.025
+    expect(s.tms.deadlift).toBeCloseTo(302.38, 2);
   });
 });
 
 describe("Bill Starr 5×5", () => {
-  it("heavy / light / medium ramps and weekly top-set increases", () => {
+  it("heavy / light / medium ramps, OHP on Wednesday, top sets up weekly when made", () => {
     const { cfg, def } = setup(billStarr);
     let s = initialState(def, cfg);
     expect(weights(planDay(def, cfg, s, 0).exercises[2])).toEqual([[115, 5], [140, 5], [170, 5], [195, 5], [225, 5]]);
+    expect(planDay(def, cfg, s, 1).exercises.map((e) => e.lift)).toEqual(["powerClean", "ohp", "squat"]);
     expect(planDay(def, cfg, s, 1).exercises[2].sets[4].weight).toBe(180);
     expect(planDay(def, cfg, s, 2).exercises[2].sets[4].weight).toBe(205); // 202.5 → 205
-    for (let d = 0; d < 3; d++) s = applyWorkout(def, cfg, s, W(`d${d}`, "2026-01-02", [["Squat (Barbell)", rep(5, 200, 5)]]), d);
-    expect(s.tms).toMatchObject({ squat: 235, bench: 170, powerClean: 140 });
+    s = applyWorkout(def, cfg, s, W("d0", "2026-01-02", [["Power Clean", [[135, 3]]], ["Bench Press (Barbell)", [[165, 5]]], ["Squat (Barbell)", [[225, 5]]]]), 0);
+    for (let d = 1; d < 3; d++) s = applyWorkout(def, cfg, s, W(`d${d}`, "2026-01-02", [["Squat (Barbell)", rep(5, 200, 5)]]), d);
+    expect(s.tms).toMatchObject({ squat: 235, bench: 170, powerClean: 135 }); // clean top set missed → holds
   });
 });
 
@@ -165,7 +246,10 @@ describe("AllPro Simple Beginner", () => {
     expect(weights(planDay(def, cfg, s).exercises[0])).toEqual(rep(2, 135, 12));
     const fail = applyWorkout(def, cfg, s, W("h5f", "2026-01-30", [["Squat (Barbell)", [[135, 11], [135, 10]]]]), s.dayIndex);
     expect(fail.tms.squat).toBe(135);
+    // LiftVault FAQ: "Hit 12 on both work sets" — 12 on one set isn't enough
+    const one = applyWorkout(def, cfg, s, W("h5o", "2026-01-30", [["Squat (Barbell)", [[135, 12], [135, 11]]]]), s.dayIndex);
+    expect(one.tms.squat).toBe(135);
     s = applyWorkout(def, cfg, s, W("h5", "2026-01-30", [["Squat (Barbell)", rep(2, 135, 12)]]), s.dayIndex);
-    expect(s.tms.squat).toBe(148.5) // TM changes are exact; planned loads round; // +13.5 → 15
+    expect(s.tms.squat).toBe(148.5); // +10%, exact (planned loads round)
   });
 });
