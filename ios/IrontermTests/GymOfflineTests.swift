@@ -98,6 +98,7 @@ final class GymStoreTests: XCTestCase {
     var puts: [LiveSession] = []
     var finishes: [LiveSession] = []
     var deletes = 0
+    var finishBody = #"{"workout":{"id":"w-1"},"demo":true,"prs":[{"lift":"bench","short":"BENCH","kind":"rep","reps":1,"weight":325,"prev":320}]}"#
 
     override func setUp() {
         StubProtocol.requests = []
@@ -121,7 +122,7 @@ final class GymStoreTests: XCTestCase {
             case ("DELETE", "/api/live"): self.deletes += 1; return (200, Data(#"{"ok":true}"#.utf8))
             case ("POST", "/api/live/finish"):
                 self.finishes.append(try! JSONDecoder().decode(LiveSession.self, from: body))
-                return (200, Data(#"{"workout":{"id":"w-1"},"demo":true,"prs":[{"lift":"bench","short":"BENCH","kind":"rep","reps":1,"weight":325,"prev":320}]}"#.utf8))
+                return (200, Data(self.finishBody.utf8))
             default: return (404, Data())
             }
         }
@@ -212,6 +213,18 @@ final class GymStoreTests: XCTestCase {
         await g.queue.flush()
         XCTAssertTrue(puts.isEmpty, "the stale save must not re-create the finished session on the server")
         XCTAssertTrue(g.queue.ops.isEmpty)
+    }
+
+    func testFinishOnALocalModeServerSaysSo() async throws {
+        finishBody = #"{"workout":{"id":"local-1"},"local":true,"prs":[]}"#
+        let g = store()
+        await g.start(dayIndex: nil, empty: false)
+        let s = try XCTUnwrap(g.session)
+        g.complete(exId: s.exercises[0].id, set: 0)
+        await g.finish()
+        let f = try XCTUnwrap(g.finished)
+        XCTAssertTrue(f.local, "no Hevy on the server: the summary must not say it went to Hevy")
+        XCTAssertFalse(f.demo)
     }
 
     func testDiscardDeletesOnServer() async throws {

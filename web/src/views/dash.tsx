@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
 import { BIG_FOUR, LIFTS } from "../../shared/lifts";
 import { addDays, type GraphMetric } from "../../shared/stats";
-import { fmt, fmtInt } from "../../shared/units";
+import { fmt, fmtBig, fmtInt } from "../../shared/units";
 import { Bars, Heatmap, Legend, LineChart, Spark } from "../charts";
-import { e1rmAt, rollingBest, type Derived } from "../derive";
+import { bestAt, rollingBest, type Derived } from "../derive";
 import type { Nav } from "../app";
-import { Delta, Panel, Seg, SessionTicket, shortDate, Watch } from "../ui";
+import { Delta, Panel, ReentryNote, Seg, SessionTicket, shortDate, Watch } from "../ui";
 
 const COLORS: Record<string, string> = { squat: "#8cb4ff", bench: "#ffb000", deadlift: "#e8e8e8", ohp: "#5082dc" };
 
@@ -17,7 +17,9 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
   const big = BIG_FOUR.filter((l) => d.lifts[l]?.length);
   const weeks = d.weekly.slice(-26);
   const lastWeekKey = weeks[weeks.length - 1]?.week;
-  const e1 = (l: string) => d.lifts[l]?.[d.lifts[l].length - 1]?.e1rm;
+  const e1 = (l: string) => d.e1rmNow(l) ?? 0;
+  // bodyweight lifts logged without added load have no e1RM to show
+  const e1Lifts = d.liftKeys.filter((l) => e1(l) > 0);
   const metricLabel = props.metric === "volume" ? `${u} lifted` : props.metric === "sets" ? "sets" : "min";
 
   return (
@@ -40,13 +42,13 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         </div>
         <div class="kpi">
           <label>VOLUME · 7D</label>
-          <div class="v">{d.vol7 >= 10000 ? fmt(d.vol7 / 1000) + "k" : fmtInt(d.vol7)}<small>{u}</small></div>
+          <div class="v">{fmtBig(d.vol7)}<small>{u}</small></div>
           <div class="d"><Delta v={d.volPrev7 ? ((d.vol7 - d.volPrev7) / d.volPrev7) * 100 : null} pct digits={0} /> wk/wk</div>
         </div>
         {big.slice(0, 2).map((l) => {
           const pts = d.lifts[l];
           const now = e1(l)!;
-          const was = e1rmAt(pts, addDays(d.today, -84));
+          const was = bestAt(pts, addDays(d.today, -84));
           return (
             <div class="kpi" onClick={() => nav({ view: "lifts", lift: l })} style={{ cursor: "pointer" }}>
               <label>{LIFTS[l].short} e1RM</label>
@@ -80,21 +82,23 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         sub={d.next ? `${d.def?.name}${d.next.weekName ? " · " + d.next.weekName : ""}` : undefined}
         act={d.next && <button class="btn" onClick={() => nav({ view: "prog" })}><em>F2</em>PROGRAM</button>}
       >
+        {d.reentry && <ReentryNote info={d.reentry} onOpen={(id) => nav({ view: "set", tab: "programs", id })} />}
         {d.next ? <SessionTicket s={d.next} unit={u} /> : (
           <div class="empty">No active program. <button class="btn pri" onClick={() => nav({ view: "set" })}>SET UP GZCLP</button></div>
         )}
       </Panel>
 
-      <Panel n="3" title="e1RM" span={4} sub="Epley · best set per session">
+      <Panel n="3" title="e1RM" span={4} sub="Epley · best of the last 28 days">
         <div class="tbl-wrap">
           <table class="t">
-            <thead><tr><th>LIFT</th><th>LAST</th><th>4W</th><th>12W</th><th>BEST</th></tr></thead>
+            <thead><tr><th>LIFT</th><th>NOW</th><th>4W</th><th>12W</th><th>BEST</th></tr></thead>
             <tbody>
-              {d.liftKeys.slice(0, 8).map((l) => {
+              {e1Lifts.slice(0, 8).map((l) => {
                 const pts = d.lifts[l];
-                const now = pts[pts.length - 1].e1rm;
+                const now = e1(l);
                 const best = Math.max(...pts.map((p) => p.e1rm));
-                const a4 = e1rmAt(pts, addDays(d.today, -28)), a12 = e1rmAt(pts, addDays(d.today, -84));
+                const a4 = bestAt(pts, addDays(d.today, -28)), a12 = bestAt(pts, addDays(d.today, -84));
+
                 return (
                   <tr class="click" onClick={() => nav({ view: "lifts", lift: l })}>
                     <td>{LIFTS[l]?.short ?? l}</td>
