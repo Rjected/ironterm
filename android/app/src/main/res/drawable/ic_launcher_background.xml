@@ -5,6 +5,4 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path android:fillColor="#000000" android:pathData="M0,0h108v108h-108z" />
-    <!-- thin terminal frame -->
-    <path android:fillColor="#222428" android:pathData="M22,22h64v1h-64z M22,85h64v1h-64z M22,22h1v64h-1z M85,22h1v64h-1z" />
 </vector>
