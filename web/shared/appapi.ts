@@ -532,7 +532,7 @@ export interface ProgramDetail extends ProgramSummary {
   };
 }
 
-const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "comeback"];
+const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "bodyweight", "comeback"];
 
 function programSummary(t: ProgramTemplate): ProgramSummary {
   const len = programLength(t);

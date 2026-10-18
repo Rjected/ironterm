@@ -69,7 +69,7 @@ struct SyncService {
         } catch let e as ApiError {
             return .failure(e)
         } catch {
-            return .failure(.network(error.localizedDescription))
+            return .failure(.transport(error))
         }
     }
 }

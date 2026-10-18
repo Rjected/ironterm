@@ -144,10 +144,12 @@ struct CalendarScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Button { shift(c.month, -1) } label: { Image(systemName: "chevron.left").padding(8) }
+                        .accessibilityLabel("Previous month")
                     Spacer()
                     Text(monthTitle(c.month)).font(T.mono(15, .heavy)).foregroundStyle(T.amber)
                     Spacer()
                     Button { shift(c.month, 1) } label: { Image(systemName: "chevron.right").padding(8) }
+                        .accessibilityLabel("Next month")
                 }
                 .foregroundStyle(T.amber)
                 grid(c)
@@ -353,11 +355,18 @@ struct ProgramScreen: View {
             }
             TermButton(title: "BROWSE PROGRAMS") { model.morePath.append(AppModel.More.programs) }
                 .accessibilityIdentifier("browse-programs")
+            if model.snapshot?.isLocal == true {
+                Panel(title: "LOGGING") {
+                    Text("No Hevy connected, so there are no routines to push: log each session in GYM and it's saved on your server.")
+                        .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
             Panel(title: "HEVY ROUTINES", detail: p.pushed ? "PUSHED" : "NOT PUSHED") {
                 Text("Push the upcoming sessions to Hevy as routines, with exact weights, to log them in the Hevy app instead.")
                     .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                 TermButton(title: pushing ? "PUSHING…" : "PUSH TO HEVY", style: .primary, disabled: pushing) { confirmPush = true }
                 if let (m, ok) = pushMsg { Text(m).font(T.mono(10, .bold)).foregroundStyle(ok ? T.up : T.down).fixedSize(horizontal: false, vertical: true) }
+            }
             }
             Panel(title: "UPCOMING", detail: "\(p.upcoming.count) SESSIONS") {
                 ForEach(Array(p.upcoming.enumerated()), id: \.offset) { i, u in

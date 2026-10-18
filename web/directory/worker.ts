@@ -3,7 +3,7 @@
 // Runs as a Cloudflare Worker with D1 (wrangler.directory.example.jsonc) or on Node with SQLite
 // (server/directory.ts).
 
-import { fetchWellKnown } from "../worker/social/net";
+import { fetchWellKnown, readLimited } from "../worker/social/net";
 import { normOrigin, precheck, unb64url, verifyRequest } from "../worker/social/sign";
 import { HANDLE_RE } from "../worker/social/types";
 
@@ -70,9 +70,8 @@ export async function handleDirectory(req: Request, env: DirEnv): Promise<Respon
 
   if (path === "/v1/register" && req.method === "POST") {
     if (await limited(db, ip, "write")) return err(429, "too many requests");
-    if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY) return err(400, "body too large");
-    const raw = await req.text();
-    if (raw.length > MAX_BODY) return err(400, "body too large");
+    let raw: string;
+    try { raw = await readLimited(req, MAX_BODY); } catch { return err(400, "body too large"); }
     const pre = precheck(req, self, http);
     if (!pre.ok) return err(pre.status, pre.error);
     let b: { handle?: unknown; name?: unknown; server?: unknown; publicKey?: unknown; listed?: unknown };

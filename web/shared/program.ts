@@ -208,7 +208,7 @@ export interface Adjustment {
   note?: string;
 }
 
-export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "comeback";
+export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "bodyweight" | "comeback";
 
 export interface ProgramTemplate {
   id: string;
@@ -263,7 +263,7 @@ export function lengthTag(l: { kind: LengthKind; weeks: number | null }): string
 export interface SlotState {
   weight: number;
   stage: number;
-  /** weight this slot last started stage 0 at (for T2 resets) */
+  /** weight stage 0 was last done at (GZCLP T2 resets to "slightly heavier than your last 3×10") */
   stage0Weight: number;
   retest: boolean;
   /** consecutive failed sessions at the current weight */
@@ -456,7 +456,7 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
         ifSuccess = nx ? `all ${st.sets * st.reps} reps → ${schemeLabel(nx)} @ ${fmt(s.weight)}` : s.weight > 0 && p.climb.loadPct > 0 ? `all ${st.sets * st.reps} reps → ${schemeLabel(p.stages[0])} @ ${fmt(up)}` : `all reps → stay at ${schemeLabel(st)}`;
         ifFail = `miss → repeat ${schemeLabel(st)} @ ${fmt(s.weight)}`;
       } else if (p.advance.type === "amrapAtLeast") {
-        ifSuccess = `${p.advance.reps}+ on last set → ${fmt(s.weight + i)}`;
+        ifSuccess = `${st.sets > 1 ? `${Array(st.sets - 1).fill(st.reps).join("/")}/` : ""}${p.advance.reps}+ → ${fmt(s.weight + i)}`;
         ifFail = `fewer → stay at ${fmt(s.weight)}`;
       } else {
         ifSuccess = `${st.sets * st.reps} reps → ${fmt(s.weight + i)}`;
@@ -625,14 +625,15 @@ function evalStages(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, s: SlotS
   const { k, how } = inferStage(p.stages, workAll, s.stage);
   const st = p.stages[k];
   const work = workAll.length > st.sets && Math.abs(workAll.length - st.sets) > (st.sets >= 6 ? 1 : 0) ? workAll.slice(-st.sets) : workAll;
-  const cur: SlotState = { ...s, weight: w, stage: k, stage0Weight: k === 0 && s.stage !== 0 ? w : s.stage0Weight, fails: w !== s.weight || k !== s.stage ? 0 : s.fails ?? 0 };
+  const cur: SlotState = { ...s, weight: w, stage: k, stage0Weight: k === 0 ? w : s.stage0Weight, fails: w !== s.weight || k !== s.stage ? 0 : s.fails ?? 0 };
   const amrapReps = work.length ? work[Math.min(work.length, st.sets) - 1].reps : undefined;
   const base = { slotId: slot.id, lift: slot.lift, tier: slot.tier, scheme: schemeLabel(st), weight: w, reps: work.map((x) => x.reps) };
   const off = w !== s.weight ? ` (planned ${fmt(s.weight)})` : "";
 
   if (p.advance.type === "amrapAtLeast") {
-    // T3: only the last set matters ("15/15/25").
-    const ok = (amrapReps ?? 0) >= p.advance.reps;
+    // T3: the sets before the last make their reps and the last one reaches the target ("15/15/25").
+    const body = work.slice(0, Math.min(work.length, st.sets) - 1);
+    const ok = (amrapReps ?? 0) >= p.advance.reps && work.length >= st.sets && body.every((x) => x.reps >= st.reps);
     return ok
       ? { next: { ...cur, weight: w + i, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${amrapReps} on last set${off} → ${fmt(w + i)}` } }
       : { next: cur, res: { ...base, outcome: "hold", amrapReps, note: `${amrapReps ?? 0} on last set, need ${p.advance.reps}${off}` } };
@@ -728,9 +729,14 @@ function evalPercent(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, state: 
   }
   if (rule?.type === "missCut") {
     const check = rule.setIndex != null ? [planned.sets[rule.setIndex]].filter(Boolean) : planned.sets.filter((x) => x.weight > 0 && !x.amrap);
+    // Each prescribed set needs its own logged set (4×6 with a 5 on the last set is a miss).
+    const used = new Set<number>();
     const short = check.filter((ps) => {
       const tol = Math.max(1, ps.weight * 0.03);
-      return !sets.some((x) => x.weight >= ps.weight - tol && x.reps >= ps.reps);
+      const k = sets.findIndex((x, j) => !used.has(j) && x.weight >= ps.weight - tol && x.reps >= ps.reps);
+      if (k < 0) return true;
+      used.add(k);
+      return false;
     });
     if (!short.length) return { tmDelta: 0, res: { ...base, outcome: "success", note: `${sets.length}/${planned.sets.length} sets, all reps made` } };
     const d = -Math.round(tm * rule.pct * 100) / 100;

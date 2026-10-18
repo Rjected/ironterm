@@ -106,7 +106,7 @@ struct StartView: View {
                 Panel(title: "FREE SESSION") {
                     TermButton(title: gym.busy ? "STARTING…" : "START EMPTY WORKOUT", disabled: gym.busy) { Task { await gym.start(dayIndex: nil, empty: true) } }
                         .accessibilityIdentifier("start-empty")
-                    Text("Sets are saved on the phone as you go and synced to the server, so losing signal, closing the app or switching to the web app won't lose anything. Logging in Hevy instead works too.")
+                    Text("Sets are saved on the phone as you go and synced to the server, so losing signal, closing the app or switching to the web app won't lose anything." + (model.snapshot?.isLocal == true ? " Finished workouts are stored on your server: no Hevy needed." : " Logging in Hevy instead works too."))
                         .font(T.mono(10)).foregroundStyle(T.faint).fixedSize(horizontal: false, vertical: true)
                 }
             }

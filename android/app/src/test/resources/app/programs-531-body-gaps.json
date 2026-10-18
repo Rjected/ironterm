@@ -1,0 +1,1020 @@
+{
+  "id": "531",
+  "mode": "gaps",
+  "sex": "m",
+  "trainingDays": [
+    0,
+    1,
+    3,
+    4
+  ],
+  "weeks": 4,
+  "legend": [
+    "recovered",
+    "taxed"
+  ],
+  "muscles": [
+    {
+      "id": "erectors",
+      "name": "Erector spinae",
+      "short": "ERECTORS",
+      "group": "back",
+      "load": 0.29,
+      "gap": 0.38,
+      "sets": 11.5,
+      "hardSets": 3.2,
+      "target": null,
+      "status": "n/a",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 36,
+      "minReadiness": 0.62,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT",
+        "OHP"
+      ]
+    },
+    {
+      "id": "vastusLateralis",
+      "name": "Vastus lateralis",
+      "short": "VAST LAT",
+      "group": "legs",
+      "load": 0.26,
+      "gap": 0.33,
+      "sets": 10.1,
+      "hardSets": 2.9,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 27,
+      "minReadiness": 0.67,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT",
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "vastusMedialis",
+      "name": "Vastus medialis",
+      "short": "VAST MED",
+      "group": "legs",
+      "load": 0.26,
+      "gap": 0.33,
+      "sets": 10.1,
+      "hardSets": 2.9,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 27,
+      "minReadiness": 0.67,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT",
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "frontDelt",
+      "name": "Anterior deltoid",
+      "short": "FRONT DELT",
+      "group": "shoulders",
+      "load": 0.26,
+      "gap": 0.27,
+      "sets": 10.1,
+      "hardSets": 2.9,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 15,
+      "minReadiness": 0.73,
+      "overlaps": 0,
+      "lifts": [
+        "OHP",
+        "BENCH"
+      ]
+    },
+    {
+      "id": "pecLower",
+      "name": "Pectoralis major, sternal",
+      "short": "LOWER PEC",
+      "group": "chest",
+      "load": 0.17,
+      "gap": 0.27,
+      "sets": 6.8,
+      "hardSets": 1.9,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 26,
+      "minReadiness": 0.73,
+      "overlaps": 0,
+      "lifts": [
+        "BENCH"
+      ]
+    },
+    {
+      "id": "gluteMax",
+      "name": "Gluteus maximus",
+      "short": "GLUTE MAX",
+      "group": "hips",
+      "load": 0.26,
+      "gap": 0.26,
+      "sets": 10.1,
+      "hardSets": 2.9,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 29,
+      "minReadiness": 0.74,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT"
+      ]
+    },
+    {
+      "id": "adductors",
+      "name": "Adductors",
+      "short": "ADDUCTORS",
+      "group": "hips",
+      "load": 0.23,
+      "gap": 0.26,
+      "sets": 9.1,
+      "hardSets": 2.6,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 25,
+      "minReadiness": 0.74,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT",
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "trapsUpper",
+      "name": "Trapezius, upper",
+      "short": "UPPER TRAP",
+      "group": "back",
+      "load": 0.16,
+      "gap": 0.2,
+      "sets": 6.1,
+      "hardSets": 1.7,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 1,
+      "minGapH": 24,
+      "recoverH": 11,
+      "minReadiness": 0.8,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "OHP"
+      ]
+    },
+    {
+      "id": "tricepsLateral",
+      "name": "Triceps, lateral + medial heads",
+      "short": "TRI LAT",
+      "group": "arms",
+      "load": 0.21,
+      "gap": 0.17,
+      "sets": 8.1,
+      "hardSets": 2.3,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 1.5,
+      "minGapH": 72,
+      "recoverH": 9,
+      "minReadiness": 0.83,
+      "overlaps": 0,
+      "lifts": [
+        "OHP",
+        "BENCH"
+      ]
+    },
+    {
+      "id": "pecUpper",
+      "name": "Pectoralis major, clavicular",
+      "short": "UPPER PEC",
+      "group": "chest",
+      "load": 0.16,
+      "gap": 0.17,
+      "sets": 6.4,
+      "hardSets": 1.8,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 11,
+      "minReadiness": 0.83,
+      "overlaps": 0,
+      "lifts": [
+        "BENCH",
+        "OHP"
+      ]
+    },
+    {
+      "id": "hamsLateral",
+      "name": "Biceps femoris",
+      "short": "BICEPS FEM",
+      "group": "legs",
+      "load": 0.12,
+      "gap": 0.17,
+      "sets": 4.7,
+      "hardSets": 1.3,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 17,
+      "minReadiness": 0.83,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT"
+      ]
+    },
+    {
+      "id": "hamsMedial",
+      "name": "Semitendinosus / semimembranosus",
+      "short": "SEMI-T/M",
+      "group": "legs",
+      "load": 0.12,
+      "gap": 0.17,
+      "sets": 4.7,
+      "hardSets": 1.3,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 17,
+      "minReadiness": 0.83,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT"
+      ]
+    },
+    {
+      "id": "forearmFlexors",
+      "name": "Wrist & finger flexors",
+      "short": "FLEXORS",
+      "group": "arms",
+      "load": 0.09,
+      "gap": 0.17,
+      "sets": 3.4,
+      "hardSets": 1,
+      "target": null,
+      "status": "n/a",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 7,
+      "minReadiness": 0.83,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "sideDelt",
+      "name": "Lateral deltoid",
+      "short": "SIDE DELT",
+      "group": "shoulders",
+      "load": 0.09,
+      "gap": 0.13,
+      "sets": 3.4,
+      "hardSets": 1,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 4,
+      "minReadiness": 0.87,
+      "overlaps": 0,
+      "lifts": [
+        "OHP"
+      ]
+    },
+    {
+      "id": "trapsMid",
+      "name": "Trapezius, middle",
+      "short": "MID TRAP",
+      "group": "back",
+      "load": 0.07,
+      "gap": 0.13,
+      "sets": 2.7,
+      "hardSets": 0.8,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 0.8,
+      "minGapH": 168,
+      "recoverH": 4,
+      "minReadiness": 0.87,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "lats",
+      "name": "Latissimus dorsi",
+      "short": "LATS",
+      "group": "back",
+      "load": 0.06,
+      "gap": 0.12,
+      "sets": 2.4,
+      "hardSets": 0.7,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.5,
+      "minGapH": 168,
+      "recoverH": 2,
+      "minReadiness": 0.88,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "serratus",
+      "name": "Serratus anterior",
+      "short": "SERRATUS",
+      "group": "chest",
+      "load": 0.11,
+      "gap": 0.11,
+      "sets": 4.4,
+      "hardSets": 1.2,
+      "target": null,
+      "status": "n/a",
+      "hits": 0.3,
+      "minGapH": null,
+      "recoverH": 1,
+      "minReadiness": 0.89,
+      "overlaps": 0,
+      "lifts": [
+        "OHP",
+        "BENCH"
+      ]
+    },
+    {
+      "id": "rectusFemoris",
+      "name": "Rectus femoris",
+      "short": "RECT FEM",
+      "group": "legs",
+      "load": 0.09,
+      "gap": 0.11,
+      "sets": 3.4,
+      "hardSets": 1,
+      "target": [
+        10,
+        20
+      ],
+      "status": "low",
+      "hits": 0.3,
+      "minGapH": null,
+      "recoverH": 3,
+      "minReadiness": 0.89,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT",
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "abs",
+      "name": "Rectus abdominis",
+      "short": "ABS",
+      "group": "core",
+      "load": 0.13,
+      "gap": 0.1,
+      "sets": 5.1,
+      "hardSets": 1.4,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.9,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT",
+        "OHP"
+      ]
+    },
+    {
+      "id": "obliques",
+      "name": "External obliques",
+      "short": "OBLIQUES",
+      "group": "core",
+      "load": 0.13,
+      "gap": 0.1,
+      "sets": 5.1,
+      "hardSets": 1.4,
+      "target": null,
+      "status": "n/a",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.9,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT",
+        "SQUAT",
+        "OHP"
+      ]
+    },
+    {
+      "id": "tricepsLong",
+      "name": "Triceps, long head",
+      "short": "TRI LONG",
+      "group": "arms",
+      "load": 0.12,
+      "gap": 0.1,
+      "sets": 4.7,
+      "hardSets": 1.3,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.9,
+      "overlaps": 0,
+      "lifts": [
+        "OHP",
+        "BENCH"
+      ]
+    },
+    {
+      "id": "rhomboids",
+      "name": "Rhomboids",
+      "short": "RHOMBOIDS",
+      "group": "back",
+      "load": 0.05,
+      "gap": 0.1,
+      "sets": 2,
+      "hardSets": 0.6,
+      "target": null,
+      "status": "n/a",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.9,
+      "overlaps": 0,
+      "lifts": [
+        "DEADLIFT"
+      ]
+    },
+    {
+      "id": "gluteMed",
+      "name": "Gluteus medius / TFL",
+      "short": "GLUTE MED",
+      "group": "hips",
+      "load": 0.04,
+      "gap": 0.08,
+      "sets": 1.7,
+      "hardSets": 0.5,
+      "target": null,
+      "status": "n/a",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.92,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT"
+      ]
+    },
+    {
+      "id": "soleus",
+      "name": "Soleus",
+      "short": "SOLEUS",
+      "group": "legs",
+      "load": 0.03,
+      "gap": 0.05,
+      "sets": 1,
+      "hardSets": 0.3,
+      "target": [
+        8,
+        20
+      ],
+      "status": "low",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 0.95,
+      "overlaps": 0,
+      "lifts": [
+        "SQUAT"
+      ]
+    },
+    {
+      "id": "rearDelt",
+      "name": "Posterior deltoid",
+      "short": "REAR DELT",
+      "group": "shoulders",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": [
+        8,
+        20
+      ],
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "infraspinatus",
+      "name": "Infraspinatus / teres minor",
+      "short": "INFRASPIN",
+      "group": "shoulders",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "teres",
+      "name": "Teres major",
+      "short": "TERES MAJ",
+      "group": "back",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "biceps",
+      "name": "Biceps brachii",
+      "short": "BICEPS",
+      "group": "arms",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": [
+        8,
+        20
+      ],
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "brachialis",
+      "name": "Brachialis",
+      "short": "BRACHIALIS",
+      "group": "arms",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "brachioradialis",
+      "name": "Brachioradialis",
+      "short": "BRACHIORAD",
+      "group": "arms",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "forearmExtensors",
+      "name": "Wrist & finger extensors",
+      "short": "EXTENSORS",
+      "group": "arms",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "trapsLower",
+      "name": "Trapezius, lower",
+      "short": "LOWER TRAP",
+      "group": "back",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "neck",
+      "name": "Sternocleidomastoid / neck",
+      "short": "NECK",
+      "group": "core",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "hipFlexors",
+      "name": "Hip flexors (sartorius, iliopsoas)",
+      "short": "HIP FLEX",
+      "group": "hips",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "gastrocnemius",
+      "name": "Gastrocnemius",
+      "short": "GASTROC",
+      "group": "legs",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": [
+        8,
+        20
+      ],
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    },
+    {
+      "id": "tibialis",
+      "name": "Tibialis anterior / shin",
+      "short": "TIBIALIS",
+      "group": "legs",
+      "load": 0,
+      "gap": 0,
+      "sets": 0,
+      "hardSets": 0,
+      "target": null,
+      "status": "none",
+      "hits": 0,
+      "minGapH": null,
+      "recoverH": null,
+      "minReadiness": 1,
+      "overlaps": 0,
+      "lifts": []
+    }
+  ],
+  "overlaps": [],
+  "overlapsByWeek": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "summary": {
+    "mostTrained": [
+      {
+        "id": "erectors",
+        "short": "ERECTORS",
+        "hardSets": 3.2
+      },
+      {
+        "id": "vastusLateralis",
+        "short": "VAST LAT",
+        "hardSets": 2.9
+      },
+      {
+        "id": "vastusMedialis",
+        "short": "VAST MED",
+        "hardSets": 2.9
+      }
+    ],
+    "gaps": [
+      {
+        "id": "lats",
+        "short": "LATS",
+        "hardSets": 0.7,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "rectusFemoris",
+        "short": "RECT FEM",
+        "hardSets": 1,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "hamsLateral",
+        "short": "BICEPS FEM",
+        "hardSets": 1.3,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "hamsMedial",
+        "short": "SEMI-T/M",
+        "hardSets": 1.3,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "pecUpper",
+        "short": "UPPER PEC",
+        "hardSets": 1.8,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "pecLower",
+        "short": "LOWER PEC",
+        "hardSets": 1.9,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "rearDelt",
+        "short": "REAR DELT",
+        "hardSets": 0,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "biceps",
+        "short": "BICEPS",
+        "hardSets": 0,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "gastrocnemius",
+        "short": "GASTROC",
+        "hardSets": 0,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "soleus",
+        "short": "SOLEUS",
+        "hardSets": 0.3,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "trapsMid",
+        "short": "MID TRAP",
+        "hardSets": 0.8,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "vastusLateralis",
+        "short": "VAST LAT",
+        "hardSets": 2.9,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "vastusMedialis",
+        "short": "VAST MED",
+        "hardSets": 2.9,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "gluteMax",
+        "short": "GLUTE MAX",
+        "hardSets": 2.9,
+        "target": [
+          10,
+          20
+        ]
+      },
+      {
+        "id": "sideDelt",
+        "short": "SIDE DELT",
+        "hardSets": 1,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "tricepsLong",
+        "short": "TRI LONG",
+        "hardSets": 1.3,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "abs",
+        "short": "ABS",
+        "hardSets": 1.4,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "trapsUpper",
+        "short": "UPPER TRAP",
+        "hardSets": 1.7,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "tricepsLateral",
+        "short": "TRI LAT",
+        "hardSets": 2.3,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "adductors",
+        "short": "ADDUCTORS",
+        "hardSets": 2.6,
+        "target": [
+          8,
+          20
+        ]
+      },
+      {
+        "id": "frontDelt",
+        "short": "FRONT DELT",
+        "hardSets": 2.9,
+        "target": [
+          8,
+          20
+        ]
+      }
+    ],
+    "overlapping": [],
+    "overlapsPerWeek": 0,
+    "lines": [
+      "Most trained: erectors 3.2, vast lat 2.9 and vast med 2.9 hard sets a week.",
+      "Below range: lats 0.7 of 10–20, rect fem 1 of 10–20, biceps fem 1.3 of 10–20 and 18 more (hard sets a week).",
+      "No overlaps: every muscle recovers before its next hit on Mon Tue Thu Fri."
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { LIFTS } from "../../shared/lifts";
 import { addDays, calisthenics, repPRs } from "../../shared/stats";
-import { fmt, fmtInt } from "../../shared/units";
+import { fmt, fmtBig, fmtInt } from "../../shared/units";
 import { Bars, LineChart } from "../charts";
 import { e1rmAt, rollingBest, type Derived } from "../derive";
 import type { Nav } from "../app";
@@ -40,7 +40,7 @@ export function Lifts(props: { d: Derived; lift?: string; nav: Nav }) {
         <div class="kpi"><label>vs 1 YEAR AGO</label><div class="v"><Delta v={yearAgo ? now.e1rm - yearAgo : null} digits={0} /></div><div class="d">{yearAgo ? `from ${fmt(yearAgo, 0)}` : "no data a year ago"}</div></div>
         <div class="kpi"><label>HEAVIEST SET</label><div class="v">{fmt(Math.max(...pts.map((p) => p.topWeight)))}<small>{u}</small></div><div class="d">any reps</div></div>
         <div class="kpi"><label>TREND</label><div class="v"><StallChip s={d.stalls[lift]} /></div><div class="d" title={d.stalls[lift]?.reason}>{d.stalls[lift]?.slope != null ? `${d.stalls[lift]!.slope! > 0 ? "+" : ""}${fmt(d.stalls[lift]!.slope!)} ${u}/wk` : d.stalls[lift]?.reason ?? "—"}</div></div>
-        <div class="kpi"><label>VOLUME · 1Y</label><div class="v">{fmt(pts.filter((p) => p.date >= addDays(d.today, -365)).reduce((a, p) => a + p.volume, 0) / 1000)}k</div><div class="d">{u} × reps</div></div>
+        <div class="kpi"><label>VOLUME · 1Y</label><div class="v">{fmtBig(pts.filter((p) => p.date >= addDays(d.today, -365)).reduce((a, p) => a + p.volume, 0))}</div><div class="d">{u} × reps</div></div>
       </div>
 
       <Panel
