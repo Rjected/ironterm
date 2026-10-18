@@ -64,9 +64,9 @@ describe("Building the Monolith", () => {
   });
 
   it("raises TMs after week 3 and finishes after 6 weeks", () => {
-    let s = run(def, cfg, 6);
-    expect(planDay(def, cfg, s, 1).exercises.map((e) => e.slotId).slice(0, 2)).toEqual(["mo2-dl-tm", "mo2-bp-tm"]);
-    s = run(def, cfg, 3, s);
+    let s = run(def, cfg, 8);
+    expect(s.tms).toEqual({ squat: 270, bench: 190, deadlift: 330, ohp: 125 });
+    s = run(def, cfg, 1, s);
     expect(s.tms).toEqual({ squat: 280, bench: 195, deadlift: 340, ohp: 130 });
     expect(ws(def, cfg, s, 2, "mo3-ohp")).toEqual(Array(12).fill(80)); // week 4: 12×5 @ 60% of 130 = 78 → 80
     s = run(def, cfg, 8, s);
@@ -83,11 +83,14 @@ describe("BBB 3-Month Challenge", () => {
   it("5/3/1 for prescribed reps, then 5×10 at 50 → 60 → 70%", () => {
     let s = initialState(def, cfg);
     const d = planDay(def, cfg, s, 3);
-    expect(d.exercises.map((e) => e.slotId)).toEqual(["bc4-main", "bc4-bbb", "bc4-acc", "bc4-abs"]);
+    // jimwendler.com: "choose one push, pull and abdominal movement per training day"
+    expect(d.exercises.map((e) => e.slotId)).toEqual(["bc4-main", "bc4-bbb", "bc4-push", "bc4-acc", "bc4-abs"]);
     expect(d.exercises[0].sets.some((x) => x.amrap)).toBe(false);
     expect(ws(def, cfg, s, 3, "bc4-bbb")).toEqual(Array(5).fill(145)); // 50% of 285 = 142.5
     s = run(def, cfg, 12, s); // month 1 weeks 1–3
-    expect(planDay(def, cfg, s, 3).exercises.map((e) => e.slotId)).toEqual(["bc4-main-tm", "bc4-acc", "bc4-abs"]); // deload: no BBB
+    // deload: 40/50/60 for prescribed reps; BBB "as normal" (jimwendler.com, Boring But Big)
+    expect(ws(def, cfg, s, 3, "bc4-main")).toEqual([115, 145, 170]);
+    expect(ws(def, cfg, s, 3, "bc4-bbb")).toEqual(Array(5).fill(145));
     s = run(def, cfg, 4, s);
     expect(s.tms).toEqual({ squat: 295, bench: 210, deadlift: 355, ohp: 135 });
     expect(ws(def, cfg, s, 3, "bc4-bbb")).toEqual(Array(5).fill(175)); // month 2: 60% of 295 = 177
@@ -96,6 +99,13 @@ describe("BBB 3-Month Challenge", () => {
     s = run(def, cfg, 16, s);
     expect(s.complete).toBe(true);
     expect(s.tms.squat).toBe(305);
+  });
+
+  it("the monthly TM bump doesn't depend on logging the main lift in the deload week", () => {
+    let s = run(def, cfg, 15);
+    // deload squat day logged with only BBB-style accessory work, no squat
+    s = applyWorkout(def, cfg, s, { id: "x", title: "x", start_time: "2026-02-01T12:00:00Z", end_time: "2026-02-01T13:00:00Z", exercises: [{ title: "Face Pull", exercise_template_id: "x", sets: [{ type: "normal", weight_kg: 20, reps: 15 }] }] }, 3);
+    expect(s.tms).toEqual({ squat: 295, bench: 210, deadlift: 355, ohp: 135 });
   });
 
   it("without deloads it's nine weeks", () => {

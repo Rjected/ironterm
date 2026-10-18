@@ -48,6 +48,17 @@ struct ConnectLink: Equatable {
         return sameOrigin(savedServer, target)
     }
 
+    /// The token would travel unencrypted (plain http). ATS only lets http through for local
+    /// networking, but on a shared or hostile LAN that is still readable by anyone on it.
+    var isCleartext: Bool { server.scheme?.lowercased() == "http" }
+
+    /// Host (and port when not the default) as shown in the confirmation, e.g. "gym.example.com".
+    var displayHost: String {
+        let host: String = server.host ?? server.absoluteString
+        guard let port = server.port else { return host }
+        return host + ":" + String(port)
+    }
+
     /// Two URLs share an origin (used to keep the WebView on the server).
     static func sameOrigin(_ a: URL, _ b: URL) -> Bool {
         func port(_ u: URL) -> Int? { u.port ?? (u.scheme == "https" ? 443 : u.scheme == "http" ? 80 : nil) }

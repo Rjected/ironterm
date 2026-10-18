@@ -27,15 +27,26 @@ data class Snapshot(
     val program: Program? = null,
     val lifts: List<Lift> = emptyList(),
     val recovery: Recovery? = null,
-    /** Local only (not sent by the server): which source produced this, "server" or "direct". */
-    val source: String = SOURCE_SERVER,
+    /**
+     * From the server: where the workouts come from. "hevy" (synced from Hevy), "local" (no Hevy
+     * connected: a Strong import and sessions logged in GYM live on the server) or "demo"; null from
+     * older servers.
+     */
+    val source: String? = null,
+    /** Local only (not sent by the server): which data source produced this, "server" or "direct". */
+    val origin: String = SOURCE_SERVER,
 ) {
     companion object {
         const val SOURCE_SERVER = "server"
         const val SOURCE_DIRECT = "direct"
+        const val LOG_LOCAL = "local"
     }
 
-    val isDirect: Boolean get() = source == SOURCE_DIRECT
+    // Caches written before [origin] existed kept "direct" in the source field.
+    val isDirect: Boolean get() = origin == SOURCE_DIRECT || source == SOURCE_DIRECT
+
+    /** The server has no Hevy key: it is the training log, nothing goes to or comes from Hevy. */
+    val isLocal: Boolean get() = source == LOG_LOCAL
 }
 
 @Serializable
@@ -92,6 +103,8 @@ data class NextSession(
     @SerialName("when") val whenLabel: String = "",
     val date: String? = null,
     val reentry: Boolean = false,
+    /** what the re-entry ramp does to this session, in words */
+    val reentryNote: String? = null,
     val exercises: List<PlannedExercise> = emptyList(),
 )
 

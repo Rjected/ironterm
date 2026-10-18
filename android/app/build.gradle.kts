@@ -85,9 +85,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
-    // Server-rendered body figure (SVG)
-    implementation("com.caverock:androidsvg-aar:1.4")
-
     // Widgets
     implementation("androidx.glance:glance-appwidget:1.1.1")
 
