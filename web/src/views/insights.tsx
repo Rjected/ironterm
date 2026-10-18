@@ -18,7 +18,7 @@ import { api, type Bootstrap } from "../api";
 import { bodyweightTrend, mergeWeighIns, strengthVsBodyweight, type WeighIn } from "../../shared/bodyweight";
 import { recoveryVsPerformance } from "../../shared/correlate";
 import { evaluateAchievements } from "../../shared/achievements";
-import { fromKg, toKg } from "../../shared/units";
+import { fromKg, parseWeightInput, toKg } from "../../shared/units";
 import { compare, startingConfig } from "../../shared/simulate";
 import { TEMPLATES, getTemplate } from "../../shared/programs";
 import { inolBand, plannedInol, sessionInol, weeklyInol } from "../../shared/inol";
@@ -225,7 +225,16 @@ function BodyRecovery(props: { d: Derived; b: Bootstrap; nav: Nav; onReload: () 
   const rel = useMemo(() => (d.lifts.squat ? strengthVsBodyweight(trend, d.lifts.squat) : []), [trend, d.lifts]);
   const asc = useMemo(() => [...d.workouts].reverse(), [d.workouts]);
   const rp = useMemo(() => (b.whoop?.recoveries?.length ? recoveryVsPerformance(asc, d.tz, b.whoop.recoveries, { map: d.liftMap, programLog: d.state?.log, whoopWorkouts: b.whoop.workouts }) : null), [asc, b.whoop]);
-  const save = async () => { if (!w) return; await api.weighIn(date, toKg(Number(w), u)); setW(""); props.onReload(); };
+  const [err, setErr] = useState<string | null>(null);
+  const save = async () => {
+    if (!w.trim()) return;
+    const v = parseWeightInput(w);
+    // 0 removes that day's weigh-in; anything unreadable must not reach the server as one
+    if (v == null || v > (u === "lb" ? 1100 : 500)) return setErr(`"${w}" isn't a weight in ${u}`);
+    if (!/^\d{4}-\d\d-\d\d$/.test(date)) return setErr("pick a date");
+    try { await api.weighIn(date, toKg(v, u)); } catch (e) { return setErr(`Couldn't save: ${(e as Error).message}`); }
+    setErr(null); setW(""); props.onReload();
+  };
   return (
     <>
       <Panel n="1" title="BODYWEIGHT" span={8} sub={trend.latest ? `trend ${fmt(trend.latest.trend)} ${u}${trend.weeklyRate != null ? ` · ${trend.weeklyRate > 0 ? "+" : ""}${fmt(trend.weeklyRate, 2)} ${u}/wk` : ""}${trend.phase ? ` · ${trend.phase}` : ""}` : "no weigh-ins yet"}>
@@ -239,6 +248,8 @@ function BodyRecovery(props: { d: Derived; b: Bootstrap; nav: Nav; onReload: () 
           <input class="inp" id="wi-date" type="date" style={{ width: "auto" }} value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} />
           <input class="inp num" id="wi-w" inputMode="decimal" placeholder={u} value={w} onInput={(e) => setW((e.target as HTMLInputElement).value)} onKeyDown={(e) => e.key === "Enter" && save()} />
           <button class="btn pri" onClick={save}>LOG WEIGHT</button>
+          {err && <span class="down" role="alert">{err}</span>}
+
           <span class="faint" style={{ fontSize: "var(--fs-s)" }}>Also reads Hevy's measurements and WHOOP. Trend: Hacker's Diet moving average.</span>
         </div>
       </Panel>
