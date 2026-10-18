@@ -16,3 +16,29 @@ object ConnectCode {
     fun handle(scanned: String?): Result =
         DeepLink.parse(scanned?.trim())?.let { Result.Connect(it) } ?: Result.Invalid(NOT_IRONTERM)
 }
+
+/**
+ * A connect link (deep link or QR) waiting for the user's OK. Nothing is stored and no request is
+ * sent until they confirm: a link on a web page or a QR code can point at anyone's server.
+ */
+data class ConnectPrompt(
+    val link: ConnectLink,
+    /** host[:port], shown big in the dialog so a look-alike server is easy to spot */
+    val host: String,
+    /** plain http: the token and workouts travel unencrypted */
+    val insecure: Boolean,
+    /** what this would replace, when connected to something else */
+    val replaces: String?,
+) {
+    companion object {
+        fun of(link: ConnectLink, currentMode: SourceMode, currentServer: String?): ConnectPrompt {
+            val current = currentServer?.takeIf { currentMode == SourceMode.SERVER && it.isNotBlank() }
+            val replaces = when {
+                currentMode == SourceMode.DIRECT -> "your Hevy API key connection"
+                current != null && !current.equals(link.server, ignoreCase = true) -> current.substringAfter("://")
+                else -> null
+            }
+            return ConnectPrompt(link, link.server.substringAfter("://"), link.server.startsWith("http://", ignoreCase = true), replaces)
+        }
+    }
+}

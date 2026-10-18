@@ -1,10 +1,10 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, OWNER, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
-import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
+import { bearer, checkToken, createToken, listTokens, revokeToken, tokenExists } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
 import { Hevy, HevyError } from "./hevy";
 import { applyNotes, toHevyUpdate, type NotesEdit } from "../shared/notes";
@@ -17,6 +17,7 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 
 export interface Env {
@@ -142,6 +143,12 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   // token (workers.dev), or the optional password session. Off localhost, no login configured
   // means no data.
   const url = new URL(req.url);
+  // Cookie-authenticated writes must come from our own pages (auth.ts). /auth/app is exempt: it
+  // carries its own app token, and a native web view's form post may have no usable Origin.
+  if (path !== "/auth/app") {
+    const why = csrfBlock(req, [url.origin, socialOrigin(env, url)]);
+    if (why) return json({ error: `Blocked ${why}.` }, { status: 403 });
+  }
   const allowed = (env.ALLOWED_EMAILS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   const google: GoogleConfig | null = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.SESSION_SECRET && allowed.length
     ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET, sessionSecret: env.SESSION_SECRET, allowed }
@@ -162,7 +169,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       return new Response(null, { status: 302, headers: h });
     } catch (e) {
       const msg = String((e as Error).message ?? e).replace(/[<>&]/g, "");
-      return new Response(`<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#ff6b5e;font:14px ui-monospace,monospace;padding:24px">Sign-in failed: ${msg}<br><br><a style="color:#ffb000" href="/auth/login">Try again</a></body>`, { status: 403, headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(`<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#ff6b5e;font:14px ui-monospace,monospace;padding:24px">Sign-in failed: ${msg}<br><br><a style="color:#ffb000" href="/auth/login">Try again</a></body>`, { status: 403, headers: { "content-type": "text/html; charset=utf-8", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'" } });
     }
   }
   // Native app → embedded web view: trade an app token for a normal session cookie.
@@ -172,7 +179,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const next = String(form?.get("next") ?? "/");
     if (!tok) return new Response("Invalid or revoked app token.", { status: 403 });
     const h = new Headers({ location: /^\/(?![\/\\])/.test(next) ? next : "/" });
-    if (sessionSecret) h.append("set-cookie", await sessionCookie(sessionSecret));
+    if (sessionSecret) h.append("set-cookie", await sessionCookie(sessionSecret, `t${tok.id}`));
     return new Response(null, { status: 302, headers: h });
   }
   if (path === "/auth/logout") return new Response(null, { status: 302, headers: { location: "/", "set-cookie": clearCookie } });
@@ -190,7 +197,10 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
 
   let ok = authMode === "none";
-  if (!ok && sessionSecret && (await isAuthed(req, sessionSecret))) ok = true;
+  if (!ok && sessionSecret) {
+    const sub = await sessionSubject(req, sessionSecret);
+    if (sub === OWNER || (sub && (await tokenExists(env.DB, sub.slice(1))))) ok = true;
+  }
   if (!ok && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) ok = true;
   if (!ok && (await checkToken(env.DB, bearer(req)))) ok = true;
   if (!ok) return json({ error: "login required", auth: authMode }, { status: 401 });
@@ -489,11 +499,11 @@ export default {
     await ensureWhoopSchema(env.DB);
     await ensureSocialSchema(env.DB);
     try {
-      return await api(req, env, ctx, url.pathname);
+      return withSecurityHeaders(await api(req, env, ctx, url.pathname));
     } catch (e) {
       console.error(e);
       const status = e instanceof HevyError ? 502 : 500;
-      return json({ error: e instanceof Error ? e.message : String(e) }, { status });
+      return withSecurityHeaders(json({ error: e instanceof Error ? e.message : String(e) }, { status }));
     }
   },
 
