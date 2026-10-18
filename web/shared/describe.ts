@@ -195,6 +195,13 @@ function percentWeeks(def: ProgramDef, slots: SlotDef[], wr: Writer): string {
     : "";
   const distinct = [...new Set(filled.map((r) => r.text))];
   if (distinct.length <= 1) {
+    // only some weeks, and not just "all but the deloads": name the weeks it's in (a 7th week, a phase)
+    if (empty.length && !empty.every((r) => isDeload(def, r.w))) {
+      const ws = filled.map((r) => r.w);
+      const named = ws.length === 1 ? weekLabel(def, ws[0]) : "";
+      const label = named && !/^week\s*\d/i.test(named) ? `${named} (week ${ws[0] + 1})` : cap(weekList(ws));
+      return `${label}: ${distinct[0] ?? ""}.`;
+    }
     const every = weeks.length === def.cycle!.weeks ? "Every week" : cap(weekList(filled.map((r) => r.w)));
     return `${every}: ${distinct[0] ?? ""}.${skipped}`;
   }
@@ -252,7 +259,8 @@ function tmRuleText(rule: TmRule, slots: SlotDef[], def: ProgramDef, wr: Writer,
   const weeks = slotWeeks(def, s0);
   const lifts = slots.map((s) => (s.progression as Percent).tmLift);
   const incs = wr.perLift(lifts.map((l) => ({ lift: l, v: wr.tmInc(l) })));
-  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week." : "";
+  const later = "applyAt" in rule && rule.applyAt === "weekEnd" ? " The change applies from the next week."
+    : "applyAt" in rule && rule.applyAt === "afterNextWeek" ? " The change applies after the following week." : "";
   const amt = (n: number) => incs.uniform ? wr.signed(wr.tmInc(lifts[0]), n) : `${n < 0 ? "−" : "+"}${plural(Math.abs(n), "step")}`;
   const legend = incs.uniform ? "" : ` One step is ${incs.text}.`;
   switch (rule.type) {
@@ -362,7 +370,9 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const n = p.failsBeforeAction ?? 1;
   const out: string[] = [];
   if (p.advance.type === "amrapAtLeast") {
-    out.push(`${st[0]}. When the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
+    const s0 = p.stages[0];
+    const others = s0.sets > 1 ? `the first ${s0.sets === 2 ? "set gets" : `${word(s0.sets - 1)} sets get`} ${s0.reps} and ` : "";
+    out.push(`${st[0]}. When ${others}the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
     return { title: st.join(" → "), text: out.join(" ") };
   }
   if (p.climb) {
@@ -380,7 +390,7 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const f = p.onFinalFail;
   const bump = f.type === "reset" ? wr.perLift(slots.map((s) => ({ lift: s.lift, v: wr.slotInc(s)! })), f.bumpIncrements) : null;
   const final = f.type === "retest" ? `test a new ${f.rmReps}-rep max and restart at ${pct(f.pct)} of it`
-    : f.type === "reset" ? `go back to ${st[0]} at the weight you last started it with, plus ${bump!.text}`
+    : f.type === "reset" ? `go back to ${st[0]} at the weight you last did it with, plus ${bump!.text}`
     : f.type === "deload" ? `drop the weight ${pct(f.pct)} and build back up`
     : f.type === "deloadBy" ? `drop ${wr.w(f.amount)} and build back up`
     : "";
@@ -454,14 +464,17 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
   // ── overview
   const scheduled = def.days.some((d) => d.weeks);
   const n = def.sessionsPerWeek, nd = def.days.length;
+  const ids = (d: ProgramDef["days"][number]) => d.slots.map((x) => x.id).join(",");
+  const sameDays = !scheduled && def.days.every((d) => ids(d) === ids(def.days[0]));
   overview.push(
     scheduled ? `${plural(n, "session")} a week · different sessions each week`
+      : sameDays ? `${plural(n, "session")} a week · the same workout every session`
       : nd === n ? `${plural(n, "session")} a week · ${word(nd)} different days`
       : nd < n ? `${plural(n, "session")} a week · ${word(nd)} days that alternate, so the order shifts week to week`
       : `${plural(n, "session")} a week · ${word(nd)} days in rotation, so each week picks up where the last left off`,
   );
   const c = def.cycle;
-  if (c?.finite) overview.push(`A ${c.weeks}-week block that ends after week ${c.weeks}.`);
+  if (c?.finite) overview.push(`${/^8/.test(String(c.weeks)) || c.weeks === 11 || c.weeks === 18 ? "An" : "A"} ${c.weeks}-week block that ends after week ${c.weeks}.`);
   else if (c && c.weeks > 1) {
     const names = c.weekNames?.slice(0, c.weeks);
     overview.push(`Repeats in ${c.weeks}-week cycles${names?.length === c.weeks ? `: ${list(names)}` : ""}.`);
@@ -482,11 +495,26 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
 
   // ── rotation
   const many = scheduled && def.days.length > 8;
-  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : def.days;
-  const rotation = days.map((d) => ({
-    day: d.name + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
-    lifts: d.slots.map((s) => `${s.tier} ${short(s.lift)}`),
-  }));
+  const days = many ? def.days.filter((d) => isScheduled(d, 0)) : sameDays ? def.days.slice(0, 1) : def.days;
+  // Slots that take turns (one per phase, never in the same week) show once: "MAIN SQUAT", not four times.
+  const nWeeks = c?.weeks ?? 1;
+  const activeWeeks = (s: SlotDef) => {
+    const p = s.progression;
+    return Array.from({ length: nWeeks }, (_, w) => w).filter((w) => p.kind !== "percent" || (p.weeks[w % p.weeks.length] ?? []).length > 0);
+  };
+  const rotation = days.map((d) => {
+    const seen: { label: string; weeks: Set<number> }[] = [];
+    for (const s of d.slots) {
+      const label = `${s.tier} ${short(s.lift)}`, ws = activeWeeks(s);
+      const twin = seen.find((x) => x.label === label && ws.every((w) => !x.weeks.has(w)));
+      if (twin) ws.forEach((w) => twin.weeks.add(w));
+      else seen.push({ label, weeks: new Set(ws) });
+    }
+    return {
+      day: (sameDays && def.days.length > 3 ? "Every session" : sameDays && def.days.length > 1 ? def.days.map((x) => x.name).join(" / ") : d.name) + (!many && d.weeks && c && !/\bweeks?\b/i.test(d.name) ? ` (${weekList(d.weeks)})` : ""),
+      lifts: seen.map((x) => x.label),
+    };
+  });
   if (many) overview.push(`Week 1's days are shown below; the ${plural(def.days.length, "session")} change week to week (see WORKOUTS).`);
 
   // ── tiers

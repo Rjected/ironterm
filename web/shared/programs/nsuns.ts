@@ -4,7 +4,9 @@
 // Verified against the "5 Day LP" tab of the LiftVault nSuns LP Complete Bundle (spreadsheet copy
 // and the public original): every set's weight / TM matches these percentages at 5 lb rounding.
 // TM rule from the sheet: 0-1 reps on the 1+ set → no change, 2-3 → +5 lb, 4-5 → +5-10 lb,
-// 6+ → +10-15 lb (low end for upper-body lifts, high end for lower).
+// more than 5 → +10-15 lb. The sheet gives only ranges and no kg; here upper-body lifts take the low
+// end and lower-body lifts the high end (the common reading), and 1 increment = 5 lb / 2.5 kg.
+// Only the 1+ sets move TMs (Monday's bench 8+ doesn't), applied once a week as in the sheet.
 
 import type { PercentSet, ProgramTemplate, SlotDef } from "../program";
 import type { Unit } from "../units";

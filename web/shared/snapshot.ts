@@ -58,6 +58,8 @@ export interface NextSession {
   when: string;
   date: string | null;
   reentry: boolean;
+  /** coming back from a break: what the ramp does to this session, in words (null otherwise) */
+  reentryNote: string | null;
   exercises: {
     lift: string;
     name: string;
@@ -131,7 +133,7 @@ export function snapshot(b: Bootstrap, now = new Date()): Snapshot {
       const when = !date ? "NEXT" : date === today ? "TODAY" : date === addDays(today, 1) ? "TOMORROW"
         : `${DOW[(new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7]} ${+date.slice(8)} ${MON[+date.slice(5, 7) - 1]}`;
       next = {
-        dayName: n.dayName, weekName: n.weekName, when, date, reentry: !!d.state?.reentry,
+        dayName: n.dayName, weekName: n.weekName, when, date, reentry: !!d.state?.reentry, reentryNote: d.reentry?.text ?? null,
         exercises: n.exercises.map((e) => {
           const sets = e.sets.map((s) => ({ reps: s.reps, repsMax: s.repsMax, weight: r1(s.weight), amrap: s.amrap, rpe: s.rpe }));
           return {

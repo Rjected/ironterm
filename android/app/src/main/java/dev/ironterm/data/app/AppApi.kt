@@ -6,16 +6,10 @@ import dev.ironterm.data.Net
 import dev.ironterm.data.normalizeServerUrl
 import dev.ironterm.gym.Live
 import dev.ironterm.gym.LiveSession
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.URLEncoder
 
@@ -29,35 +23,28 @@ class ApiException(val code: Int, message: String) : IOException(message) {
 class AppApi(
     serverUrl: String,
     private val token: String,
-    private val client: OkHttpClient = Net.client,
 ) {
     private val base = normalizeServerUrl(serverUrl) ?: throw IOException("Invalid server URL")
-    private val jsonType = "application/json".toMediaType()
 
     internal fun enc(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     /** [authOn403] false: only 401 means "token revoked" (social answers 403 for other reasons). */
-    internal suspend fun <T> call(method: String, path: String, body: String?, de: DeserializationStrategy<T>?, json: Json = AppJson.json, authOn403: Boolean = true): T? =
-        withContext(Dispatchers.IO) {
-            val req = Request.Builder().url(base + path)
-                .header("Authorization", "Bearer $token")
-                .header("accept", "application/json")
-                .method(method, body?.toRequestBody(jsonType) ?: if (method == "GET" || method == "DELETE") null else "{}".toRequestBody(jsonType))
-                .build()
-            client.newCall(req).execute().use { res ->
-                val text = res.body?.string().orEmpty()
-                when {
-                    res.code == 401 || (res.code == 403 && authOn403) -> throw AuthException()
-                    !res.isSuccessful -> throw ApiException(res.code, errorText(text) ?: "Server error ${res.code}")
-                    de == null -> null
-                    else -> try {
-                        json.decodeFromString(de, text)
-                    } catch (e: Exception) {
-                        throw IOException("Server sent an unexpected response (update the server?)", e)
-                    }
-                }
+    internal suspend fun <T> call(method: String, path: String, body: String?, de: DeserializationStrategy<T>?, json: Json = AppJson.json, authOn403: Boolean = true): T? {
+        val headers = mapOf("Authorization" to "Bearer $token", "accept" to "application/json", "Content-Type" to "application/json")
+        val payload = body ?: if (method == "GET" || method == "DELETE") null else "{}"
+        val res = Net.send(base + path, method, headers, payload)
+        val text = res.body
+        return when {
+            res.code == 401 || (res.code == 403 && authOn403) -> throw AuthException()
+            !res.isSuccessful -> throw ApiException(res.code, errorText(text) ?: "Server error ${res.code}")
+            de == null -> null
+            else -> try {
+                json.decodeFromString(de, text)
+            } catch (e: Exception) {
+                throw IOException("Server sent an unexpected response (update the server?)", e)
             }
         }
+    }
 
     private fun errorText(body: String): String? =
         runCatching { AppJson.json.parseToJsonElement(body).jsonObject["error"]?.jsonPrimitive?.content }.getOrNull()
@@ -84,6 +71,11 @@ class AppApi(
     suspend fun programDetail(id: String, options: Map<String, String> = emptyMap()): ProgramDetail {
         val qs = options.toSortedMap().entries.joinToString("&") { "opt.${enc(it.key)}=${enc(it.value)}" }
         return get("/api/app/programs/${enc(id)}" + (if (qs.isEmpty()) "" else "?$qs"), ProgramDetailSerializer)
+    }
+    /** What the program does to each muscle (docs/api/programs.md), the figures coloured for [mode] ("load" | "gaps"). */
+    suspend fun programBody(id: String, options: Map<String, String> = emptyMap(), mode: String = "load"): ProgramBody {
+        val qs = (listOf("mode=${enc(mode)}") + options.toSortedMap().map { (k, v) -> "opt.${enc(k)}=${enc(v)}" }).joinToString("&")
+        return get("/api/app/programs/${enc(id)}/body?$qs", ProgramBody.serializer())
     }
     suspend fun startProgram(id: String, body: ProgramStartBody): ProgramStartResult =
         call("POST", "/api/app/programs/${enc(id)}/start", AppJson.json.encodeToString(ProgramStartBody.serializer(), body), ProgramStartResult.serializer())!!

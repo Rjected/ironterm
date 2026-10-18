@@ -1,11 +1,11 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, csrfBlock, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, OWNER, passwordMatches, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
-import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
-import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
+import { bearer, checkToken, createToken, listTokens, revokeToken, tokenExists } from "./tokens";
+import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, safePath, type GoogleConfig } from "./google";
 import { Hevy, HevyError } from "./hevy";
 import { applyNotes, toHevyUpdate, type NotesEdit } from "../shared/notes";
 import { authUrl, disconnect, ensureWhoopSchema, handleCallback, handleWebhookEvent, syncWhoop, verifyWebhook, whoopConfigured, whoopData } from "./whoop";
@@ -17,7 +17,11 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { clientIp, loginBlocked, loginFailed, loginSucceeded } from "./ratelimit";
+import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
+import { BadRequest, liveSession, notesEdit, programConfig, readJson, readObject, settingsPatch, trips as tripsBody, validTz, weighIn } from "./validate";
+import { buildProgram } from "../shared/programs";
 
 export interface Env {
   DB: D1Database;
@@ -91,7 +95,10 @@ const NO_HEVY: Record<Mode, string> = {
 
 async function settings(env: Env, m: Mode): Promise<Settings> {
   const s = await kvGet<Partial<Settings>>(env.DB, k(m, "settings"));
-  return { unit: "lb", tz: env.TIMEZONE ?? "America/New_York", autoPush: true, graphMetric: "volume", ...s };
+  const out: Settings = { unit: "lb", tz: env.TIMEZONE ?? "America/New_York", autoPush: true, graphMetric: "volume", ...s };
+  // A zone the runtime doesn't know would make every date computation throw.
+  if (!validTz(out.tz)) out.tz = validTz(env.TIMEZONE) ? env.TIMEZONE! : "UTC";
+  return out;
 }
 
 function today(tz: string) {
@@ -107,7 +114,7 @@ async function afterSync(env: Env) {
   if (!env.HEVY_API_KEY) return;
   const [s, cfg] = await Promise.all([settings(env, "live"), program(env, "live")]);
   if (!s.autoPush || !cfg || !cfg.routineDays || !Object.keys(cfg.routineDays).length) return;
-  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg);
+  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, undefined, { today: today(s.tz), reentry: s.reentry });
   await kvPut(env.DB, "program", r.cfg);
 }
 
@@ -129,7 +136,8 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   if (path === "/api/whoop/webhook" && method === "POST") {
     const raw = await req.text();
     if (!(await verifyWebhook(env, req, raw))) return json({ error: "bad signature" }, { status: 401 });
-    const ev = JSON.parse(raw) as { id: string; type: string };
+    let ev: { id: string; type: string };
+    try { ev = JSON.parse(raw); } catch { return json({ error: "body must be JSON" }, { status: 400 }); }
     ctx.waitUntil(Promise.resolve(handleWebhookEvent(env, ev)).catch((e) => console.error("whoop webhook", e)));
     return json({ ok: true });
   }
@@ -168,7 +176,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       return new Response(null, { status: 302, headers: h });
     } catch (e) {
       const msg = String((e as Error).message ?? e).replace(/[<>&]/g, "");
-      return new Response(`<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#ff6b5e;font:14px ui-monospace,monospace;padding:24px">Sign-in failed: ${msg}<br><br><a style="color:#ffb000" href="/auth/login">Try again</a></body>`, { status: 403, headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(`<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#ff6b5e;font:14px ui-monospace,monospace;padding:24px">Sign-in failed: ${msg}<br><br><a style="color:#ffb000" href="/auth/login">Try again</a></body>`, { status: 403, headers: { "content-type": "text/html; charset=utf-8", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'" } });
     }
   }
   // Native app → embedded web view: trade an app token for a normal session cookie.
@@ -177,8 +185,8 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const tok = await checkToken(env.DB, String(form?.get("token") ?? ""));
     const next = String(form?.get("next") ?? "/");
     if (!tok) return new Response("Invalid or revoked app token.", { status: 403 });
-    const h = new Headers({ location: /^\/(?![\/\\])/.test(next) ? next : "/" });
-    if (sessionSecret) h.append("set-cookie", await sessionCookie(sessionSecret));
+    const h = new Headers({ location: safePath(next) });
+    if (sessionSecret) h.append("set-cookie", await sessionCookie(sessionSecret, `t${tok.id}`));
     return new Response(null, { status: 302, headers: h });
   }
   if (path === "/auth/logout") return new Response(null, { status: 302, headers: { location: "/", "set-cookie": clearCookie } });
@@ -189,17 +197,34 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ error: "No login configured for this deployment." }, { status: 403 });
   }
   if (path === "/api/login" && method === "POST") {
-    const { password } = await req.json<{ password: string }>();
-    if (!env.APP_PASSWORD || !safeEqual(password ?? "", env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
+    if (!env.APP_PASSWORD) return json({ error: "Password sign-in isn't configured." }, { status: 404 });
+    const ip = clientIp(req);
+    const wait = await loginBlocked(env.DB, ip);
+    if (wait) return json({ error: `Too many wrong passwords. Try again in ${Math.ceil(wait / 60)} min.` }, { status: 429, headers: { "retry-after": String(wait) } });
+    const { password: pw } = await readObject(req, true);
+    const password = typeof pw === "string" ? pw : "";
+    if (!(await passwordMatches(password, env.APP_PASSWORD))) {
+      await loginFailed(env.DB, ip);
+      return json({ error: "Wrong password" }, { status: 401 });
+    }
+    await loginSucceeded(env.DB, ip);
     return json({ ok: true }, { headers: { "set-cookie": await sessionCookie(sessionSecret!) } });
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
 
-  let ok = authMode === "none";
-  if (!ok && sessionSecret && (await isAuthed(req, sessionSecret))) ok = true;
-  if (!ok && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) ok = true;
-  if (!ok && (await checkToken(env.DB, bearer(req)))) ok = true;
-  if (!ok) return json({ error: "login required", auth: authMode }, { status: 401 });
+  // "owner": a real sign-in (Google, password, Access) or this machine with no login configured.
+  // "app": an app token, or a web session traded for one. Apps get the whole API except managing
+  // app tokens, so a stolen phone can't mint itself a token that outlives revoking its own.
+  let principal: "owner" | "app" | null = authMode === "none" ? "owner" : null;
+  const sub = !principal && sessionSecret ? await sessionSubject(req, sessionSecret) : null;
+  if (sub === OWNER) principal = "owner";
+  if (!principal && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) principal = "owner";
+  if (!principal && sub && (await tokenExists(env.DB, sub.slice(1)))) principal = "app";
+  if (!principal && (await checkToken(env.DB, bearer(req)))) principal = "app";
+  if (!principal) return json({ error: "login required", auth: authMode }, { status: 401 });
+  if (path === "/api/tokens" || path.startsWith("/api/tokens/")) {
+    if (principal !== "owner") return json({ error: "Manage app tokens from a signed-in browser, not from an app." }, { status: 403 });
+  }
 
   if (path.startsWith("/api/social/")) return handleOwner(req, socialCtx(req, env, ctx, authMode), path);
 
@@ -210,7 +235,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   // "Start fresh (no Hevy)": use Ironterm as the log even before any workout exists.
   if (path === "/api/mode" && method === "PUT") {
     if (m === "live") return json({ error: "A Hevy key is set; mode follows Hevy." }, { status: 400 });
-    const { mode: want } = await req.json<{ mode?: string }>().catch(() => ({}) as { mode?: string });
+    const { mode: want } = await readObject(req, true);
     if (want !== "local" && want !== "demo") return json({ error: "mode must be local or demo" }, { status: 400 });
     await kvPut(env.DB, "mode", want === "local" ? "local" : null);
     return json({ mode: await mode(env) });
@@ -257,8 +282,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   const notesM = path.match(/^\/api\/workouts\/([^/]+)\/notes$/);
   if (notesM && method === "PUT") {
     const id = decodeURIComponent(notesM[1]);
-    const edit = await req.json<NotesEdit>();
-    if (typeof edit?.description !== "string" || !Array.isArray(edit.exercises)) return json({ error: "bad request" }, { status: 400 });
+    const edit: NotesEdit = notesEdit(await readJson(req));
     if (m === "local") {
       const w = (await allWorkouts(env.DB)).find((x) => x.id === id);
       if (!w) return json({ error: "workout not found" }, { status: 404 });
@@ -310,6 +334,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
         const r = appProgramDetail(b, decodeURIComponent(sub.slice(9)), opt);
         return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
       }
+      const bodyM = sub.match(/^programs\/([^/]+)\/body$/);
+      if (bodyM) {
+        const opt: Record<string, string> = {};
+        for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
+        const mode = q.get("mode") ?? "load";
+        if (mode !== "load" && mode !== "gaps") return json({ error: "mode must be load or gaps" }, { status: 400 });
+        const days = parseDays(q.get("days"));
+        if (days && "error" in days) return json({ error: days.error }, { status: 400 });
+        const r = appProgramBody(b, decodeURIComponent(bodyM[1]), { opt, mode, days, svg: q.get("svg") !== "0" });
+        return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
+      }
     }
     const startM = sub.match(/^programs\/([^/]+)\/start$/);
     if (startM && method === "POST") {
@@ -324,8 +359,9 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       return json({ ok: true, program: appProgram(await bootstrap(env, authMode, m)) });
     }
     if (sub === "gym/start" && method === "POST") {
-      const body = await req.json<{ dayIndex?: number; empty?: boolean }>().catch(() => ({}));
-      const s = startSession(b, body);
+      const body = await readObject(req, true);
+      const dayIndex = checkDayIndex(body.dayIndex, b.program);
+      const s = startSession(b, { dayIndex, empty: body.empty === true });
       await kvPut(env.DB, k(m, "live"), s);
       return json(s);
     }
@@ -334,19 +370,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   if (path === "/api/tokens" && method === "GET") return json(await listTokens(env.DB));
   if (path === "/api/tokens" && method === "POST") {
-    const { name } = await req.json<{ name?: string }>().catch(() => ({ name: "" }));
-    return json(await createToken(env.DB, name ?? ""));
+    const { name } = await readObject(req, true);
+    return json(await createToken(env.DB, typeof name === "string" ? name : ""));
   }
   if (path.startsWith("/api/tokens/") && method === "DELETE") return json({ ok: await revokeToken(env.DB, decodeURIComponent(path.slice(12))) });
 
   if (path === "/api/settings" && method === "PUT") {
-    const next = { ...(await settings(env, m)), ...(await req.json<Partial<Settings>>()) };
+    const next = { ...(await settings(env, m)), ...settingsPatch(await readJson(req)) };
     await kvPut(env.DB, k(m, "settings"), next);
     return json(next);
   }
 
   if (path === "/api/program" && method === "PUT") {
-    const cfg = await req.json<ProgramConfig | null>();
+    const cfg = programConfig(await readJson(req, true));
     await kvPut(env.DB, k(m, "program"), cfg);
     return json({ ok: true });
   }
@@ -360,17 +396,22 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   if (path === "/api/routines/push" && method === "POST") {
     if (m !== "live") return json({ error: `${NO_HEVY[m]} push routines.` }, { status: 400 });
-    const { dayIndex } = await req.json<{ dayIndex?: number }>().catch(() => ({}) as { dayIndex?: number });
+    const body = await readObject(req, true);
     const cfg = await program(env, m);
     if (!cfg) return json({ error: "Set up a program first." }, { status: 400 });
-    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex);
+    const dayIndex = checkDayIndex(body.dayIndex, cfg);
+    const s = await settings(env, m);
+    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex, { today: today(s.tz), reentry: s.reentry });
     await kvPut(env.DB, "program", r.cfg);
     return json(r);
   }
 
   // ── gym mode: the in-progress session lives server-side so a phone refresh never loses it
+  // A debounced save that lands after FINISH (or a retry from another device) must not bring
+  // the finished session back as the live one.
+  if (path === "/api/live" && method === "PUT" && (await alreadyFinished(env, m, req.clone() as Request))) return json({ ok: true, finished: true });
   if (path === "/api/live" && method === "PUT") {
-    await kvPut(env.DB, k(m, "live"), await req.json<LiveSession>());
+    await kvPut(env.DB, k(m, "live"), liveSession(await readJson(req)));
     return json({ ok: true });
   }
   if (path === "/api/live" && method === "DELETE") {
@@ -378,8 +419,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ ok: true });
   }
   if (path === "/api/live/finish" && method === "POST") {
-    const session = await req.json<LiveSession>();
-    if (typeof session?.id !== "string" || !Array.isArray(session.exercises)) return json({ error: "bad request" }, { status: 400 });
+    const session = liveSession(await readJson(req)) as unknown as LiveSession;
     if (m === "demo") {
       // Demo: keep the workout locally so the program advances.
       const w = toStoredWorkout(session, `demo-live-${session.id}`, (ex) => ex.templateId ?? `demo-${ex.lift}`);
@@ -418,18 +458,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
 
   // ── trips
   if (path === "/api/trips" && method === "PUT") {
-    await kvPut(env.DB, k(m, "trips"), await req.json<Trip[]>());
+    await kvPut(env.DB, k(m, "trips"), tripsBody(await readJson(req)) as Trip[]);
     return json({ ok: true });
   }
   if (path === "/api/routines/travel" && method === "POST") {
     if (m !== "live") return json({ error: `${NO_HEVY[m]} push routines.` }, { status: 400 });
-    const { sessions, unit } = await req.json<{ sessions: PlannedSession[]; unit: "lb" | "kg" }>();
-    return json({ pushed: await pushSessions(env.DB, env.HEVY_API_KEY!, sessions, unit) });
+    const { sessions, unit } = await readObject(req);
+    if (!Array.isArray(sessions) || (unit !== "lb" && unit !== "kg")) return json({ error: 'send {sessions: [...], unit: "lb" | "kg"}' }, { status: 400 });
+    return json({ pushed: await pushSessions(env.DB, env.HEVY_API_KEY!, sessions as PlannedSession[], unit) });
   }
 
   // ── manual weigh-ins (Hevy's own log is rarely used)
   if (path === "/api/weighin" && method === "POST") {
-    const w = await req.json<{ date: string; kg: number }>();
+    const w = weighIn(await readJson(req));
     const list = ((await kvGet<{ date: string; kg: number }[]>(env.DB, k(m, "weighins"))) ?? []).filter((x) => x.date !== w.date);
     if (w.kg > 0) list.push({ date: w.date, kg: w.kg });
     await kvPut(env.DB, k(m, "weighins"), list.sort((a, z) => a.date.localeCompare(z.date)));
@@ -460,6 +501,22 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   }
 
   return json({ error: "not found" }, { status: 404 });
+}
+
+/** Is this PUT /api/live body a session that was already saved as a workout? */
+async function alreadyFinished(env: Env, m: Mode, req: Request): Promise<boolean> {
+  const s = await req.json<{ id?: unknown }>().catch(() => null);
+  if (!s || typeof s.id !== "string") return false;
+  if (m === "demo") return ((await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? []).some((w) => w.id === `demo-live-${s.id}`);
+  return !!(await kvGet<{ workout?: unknown }>(env.DB, `finished:${s.id}`))?.workout;
+}
+
+/** An optional program day index: absent, or a day of the current program. */
+function checkDayIndex(v: unknown, cfg: ProgramConfig | null): number | undefined {
+  if (v == null) return undefined;
+  const days = cfg ? buildProgram(cfg)?.days.length ?? 0 : 0;
+  if (!Number.isInteger(v) || (v as number) < 0 || (v as number) >= days) throw new BadRequest(days ? `dayIndex must be 0 to ${days - 1}` : "no program to pick a day from");
+  return v as number;
 }
 
 function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
@@ -495,12 +552,13 @@ export default {
     await ensureWhoopSchema(env.DB);
     await ensureSocialSchema(env.DB);
     try {
-      return await api(req, env, ctx, url.pathname);
+      return withSecurityHeaders(await api(req, env, ctx, url.pathname));
     } catch (e) {
       console.error(e);
+      if (e instanceof BadRequest) return json({ error: e.message }, { status: 400 });
       // BodyTooLarge: the self-hosted server cut off an oversized upload (server/bodylimit.ts)
       const status = e instanceof HevyError ? 502 : e instanceof Error && e.name === "BodyTooLarge" ? 413 : 500;
-      return json({ error: e instanceof Error ? e.message : String(e) }, { status });
+      return withSecurityHeaders(json({ error: e instanceof Error ? e.message : String(e) }, { status }));
     }
   },
 

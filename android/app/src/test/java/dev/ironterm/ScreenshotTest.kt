@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
@@ -173,6 +175,12 @@ class ScreenshotTest {
     @Test fun gym_keypad() = shot("gym_keypad", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = live.copy(restEndsAt = null))), before = {
         compose.onAllNodes(androidx.compose.ui.test.hasContentDescription("LB value")).onFirst().performClick()
     })
+    @Test fun gym_remove_set_is_named() {
+        val s = Live.addExercise(Live.emptySession("lb", Live.iso(now - 60_000)).copy(id = "e2"), "bench")
+        compose.setContent { TerminalTheme { AppScreen(server, AppActions.None, Nav(Tabs.GYM), {}, serverData, GymUi(GymState(session = s)), now = now, ticking = false) } }
+        compose.waitForIdle()
+        compose.onAllNodes(hasContentDescription("Remove set")).assertCountEquals(1)
+    }
     @Test fun gym_empty_session() = shot("gym_empty_session", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = Live.emptySession("lb", Live.iso(now - 60_000)).copy(id = "e1"))))
     private fun summary(state: String, error: String? = null) = FinishSummary(
         sessionId = live.id, title = live.title, unit = "lb", sets = 14, volume = 11355.0, durationSec = 66 * 60, exercises = 3,
@@ -185,6 +193,20 @@ class ScreenshotTest {
         val err = "No Hevy exercise found for cableFly. Map it in Settings › Lifts."
         shot("gym_summary_failed", server, Nav(Tabs.GYM), serverData, GymUi(GymState(summary = summary(FinishState.FAILED, err), outbox = listOf(OutOp(OutOp.FINISH, live.id, live, now, attempts = 3, failed = true, error = err)))))
     }
+
+    // ── local mode: the server has no Hevy key, so nothing may claim it went to Hevy ──
+    private val local get() = server.copy(snapshot = snap.copy(demo = false, source = Snapshot.LOG_LOCAL))
+    private fun noHevy() = listOf("to Hevy", "in Hevy", "Hevy instead").forEach { compose.onAllNodes(hasText(it, substring = true, ignoreCase = true)).assertCountEquals(0) }
+    @Test fun gym_finish_sheet_local() = shot("gym_finish_sheet_local", local, Nav(Tabs.GYM), serverData, liveGym, before = {
+        click("FINISH")(); compose.waitForIdle()
+        noHevy()
+        compose.onAllNodes(hasText("SAVE")).assertCountEquals(1)
+    })
+    @Test fun gym_summary_local() = shot("gym_summary_local", local, Nav(Tabs.GYM), serverData, GymUi(GymState(summary = summary(FinishState.SAVED).copy(local = true, program = true))), before = {
+        noHevy()
+        compose.onAllNodes(hasText("SAVED")).assertCountEquals(1)
+    })
+    @Test fun gym_start_local() = shot("gym_start_local", local, Nav(Tabs.GYM), serverData, before = { noHevy() })
 
     // ═════════════ LIFTS ═════════════
     @Test fun lifts() = shot("lifts", server, Nav(Tabs.LIFTS), serverData)
@@ -209,7 +231,10 @@ class ScreenshotTest {
 
     // ═════════════ MORE ═════════════
     @Test fun more() = shot("more", server, Nav(Tabs.MORE), serverData)
-    @Test fun calendar() = shot("calendar", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData)
+    @Test fun calendar() = shot("calendar", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, before = {
+        // icon-only controls are named for TalkBack
+        listOf("Back", "Previous month", "Next month").forEach { compose.onAllNodes(hasContentDescription(it)).assertCountEquals(1) }
+    })
     @Test fun calendar_360() = shot("calendar_360", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, width = 360)
     @Test fun calendar_day() = shot("calendar_day", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, before = click("13"))
     @Test fun program() = shot("program", server, Nav(Tabs.MORE, listOf(Route.Program)), serverData)

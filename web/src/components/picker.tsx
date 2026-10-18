@@ -119,8 +119,8 @@ export function Picker<T extends string>(props: {
   );
 }
 
-const CAT_ORDER = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
-const CAT_NAME: Record<string, string> = { gzcl: "GZCL", novice: "Novice", strength: "Strength", powerlifting: "Powerlifting", hypertrophy: "Hypertrophy", peaking: "Peaking" };
+const CAT_ORDER = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "bodyweight", "comeback"];
+const CAT_NAME: Record<string, string> = { gzcl: "GZCL", novice: "Novice", strength: "Strength", powerlifting: "Powerlifting", hypertrophy: "Hypertrophy", peaking: "Peaking", bodyweight: "Bodyweight", comeback: "Comeback" };
 
 /** Every program template, grouped by category, for a Picker. */
 export function programOptions(exclude: string[] = []): PickOption<string>[] {

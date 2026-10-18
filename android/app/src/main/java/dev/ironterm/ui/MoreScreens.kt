@@ -1,6 +1,5 @@
 package dev.ironterm.ui
 
-import android.graphics.Picture
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,7 +38,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.caverock.androidsvg.SVG
 import dev.ironterm.Fmt
 import dev.ironterm.data.SourceMode
 import dev.ironterm.data.WeekDay
@@ -115,9 +113,9 @@ private fun CalendarBody(cal: AppCalendar, todayIso: String?, refreshing: Boolea
     val ym = runCatching { YearMonth.parse(cal.month) }.getOrNull()
     RefreshColumn(refreshing, onRefresh) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clickable { shift(-1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("‹", size = 22.sp, color = T.amber, bold = true) }
+            Box(Modifier.clickable { shift(-1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("‹", Modifier.semantics { contentDescription = "Previous month" }, size = 22.sp, color = T.amber, bold = true) }
             Mono(ym?.let { "${Fmt.month(it.atDay(1))} ${it.year}" } ?: cal.month, Modifier.weight(1f), size = 15.sp, bold = true, align = TextAlign.Center)
-            Box(Modifier.clickable { shift(1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("›", size = 22.sp, color = T.amber, bold = true) }
+            Box(Modifier.clickable { shift(1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("›", Modifier.semantics { contentDescription = "Next month" }, size = 22.sp, color = T.amber, bold = true) }
         }
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp).pointerInput(cal.month) {
@@ -191,7 +189,7 @@ private fun DaySheet(d: CalDay, onGo: (Route) -> Unit) {
 // ═════════════════════════════ PROGRAM ═════════════════════════════
 
 @Composable
-fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}) {
+fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}, onOpenProgram: (String) -> Unit = {}) {
     LaunchedEffect(state.mode) { actions.load(Screens.PROGRAM) }
     Pushed("Program", onBack) {
         Loaded(data.program, "Program", onRetry = { actions.load(Screens.PROGRAM, true) }, onSetup = onSetup,
@@ -215,16 +213,30 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Mono("WEEK ${p.week}" + (p.weekName?.let { " · ${it.uppercase()}" } ?: ""), size = 11.sp, color = T.amber, bold = true)
                         if (p.complete) { Spacer(Modifier.width(8.dp)); Badge("COMPLETE", T.up) }
-                        p.reentry?.let { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY ${it.done}/${it.total}") }
+                        p.reentry?.let { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY ${it.done + 1}/${it.total}") }
+                    }
+                    p.reentry?.let { r ->
+                        r.summary?.let {
+                            Spacer(Modifier.height(8.dp))
+                            Mono(it, size = 11.sp, color = T.amber)
+                        }
+                        r.suggest.forEach { s ->
+                            Spacer(Modifier.height(6.dp))
+                            TButton("${s.name} ›", modifier = Modifier.fillMaxWidth(), onClick = { onOpenProgram(s.templateId) })
+                        }
                     }
                     Spacer(Modifier.height(12.dp))
-                    BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
-                    Spacer(Modifier.height(6.dp))
-                    Mono(
-                        if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
-                        else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
-                        size = 10.sp, color = T.faint,
-                    )
+                    if (state.snapshot?.isLocal == true) {
+                        Mono("No Hevy connected, so there are no routines to push: log each session in GYM and it's saved on your server.", size = 10.sp, color = T.faint)
+                    } else {
+                        BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
+                        Spacer(Modifier.height(6.dp))
+                        Mono(
+                            if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
+                            else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
+                            size = 10.sp, color = T.faint,
+                        )
+                    }
                     Spacer(Modifier.height(12.dp))
                     TButton("Browse programs ›", modifier = Modifier.fillMaxWidth(), onClick = onBrowse)
                 }
@@ -327,8 +339,8 @@ fun BodyScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> 
 }
 
 /** The figure's colour scales (web/shared/anatomy-svg.ts): warn = near-black → red, load = navy → light blue. */
-private val WARN_SCALE = listOf(androidx.compose.ui.graphics.Color(0xFF16181D), androidx.compose.ui.graphics.Color(0xFFFF6B5E))
-private val LOAD_SCALE = listOf(0xFF0F3278, 0xFF285AB4, 0xFF5082DC, 0xFF8CB4FF).map { androidx.compose.ui.graphics.Color(it) }
+internal val WARN_SCALE = listOf(androidx.compose.ui.graphics.Color(0xFF16181D), androidx.compose.ui.graphics.Color(0xFFFF6B5E))
+internal val LOAD_SCALE = listOf(0xFF0F3278, 0xFF285AB4, 0xFF5082DC, 0xFF8CB4FF).map { androidx.compose.ui.graphics.Color(it) }
 
 /** One muscle: short label + bars; tap shows the anatomical name, sets and target range. */
 @Composable
@@ -371,30 +383,18 @@ private fun BodyFigures(b: AppBody) {
     }
 }
 
-/** Server-rendered SVG drawn natively (AndroidSVG → Picture), parsed once per document. */
+/** Server-rendered SVG drawn natively (in-repo renderer, see Svg.kt), parsed once per document. */
 @Composable
 fun SvgImage(svg: String, description: String, modifier: Modifier) {
-    val parsed = remember(svg) {
-        runCatching {
-            val s = SVG.getFromString(svg)
-            val vb = s.documentViewBox
-            val ratio = if (vb != null && vb.height() > 0) vb.width() / vb.height() else 0.52f
-            s.renderToPicture() to ratio
-        }.getOrNull()
-    }
-    if (parsed == null) {
+    val doc = remember(svg) { runCatching { SvgDocument.parse(svg) }.getOrNull() }
+    if (doc == null) {
         Box(modifier.aspectRatio(0.52f).border(1.dp, T.line), contentAlignment = Alignment.Center) { Mono("FIGURE UNAVAILABLE", size = 9.sp, color = T.faint) }
         return
     }
-    val (pic: Picture, ratio) = parsed
+    val vb = doc.viewBox
+    val ratio = if (vb.height() > 0 && vb.width() > 0) vb.width() / vb.height() else 0.52f
     Canvas(modifier.aspectRatio(ratio).semantics { contentDescription = description }) {
-        drawIntoCanvas { c ->
-            val nc = c.nativeCanvas
-            nc.save()
-            nc.scale(size.width / pic.width.coerceAtLeast(1), size.height / pic.height.coerceAtLeast(1))
-            nc.drawPicture(pic)
-            nc.restore()
-        }
+        drawIntoCanvas { c -> doc.draw(c.nativeCanvas, size.width, size.height) }
     }
 }
 

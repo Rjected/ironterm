@@ -161,3 +161,56 @@ describe("replaying Sheiko #32", () => {
     expect(skipped.find((x) => x.slotId === "s32w2d3-bench2")?.outcome).toBe("missed");
   });
 });
+
+// Day-by-day against the ChaseT 2008 sheets hosted by LiftVault ("Sheiko Training Collection"
+// tabs #29–#32 and #37, "Sheiko Beginner" Prep_1/Comp, "Sheiko AML" Prep I–III/Comp), read cell by
+// cell 2026-10-18. Each exercise as the sheet writes it: "reps@pct[xSets]" for % work, "SETSxREPS"
+// for accessories.
+describe("sessions match the source sheets", () => {
+  const spec = (def: ProgramDef, dayId: string) => {
+    const day = def.days.find((d) => d.id === dayId)!;
+    expect(day, dayId).toBeDefined();
+    return day.slots.map((s) => {
+      const p = s.progression;
+      if (p.kind === "fixed") return `${s.lift} ${p.sets}x${p.reps}`;
+      if (p.kind !== "percent") throw new Error("unexpected");
+      const toks: string[] = [];
+      let prev = "", n = 0;
+      const flush = () => { if (prev) toks.push(n > 1 ? `${prev}x${n}` : prev); };
+      for (const x of p.weeks[0]) {
+        const t = `${x.reps}@${Math.round(x.pct! * 1000) / 10}`;
+        if (t === prev) n++; else { flush(); prev = t; n = 1; }
+      }
+      flush();
+      return `${s.lift} ${toks.join(" ")}`;
+    });
+  };
+  it("#29 week 1 Monday", () => {
+    expect(spec(sheiko2932.build({}), "S29W1D1")).toEqual([
+      "bench 5@50 4@60x2 3@70x2 3@75x5", "squat 5@50 5@60x2 5@70x5", "bench 5@50 5@60 4@70x4", "chestFly 5x10", "goodMorning 5x5",
+    ]);
+  });
+  it("#32 week 4 (last week: Monday, Wednesday, then competition)", () => {
+    const def = sheiko2932.build({ run: "32" });
+    expect(spec(def, "S32W4D1").slice(0, 2)).toEqual(["bench 3@50 3@60x2 2@70x2 1@75x4", "deadlift 3@50 2@60x2 2@70x4"]);
+    expect(spec(def, "S32W4D2")).toEqual(["squat 3@50 3@60x2 2@70x3", "bench 3@50 3@60x2 2@70x3"]);
+    expect(def.days.filter((d) => d.weeks?.[0] === 3)).toHaveLength(2);
+  });
+  it("#37 week 2 Friday", () => {
+    expect(spec(sheiko37.build({}), "S37W2D3")).toEqual([
+      "squat 4@50 4@60 3@70x2 3@75x6", "bench 6@50 5@60 4@70x2 3@75x2 2@80x2 4@75 5@70 6@60 7@50",
+      "chestFly 5x10", expect.stringMatching(/ 5x10$/), "squat 3@55 3@65 2@75x4", "goodMorning 5x6",
+    ]);
+  });
+  it("Beginner prep week 1 Monday and comp week 4 Wednesday", () => {
+    const def = sheikoBeginner.build({});
+    expect(spec(def, "BP1W1D1").slice(0, 2)).toEqual(["squat 5@50 5@60 4@70x4", "bench 5@50 4@60 3@70 3@75x4"]);
+    expect(spec(def, "BCW4D2")).toEqual(["squat 3@50 3@60 2@65x3", "bench 3@50 3@60 2@70x3"]);
+  });
+  it("AML comp week 2 Wednesday max singles and the final week", () => {
+    const def = sheikoAml.build({});
+    expect(spec(def, "A4W2D2").slice(0, 2)).toEqual(["bench 3@50 3@60 3@70 2@80 1@90 1@95 1@100", "deadlift 3@50 3@60 2@70 2@80 1@90 1@95 1@100"]);
+    expect(spec(def, "A4W5D1").slice(0, 2)).toEqual(["bench 3@50 3@60 2@70x2 1@75x3", "deadlift 3@50 3@60 2@70x3"]);
+    expect(spec(def, "A4W5D2")).toEqual(["squat 3@50 2@60 1@70x3", "bench 3@50 3@60 2@70x3"]);
+  });
+});

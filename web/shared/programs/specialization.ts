@@ -31,10 +31,8 @@
 //   The engine has one max per lift, so the shrug % is rescaled onto the goal max using the
 //   "goal" option (goal = current × (1 + g)). Assistance loads aren't prescribed: pick a weight.
 //
-// Not included (couldn't source exact tables): full Smolov (intense-mesocycle tables disagree
-// between sources, the switching phase isn't a fixed table, and the base phase uses absolute
-// +kg jumps), Magnusson–Ortmayer (sources disagree on length, 8 vs 11–12 weeks, and the sheet
-// isn't readable as text), Bulgarian daily max (no concrete template).
+// Full Smolov and Magnusson–Ortmayer live in liftvault.ts. Not included: Bulgarian daily max (no
+// concrete template).
 
 import type { DayDef, OptionDef, PercentSet, ProgramTemplate, SlotDef, Tier } from "../program";
 import type { Unit } from "../units";
@@ -59,7 +57,7 @@ export const smolovJr: ProgramTemplate = {
   id: "smolov-jr",
   name: "Smolov Jr",
   author: "Sergey Smolov (base mesocycle, condensed)",
-  source: "published program, LiftVault Smolov / Smolov Jr page",
+  source: "smolovjr.com: Smolov Jr · LiftVault Smolov Jr sheet",
   summary: "Three brutal weeks of one lift four days a week (6×6, 7×5, 8×4, 10×3 at 70–85%), adding weight each week.",
   category: "peaking",
   level: "intermediate",
@@ -117,7 +115,7 @@ export const russianSquat: ProgramTemplate = {
   id: "russian-squat",
   name: "Russian Squat Routine",
   author: "Soviet sports science (popularized by Pavel Tsatsouline)",
-  source: "published program, LiftVault Russian Squat Program (original) · StrengthLog calculator",
+  source: "StrengthLog: Russian (\"Old School\") Squat Routine · LiftVault Russian Squat Program",
   summary: "Six weeks of squatting three times a week: steady 6×2 @ 80% days alternate with volume ramps to 6×6, then intensity ramps to a 105% single.",
   category: "peaking",
   level: "intermediate",

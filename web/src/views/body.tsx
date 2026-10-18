@@ -127,6 +127,10 @@ export function Body(props: { d: Derived; cfg: ProgramConfig | null; nav?: Nav }
             <Picker label="Program" value={tpl} width="min(320px, 100%)"
               options={[...(props.cfg && d.def ? [{ value: "active", label: d.def.name, group: "Your program", hint: "active" }] : []), ...programOptions()]}
               onChange={(v) => { setTpl(v); setSched(null); setPinned(null); }} />
+            {props.nav && (tpl !== "active" || props.cfg) && (
+              <a class="btn" id="body-open-program" style={{ padding: "4px 8px", textDecoration: "none" }} href={`#set/programs/${encodeURIComponent(tpl === "active" ? props.cfg!.templateId : tpl)}`}
+                onClick={(e) => { e.preventDefault(); props.nav!({ view: "set", tab: "programs", id: tpl === "active" ? props.cfg!.templateId : tpl }); }}>PROGRAM PAGE →</a>
+            )}
             <div class="seg" role="group" aria-label="Training days">
               {DOW.map((n, i) => (
                 <button class={schedule.includes(i) ? "on" : ""} onClick={() => {

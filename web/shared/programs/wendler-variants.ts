@@ -7,12 +7,13 @@
 // - Building the Monolith: jimwendler.com "Building the Monolith – 5/3/1 for Size" (set/rep/%
 //   structure cross-checked with Liftosaur's version, which prints the same loads as % of 1RM).
 //   6 weeks, 3 days. Wendler says to "adjust TM" after week 3 without an amount; we use the standard
-//   +5 lb upper / +10 lb lower (as Liftosaur does). Suggested TM: 85%.
+//   +5 lb upper / +10 lb lower (as Liftosaur does). Suggested TM: "lower than you think (85%)".
 // - Boring But Big 3-Month Challenge: jimwendler.com "Boring But Big, 3 Month Challenge". Main
 //   5/3/1 sets for the prescribed reps only (no AMRAPs), then 5×10 of the same lift at 50% / 60% /
-//   70% of TM in months 1 / 2 / 3; chins or face pulls + abs, 25–50 reps each. The post doesn't
-//   mention deloads or TM increases, so "month" = the book's 4-week cycle (3 weeks + deload) with
-//   the standard +5/+10 TM bump after each month (deload can be switched off).
+//   70% of TM in months 1 / 2 / 3; one push, one pull and one ab movement a day, 25–50 reps each
+//   (the prose says 25–30). The post doesn't mention deloads or TM increases, so "month" = the
+//   book's 4-week cycle (3 weeks + deload) with the standard +5/+10 TM bump after each month
+//   (deload can be switched off). BBB stays 5×10 in the deload, as on jimwendler.com's BBB page.
 // - 5/3/1 5's PRO + FSL / BBS / SSL: 5/3/1 Forever leader-style template (from memory of the book +
 //   Wendler's blog on FSL vs BBB): every main set is 5 reps at the usual 5/3/1 percentages, then
 //   FSL 5×5, Boring But Strong 10×5 at the FSL weight, or Second Set Last 5×5. TM 85%, +5/+10 per
@@ -42,23 +43,6 @@ function defaults(pctOf1rm: number) {
 
 const pct = (lift: string, id: string, weeks: PercentSet[][], tier: Tier = "MAIN", tmLift = lift, note?: string): SlotDef => ({ id, lift, tier, note, progression: { kind: "percent", tmLift, weeks } });
 const fixed = (id: string, lift: string, sets: number, reps: number, repsMax?: number, note?: string): SlotDef => ({ id, lift, tier: "ACC", progression: { kind: "fixed", sets, reps, repsMax, note } });
-
-/**
- * A main-lift slot whose TM goes up once a block in a finite program (the engine's cycle.tmIncrease
- * only fires for open-ended cycles). The slot is split in two: the normal slot (empty in `bumpWeeks`)
- * and a twin that only exists in `bumpWeeks` and adds one tmIncrement to the TM when logged.
- */
-function withBump(lift: string, id: string, weeks: PercentSet[][], bumpWeeks: number[], tier: Tier = "MAIN"): SlotDef[] {
-  const main = weeks.map((t, w) => (bumpWeeks.includes(w) ? [] : t));
-  const bump = weeks.map((t, w) => (bumpWeeks.includes(w) ? t : []));
-  return [
-    pct(lift, id, main, tier),
-    {
-      id: `${id}-tm`, lift, tier, note: "TM goes up at the end of this week",
-      progression: { kind: "percent", tmLift: lift, weeks: bump, tmRule: { type: "amrapTable", setIndex: 0, table: [{ minReps: 0, increments: 1 }], applyAt: "weekEnd" } },
-    },
-  ];
-}
 
 const liftName = (l: string) => ({ ohp: "Press", bench: "Bench", squat: "Squat", deadlift: "Deadlift" })[l] ?? l;
 
@@ -125,7 +109,6 @@ export const monolith: ProgramTemplate = {
   weeks: 6,
   options: [],
   build() {
-    const bump = [2]; // TM goes up after week 3
     const monPress = MONO_WEEKS.map(([a, b, c]) => [P(a, 5), P(b, 5), P(c, 5), P(a, 5, true)]);
     const friSquat = MONO_WEEKS.map(([a, b, c], w) => [P(a, 5), P(b, 5), P(c, 5), P(WIDOWMAKER[w], 20)]);
     const friPress = FRI_PRESS.map(([n, p]) => Array.from({ length: n }, () => P(p, 5)));
@@ -134,8 +117,8 @@ export const monolith: ProgramTemplate = {
       name: "Building the Monolith",
       sessionsPerWeek: 3,
       maxLabel: "Training max",
-      tmIncrement: TM_UP,
-      cycle: { weeks: 6, finite: true, weekNames: ["Week 1", "Week 2", "Week 3", "Week 4 (TM up)", "Week 5", "Week 6"] },
+      // TM goes up after week 3 (fires on the pass boundary, so a missed session can't skip it)
+      cycle: { weeks: 6, finite: true, tmIncrease: TM_UP, tmIncreaseEvery: 3, weekNames: ["Week 1", "Week 2", "Week 3", "Week 4 (TM up)", "Week 5", "Week 6"] },
       days: [
         { id: "1", name: "Monday · Squat / Press", slots: [
           pct("squat", "mo1-sq", ramp(5)),
@@ -145,14 +128,14 @@ export const monolith: ProgramTemplate = {
           fixed("mo1-dip", "dip", 5, 20, 40, "100–200 total reps"),
         ] },
         { id: "2", name: "Wednesday · Deadlift / Bench", slots: [
-          ...withBump("deadlift", "mo2-dl", ramp(3), bump),
-          ...withBump("bench", "mo2-bp", ramp(5), bump),
+          pct("deadlift", "mo2-dl", ramp(3)),
+          pct("bench", "mo2-bp", ramp(5)),
           { id: "mo2-row", lift: "dbRow", tier: "ACC", progression: { kind: "double", sets: 5, reps: [10, 20], increment: { lb: 5, kg: 2 } } },
           fixed("mo2-curl", "bicepCurl", 5, 20, undefined, "100 total reps"),
         ] },
         { id: "3", name: "Friday · Squat (20 reps) / Press volume", slots: [
-          ...withBump("squat", "mo3-sq", friSquat, bump),
-          ...withBump("ohp", "mo3-ohp", friPress, bump),
+          pct("squat", "mo3-sq", friSquat),
+          pct("ohp", "mo3-ohp", friPress),
           fixed("mo3-chin", "chinUp", 5, 5, undefined, "weighted"),
           fixed("mo3-fp", "facePull", 5, 20, undefined, "100 total reps (or band pull-aparts)"),
           fixed("mo3-shrug", "shrug", 5, 20, undefined, "100 total reps"),
@@ -161,11 +144,12 @@ export const monolith: ProgramTemplate = {
       notes: [
         "Start with a TM of about 85% of your 1RM. After week 3 the TM goes up (+5 lb press/bench, +10 lb squat/deadlift) and weeks 4–6 repeat the waves.",
         "Only the first three exercises each day are required. Use a safety-squat bar for the 20-rep set if you like.",
-        "Deload after the six weeks, then move to a less demanding template.",
+        "No joker sets, and don't superset the main lifts.",
+        "After the six weeks, move to a less demanding template (a deload week first is common).",
       ],
     };
   },
-  defaults: defaults(0.85),
+  defaults: (unit: Unit) => ({ ...defaults(0.85)(unit), startWeights: { "mo2-row": unit === "lb" ? 60 : 26 } }),
 };
 
 // ───────────────────────── Boring But Big 3-Month Challenge ─────────────────────────
@@ -190,13 +174,13 @@ export const bbbChallenge: ProgramTemplate = {
     const per = deload ? 4 : 3;
     const total = per * 3;
     const main = Array.from({ length: total }, (_, w) => STRAIGHT[w % per]);
-    const bbb = Array.from({ length: total }, (_, w) => (w % per === 3 ? [] : rep(5, P(50 + 10 * Math.floor(w / per), 10))));
-    const bump = [per - 1, 2 * per - 1]; // last week of months 1 and 2
-    const day = (id: string, lift: string, acc: string): DayDef => ({
+    const bbb = Array.from({ length: total }, (_, w) => rep(5, P(50 + 10 * Math.floor(w / per), 10)));
+    const day = (id: string, lift: string, push: string, acc: string): DayDef => ({
       id, name: `Day ${id} · ${liftName(lift)}`,
       slots: [
-        ...withBump(lift, `bc${id}-main`, main, bump),
+        pct(lift, `bc${id}-main`, main),
         pct(lift, `bc${id}-bbb`, bbb, "SUPP"),
+        fixed(`bc${id}-push`, push, 5, 5, 10, "25–50 total reps, any push"),
         fixed(`bc${id}-acc`, acc, 5, 5, 10, "25–50 total reps"),
         fixed(`bc${id}-abs`, "hangingLegRaise", 5, 5, 10, "25–50 total reps, any ab exercise"),
       ],
@@ -207,13 +191,14 @@ export const bbbChallenge: ProgramTemplate = {
       name: "BBB 3-Month Challenge",
       sessionsPerWeek: 4,
       maxLabel: "Training max",
-      tmIncrement: TM_UP,
-      cycle: { weeks: total, finite: true, weekNames: names },
-      days: [day("1", "ohp", "chinUp"), day("2", "deadlift", "facePull"), day("3", "bench", "chinUp"), day("4", "squat", "facePull")],
+      // TM up after each month (pass boundary, so a missed session can't skip it)
+      cycle: { weeks: total, finite: true, tmIncrease: TM_UP, tmIncreaseEvery: per, weekNames: names },
+      days: [day("1", "ohp", "dip", "chinUp"), day("2", "deadlift", "pushUp", "facePull"), day("3", "bench", "dip", "chinUp"), day("4", "squat", "pushUp", "facePull")],
       notes: [
         "Main sets are for the prescribed reps only — no AMRAPs. BBB is 5×10 of the same lift: 50% of TM in month 1, 60% in month 2, 70% in month 3.",
         "TM goes up +5 lb press/bench, +10 lb squat/deadlift at the end of each month.",
-        "Assistance should be easy: chins/rows on press and bench days, face pulls on squat and deadlift days, abs every day. Walk or push the Prowler for conditioning.",
+        "Deload weeks keep BBB at 5×10 (or cut it to 3×10).",
+        "Assistance should be easy: one push, one pull (chins/rows on press and bench days, face pulls on squat and deadlift days) and abs every day, 25–50 reps each. Walk or push the Prowler for conditioning.",
       ],
     };
   },

@@ -227,11 +227,10 @@ export function App() {
         )}
         <div class="side-sec">
           <h4>e1RM · {d.unit}</h4>
-          {d.liftKeys.slice(0, 6).map((l) => {
-            const pts = d.lifts[l];
+          {d.liftKeys.filter((l) => (d.e1rmNow(l) ?? 0) > 0).slice(0, 6).map((l) => {
             return (
               <div class="kv" style={{ cursor: "pointer" }} onClick={() => nav({ view: "lifts", lift: l })}>
-                <span>{LIFTS[l]?.short}</span><span class="hi">{fmt(pts[pts.length - 1].e1rm, 0)}</span>
+                <span>{LIFTS[l]?.short}</span><span class="hi">{fmt(d.e1rmNow(l) ?? 0, 0)}</span>
               </div>
             );
           })}
@@ -253,8 +252,8 @@ export function App() {
         {route.view === "stats" && <Stats b={b} d={d} onSettings={async (patch) => { await api.saveSettings({ ...b.settings, ...patch }); load(); }} />}
         {route.view === "prog" && <Program d={d} cfg={b.program} mode={b.mode} nav={nav} onPush={doPush} busy={busy} />}
         {route.view === "lifts" && <Lifts d={d} lift={route.lift} nav={nav} />}
-        {route.view === "hist" && <History d={d} mode={b.mode} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m); load(); }} />}
-        {route.view === "set" && <Setup b={b} program={route.tab === "programs" ? route.id : undefined} nav={nav} onSaved={(m) => { say(m); load(); }} />}
+        {route.view === "hist" && <History d={d} mode={b.mode} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m, m.startsWith("Couldn't")); load(); }} />}
+        {route.view === "set" && <Setup b={b} program={route.tab === "programs" ? route.id : undefined} nav={nav} onSaved={(m) => { say(m, m.startsWith("Couldn't")); load(); }} />}
         {route.view === "friends" && <Friends key={`${route.tab ?? ""}/${route.id ?? ""}`} tab={route.tab} id={route.id} nav={nav} say={say} onUnread={setUnread} />}
       </main>
 

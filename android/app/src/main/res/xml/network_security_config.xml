@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext stays allowed: self-hosted servers on a home network or VPN are often plain http, and a
+  network security config can't express "private addresses only" (no IP ranges). SETUP warns
+  before the token is sent over http to a public address (Cleartext.kt).
+  The in-app updater refuses http on its own (ApkDownloader).
+  Only system CAs are trusted; user-installed CAs are not (no debug-overrides in release).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

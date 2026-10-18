@@ -56,7 +56,7 @@ class DirectAggregatorTest {
             workout("d", today.minusDays(3), "Cardio", Exercise("Running", sets = listOf(ExerciseSet(type = "normal", distanceMeters = 5000.0)))),
         )
         val s = DirectAggregator.build(ws, today, TestData.zone, "kg", weeklyTarget = 3)
-        assertEquals(Snapshot.SOURCE_DIRECT, s.source)
+        assertEquals(Snapshot.SOURCE_DIRECT, s.origin)
         assertNull(s.program); assertNull(s.recovery)
         // graph shape matches the server: 53 Monday weeks ending today
         assertEquals(DayOfWeek.MONDAY, LocalDate.parse(s.graph.start).dayOfWeek)
