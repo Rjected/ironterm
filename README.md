@@ -69,6 +69,7 @@ More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget a
 | [`ios/`](ios/) | Native SwiftUI app with WidgetKit widgets, including the lock screen. |
 | [`src/`](src/) | `ironterm-graph`: a terminal CLI that prints your contribution graph. |
 | [`docs/api/`](docs/api/) | The small JSON API the apps read. |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Threat model and how to report a vulnerability. |
 
 ## Get started
 
