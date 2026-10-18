@@ -23,6 +23,8 @@ class CleartextTest {
         listOf(
             "http://gym.example.com", "http://8.8.8.8", "http://172.32.0.1", "http://192.169.0.1", "http://100.128.0.1",
             "http://[2001:db8::1]", "http://local.example.com", "http://evil.com/.local",
+            // the host is what's after the userinfo and before any path, query or fragment
+            "http://10.0.0.1@evil.com", "http://evil.com#@10.0.0.1", "http://evil.com?x=@nas", "HTTP://Evil.COM:80/",
         ).forEach { assertEquals(it, Cleartext.WARNING, Cleartext.warning(it)) }
     }
 
