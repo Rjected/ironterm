@@ -123,19 +123,55 @@ final class Store {
     }
 }
 
+/// The three SecItem calls the wrapper needs, behind a protocol so tests can simulate a device
+/// Keychain (or a missing entitlement) without touching the real one.
+protocol KeychainBackend {
+    func copy(_ query: [String: Any]) -> (OSStatus, Data?)
+    func add(_ query: [String: Any]) -> OSStatus
+    func delete(_ query: [String: Any]) -> OSStatus
+}
+
+struct SystemKeychain: KeychainBackend {
+    func copy(_ query: [String: Any]) -> (OSStatus, Data?) {
+        var out: AnyObject?
+        let status: OSStatus = SecItemCopyMatching(query as CFDictionary, &out)
+        return (status, out as? Data)
+    }
+
+    func add(_ query: [String: Any]) -> OSStatus { SecItemAdd(query as CFDictionary, nil) }
+
+    func delete(_ query: [String: Any]) -> OSStatus { SecItemDelete(query as CFDictionary) }
+}
+
 /// Minimal generic-password Keychain wrapper. Items live in the App Group access group so the
-/// widget extension can read them. If the build carries no entitlements (an unsigned simulator
-/// build, errSecMissingEntitlement), it falls back to the App Group defaults so the app still
-/// works; a properly signed device build always uses the Keychain.
+/// widget extension can read them, with kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly (readable
+/// by the widget after the first unlock, never in backups or on another device).
+///
+/// Plaintext fallback: an unsigned simulator build (CODE_SIGNING_ALLOWED=NO) has no entitlements
+/// and gets errSecMissingEntitlement, so there, and only there, secrets go to the App Group
+/// defaults so the app still works. A device build never writes secrets in plaintext; any value
+/// found in the plaintext store is moved into the Keychain and removed on the next read.
 final class Keychain {
     let service: String
     let accessGroup: String?
     let fallback: UserDefaults?
+    let backend: KeychainBackend
+    let allowsPlaintextFallback: Bool
 
-    init(service: String, accessGroup: String?, fallback: UserDefaults?) {
+    #if targetEnvironment(simulator)
+    static let defaultAllowsPlaintextFallback: Bool = true
+    #else
+    static let defaultAllowsPlaintextFallback: Bool = false
+    #endif
+
+    init(service: String, accessGroup: String?, fallback: UserDefaults?,
+         backend: KeychainBackend = SystemKeychain(),
+         allowsPlaintextFallback: Bool = Keychain.defaultAllowsPlaintextFallback) {
         self.service = service
         self.accessGroup = accessGroup
         self.fallback = fallback
+        self.backend = backend
+        self.allowsPlaintextFallback = allowsPlaintextFallback
     }
 
     private func query(_ account: String) -> [String: Any] {
@@ -148,26 +184,46 @@ final class Keychain {
         return q
     }
 
+    private static func plaintextKey(_ account: String) -> String { "kc." + account }
+
     func get(_ account: String) -> String? {
-        var q = query(account)
+        var q: [String: Any] = query(account)
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
-        var out: AnyObject?
-        let status = SecItemCopyMatching(q as CFDictionary, &out)
-        if status == errSecSuccess, let data = out as? Data { return String(data: data, encoding: .utf8) }
-        if status == errSecMissingEntitlement { return fallback?.string(forKey: "kc." + account) }
+        let (status, data): (OSStatus, Data?) = backend.copy(q)
+        let key: String = Self.plaintextKey(account)
+        let plain: String? = fallback?.string(forKey: key)
+        if status == errSecSuccess, let data {
+            // the Keychain wins; drop any stale plaintext copy
+            if plain != nil { fallback?.removeObject(forKey: key) }
+            return String(data: data, encoding: .utf8)
+        }
+        if status == errSecMissingEntitlement {
+            return allowsPlaintextFallback ? plain : nil
+        }
+        if status == errSecItemNotFound, let plain, !plain.isEmpty {
+            // migrate a value left in the plaintext store into the Keychain
+            if add(plain, account) == errSecSuccess { fallback?.removeObject(forKey: key) }
+            return plain
+        }
         return nil
     }
 
     func set(_ value: String?, for account: String) {
-        SecItemDelete(query(account) as CFDictionary)
-        fallback?.removeObject(forKey: "kc." + account)
+        _ = backend.delete(query(account))
+        fallback?.removeObject(forKey: Self.plaintextKey(account))
         guard let value, !value.isEmpty else { return }
-        var q = query(account)
+        let status: OSStatus = add(value, account)
+        if status == errSecMissingEntitlement && allowsPlaintextFallback {
+            fallback?.set(value, forKey: Self.plaintextKey(account))
+        }
+    }
+
+    private func add(_ value: String, _ account: String) -> OSStatus {
+        var q: [String: Any] = query(account)
         q[kSecValueData as String] = Data(value.utf8)
         // readable by the widget after the first unlock, never synced off the device
         q[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        let status = SecItemAdd(q as CFDictionary, nil)
-        if status == errSecMissingEntitlement { fallback?.set(value, forKey: "kc." + account) }
+        return backend.add(q)
     }
 }
