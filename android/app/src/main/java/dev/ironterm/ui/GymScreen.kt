@@ -581,7 +581,7 @@ private fun FocusPanel(ex: LiveExercise, i: Int, unit: String, isCurrent: Boolea
             Spacer(Modifier.weight(1f))
             if (!x.done && x.target == null) {
                 Box(Modifier.clickable { actions.gym { Live.removeSet(it, ex.id, i) } }.size(40.dp), contentAlignment = Alignment.Center) {
-                    Mono("×", size = 18.sp, color = T.down, bold = true)
+                    Mono("×", Modifier.semantics { contentDescription = "Remove set" }, size = 18.sp, color = T.down, bold = true)
                 }
             }
         }

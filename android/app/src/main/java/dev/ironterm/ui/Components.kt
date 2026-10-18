@@ -66,6 +66,8 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -177,7 +179,7 @@ fun EmptyNote(title: String, body: String) {
 fun BackBar(title: String, onBack: () -> Unit, right: @Composable RowScope.() -> Unit = {}) {
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.clickable(onClickLabel = "Back", onClick = onBack).padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Mono("‹", size = 20.sp, color = T.amber, bold = true)
+            Mono("‹", Modifier.semantics { contentDescription = "Back" }, size = 20.sp, color = T.amber, bold = true)
         }
         Mono(title.uppercase(), Modifier.weight(1f), size = 14.sp, color = T.text, bold = true, maxLines = 1)
         right()
