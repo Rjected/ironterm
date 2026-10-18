@@ -106,7 +106,7 @@ export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved
   );
 
   const page = openId ? (
-    <ProgramPage key={openId} id={openId} b={b} onBack={phone ? back : undefined} onSaved={props.onSaved} editor={b.program?.templateId === openId ? editor : undefined} />
+    <ProgramPage key={openId} id={openId} b={b} onBack={phone ? back : undefined} onOpen={pick} onSaved={props.onSaved} editor={b.program?.templateId === openId ? editor : undefined} />
   ) : <div class="empty">Pick a program to see its rules and workouts.</div>;
 
   // phones: a program is its own full-screen page

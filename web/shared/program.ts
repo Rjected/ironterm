@@ -144,7 +144,10 @@ export interface ProgramDef {
    */
   cycle?: { weeks: number; tmIncrease?: Record<string, Weights>; weekNames?: string[]; finite?: boolean;
     /** apply tmIncrease every N weeks instead of once per cycle (works inside finite blocks too) */
-    tmIncreaseEvery?: number };
+    tmIncreaseEvery?: number;
+    /** apply tmIncrease at the end of these weeks of the cycle (0-based) instead, for uneven
+     *  phases: 5/3/1 Forever Leader ×2 → 7th week → Anchor → 7th week bumps after weeks 3, 6 and 10 */
+    tmIncreaseAt?: number[] };
   /** TM increment unit per lift for amrapTable / amrapVsTarget increments. */
   tmIncrement?: Record<string, Weights>;
   /** What the maxes are called in setup: "Training max", "1RM", "5RM"… */
@@ -208,10 +211,40 @@ export interface ProgramTemplate {
   daysPerWeek: number[];
   /** Length of one run in weeks; omit for open-ended programs. */
   weeks?: number;
+  /** What to run when this one ends or stalls for good (shown on the program page). */
+  then?: ProgramNext;
   options: OptionDef[];
   build(options: Record<string, string>): ProgramDef;
   /** Reasonable starting values to prefill setup with. */
   defaults?(unit: Unit): Partial<Pick<ProgramConfig, "startWeights" | "trainingMaxes" | "increments">>;
+}
+
+export interface ProgramNext {
+  /** template to move to, when there is one in the catalog */
+  id?: string;
+  /** when and why, one sentence: "When resets stop working, move to the Texas Method." */
+  when: string;
+}
+
+/**
+ * How long a program runs:
+ *   block    a fixed number of weeks, then it's done (Smolov Jr, Candito, SBS)
+ *   cycles   a cycle of weeks that repeats forever, maxes rising each time round (5/3/1)
+ *   ongoing  no weeks at all: progress session to session until you stall (GZCLP, StrongLifts)
+ */
+export type LengthKind = "block" | "cycles" | "ongoing";
+
+export function programLength(t: ProgramTemplate): { kind: LengthKind; weeks: number | null } {
+  if (t.weeks) return { kind: "block", weeks: t.weeks };
+  const c = t.build(Object.fromEntries(t.options.map((o) => [o.key, o.default]))).cycle;
+  if (c?.finite) return { kind: "block", weeks: c.weeks };
+  if (c && c.weeks > 1) return { kind: "cycles", weeks: c.weeks };
+  return { kind: "ongoing", weeks: null };
+}
+
+/** "12-WEEK BLOCK" · "CYCLES FOREVER" · "ONGOING" */
+export function lengthTag(l: { kind: LengthKind; weeks: number | null }): string {
+  return l.kind === "block" ? `${l.weeks}-WEEK BLOCK` : l.kind === "cycles" ? "CYCLES FOREVER" : "ONGOING";
 }
 
 // ───────────────────────── state ─────────────────────────
@@ -783,11 +816,13 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
     for (const k of Object.keys(pending)) delete pending[k];
   }
   // Once-per-cycle TM bumps (5/3/1) when a pass boundary lands on a cycle boundary.
-  if (def.cycle?.tmIncrease && (!def.cycle.finite || def.cycle.tmIncreaseEvery)) {
-    const every = def.cycle.tmIncreaseEvery ?? def.cycle.weeks;
+  if (def.cycle?.tmIncrease && (!def.cycle.finite || def.cycle.tmIncreaseEvery || def.cycle.tmIncreaseAt)) {
+    const { weeks, tmIncreaseAt: at } = def.cycle;
+    const every = def.cycle.tmIncreaseEvery ?? weeks;
     for (let r = state.rotations + 1; r <= next.rotations; r++) {
-      if (def.cycle.finite && r >= def.cycle.weeks) break;
-      if (r % every === 0) for (const [lift, w8] of Object.entries(def.cycle.tmIncrease)) if (tms[lift] != null) tms[lift] += inc(w8, cfg.unit);
+      if (def.cycle.finite && r >= weeks) break;
+      // r passes done: the week that just ended is (r − 1) of the cycle
+      if (at ? at.includes((r - 1) % weeks) : r % every === 0) for (const [lift, w8] of Object.entries(def.cycle.tmIncrease)) if (tms[lift] != null) tms[lift] += inc(w8, cfg.unit);
     }
   }
   const entry: LogEntry = { workoutId: w.id, date: w.start_time, dayId: day.id, week: plan.week, results };
