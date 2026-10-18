@@ -253,3 +253,14 @@ describe("AllPro Simple Beginner", () => {
     expect(s.tms.squat).toBe(148.5); // +10%, exact (planned loads round)
   });
 });
+
+describe("configs saved before these templates changed", () => {
+  it("Fierce 5: old start weights become the working weights; ICF: B-day rows start at the row weight", () => {
+    const f = fierce5.build({});
+    const fc: ProgramConfig = { templateId: "fierce5", options: {}, unit: "lb", startDate: "2026-01-01", startWeights: { sq: 185, bench: 135, pendlay: 115, fsq: 135, ohp: 95, rdl: 155, facepull: 30, calf: 90, pushdown: 30, pulldown: 80, abs: 0, curl: 45 }, trainingMaxes: {} };
+    expect(planDay(f, fc, initialState(f, fc), 0).exercises[0].sets[0].weight).toBe(185);
+    const i = icf55.build({});
+    const ic: ProgramConfig = { templateId: "icf-5x5", options: {}, unit: "lb", startDate: "2026-01-01", startWeights: { sq: 135, bench: 95, row: 85, dl: 155, ohp: 65 }, trainingMaxes: {} };
+    expect(initialState(i, ic).slots["row-b"].weight).toBe(85);
+  });
+});

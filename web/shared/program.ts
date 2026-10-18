@@ -397,13 +397,22 @@ export function firstScheduled(def: ProgramDef, from: number, rotations: number)
 
 export function initialState(def: ProgramDef, cfg: ProgramConfig): ProgramState {
   const slots: Record<string, SlotState> = {};
-  for (const s of allSlots(def)) {
+  const every = allSlots(def);
+  // A config saved before a template changed shape can lack a value: fall back to another slot of
+  // the same lift (a split-off B-day row), or to a slot's old start weight when it became a % slot.
+  const sameLift = (s: SlotDef) => every.map((o) => (o.lift === s.lift && o.id !== s.id ? cfg.startWeights[o.id] : undefined)).find((v) => v != null);
+  for (const s of every) {
     if (!usesStartWeight(s)) continue;
-    const w = cfg.startWeights[s.id] ?? 0;
+    const w = cfg.startWeights[s.id] ?? sameLift(s) ?? 0;
     slots[s.id] = { weight: w, stage: cfg.startStages?.[s.id] ?? 0, stage0Weight: w, retest: false, fails: 0 };
   }
+  const tms = { ...cfg.trainingMaxes };
+  for (const s of every) {
+    const p = s.progression;
+    if (p.kind === "percent" && tms[p.tmLift] == null && cfg.startWeights[s.id] != null) tms[p.tmLift] = cfg.startWeights[s.id];
+  }
   const start = firstScheduled(def, 0, 0);
-  return { dayIndex: start.dayIndex, rotations: start.rotations, slots, tms: { ...cfg.trainingMaxes }, log: [] };
+  return { dayIndex: start.dayIndex, rotations: start.rotations, slots, tms, log: [] };
 }
 
 function defaultRest(t: Tier) {
