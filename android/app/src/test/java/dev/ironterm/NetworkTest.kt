@@ -14,10 +14,10 @@ import dev.ironterm.data.SourceMode
 import dev.ironterm.data.hevy.HevyApi
 import dev.ironterm.data.hevy.WorkoutsResponse
 import kotlinx.coroutines.runBlocking
-import okhttp3.mockwebserver.Dispatcher
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.RecordedRequest
+import dev.ironterm.testing.Dispatcher
+import dev.ironterm.testing.MockResponse
+import dev.ironterm.testing.MockWebServer
+import dev.ironterm.testing.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,7 +35,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicInteger
 
-/** End-to-end: Refresher → OkHttp → a local mock server that only answers the right credential. */
+/** End-to-end: Refresher → HttpURLConnection → a local mock server that only answers the right credential. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class NetworkTest {
@@ -96,8 +96,8 @@ class NetworkTest {
         assertEquals("/api/snapshot", req.path)
         assertEquals("Bearer ht_good", req.getHeader("Authorization"))
         val cached = store.read()!!
-        assertEquals(Snapshot.SOURCE_SERVER, cached.source)
-        assertEquals(TestData.fixture.copy(source = Snapshot.SOURCE_SERVER), cached)
+        assertEquals(Snapshot.SOURCE_SERVER, cached.origin)
+        assertEquals(TestData.fixture.copy(origin = Snapshot.SOURCE_SERVER), cached)
         assertEquals(clock(), store.status().lastSuccessAt)
         assertNull(store.status().lastError)
     }
@@ -150,7 +150,7 @@ class NetworkTest {
         val r = refresher().refresh()
         assertTrue(r.toString(), r is RefreshResult.Ok)
         val s = store.read()!!
-        assertEquals(Snapshot.SOURCE_DIRECT, s.source)
+        assertEquals(Snapshot.SOURCE_DIRECT, s.origin)
         assertEquals(workouts.size, s.totals.allTime)
         assertEquals(3, hevyCalls.get()) // ceil(24/10) pages, pageSize 10
         assertEquals(listOf("squat", "bench", "deadlift", "ohp"), s.lifts.take(4).map { it.key })

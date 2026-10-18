@@ -39,6 +39,26 @@ struct ConnectLink: Equatable {
         return o.url
     }
 
+    /// The saved app token only ever goes back to the server it was saved for. Typing a new server
+    /// URL in SETUP while the saved token is still in the (prefilled) token field must not send it
+    /// to that new host; a token typed or pasted for the new server is fine.
+    static func mayUseToken(_ token: String, for target: URL, savedToken: String?, savedServer: URL?) -> Bool {
+        guard let savedToken, !savedToken.isEmpty, token == savedToken else { return true }
+        guard let savedServer else { return false }
+        return sameOrigin(savedServer, target)
+    }
+
+    /// The token would travel unencrypted (plain http). ATS only lets http through for local
+    /// networking, but on a shared or hostile LAN that is still readable by anyone on it.
+    var isCleartext: Bool { server.scheme?.lowercased() == "http" }
+
+    /// Host (and port when not the default) as shown in the confirmation, e.g. "gym.example.com".
+    var displayHost: String {
+        let host: String = server.host ?? server.absoluteString
+        guard let port = server.port else { return host }
+        return host + ":" + String(port)
+    }
+
     /// Two URLs share an origin (used to keep the WebView on the server).
     static func sameOrigin(_ a: URL, _ b: URL) -> Bool {
         func port(_ u: URL) -> Int? { u.port ?? (u.scheme == "https" ? 443 : u.scheme == "http" ? 80 : nil) }

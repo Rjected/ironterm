@@ -8,21 +8,29 @@
 //        6RM, 85%×3×5+ · 4RM, 85%×2×5+ · 2RM, 85%×1×5+ · 5RM, 90%×2×3+ · 3RM, 90%×1×3+ · wk 12 1RM.
 //   T2a  % of TM: 4×10@50, 4×8@60, 4×6@70, 5×4@75, 7×2@80, off, 5×6@70, 5×5@75, 5×4@80,
 //        6×3@82.5, 7×2@85, off. The post says TM is recalculated from the week-6 1RM.
-//   T2b  find an RM then 3 max-rep sets (MRS) at that weight: 15/12/10/8/6RM, rest, 15/12/10/6RM, rest, rest.
+//   T2b  find an RM then 3 max-rep sets (MRS) at that weight: 15/12/10/8/6RM, rest, then
+//        12/10/8/6RM (the post's MRS section and Cody's J&T2.0 sheet; its weekly table says
+//        15/12/10/6), rest, rest.
 //   T3   RM + 3 MRS: 20/18/16/14/12/10RM, rest, 18/16/14/12RM, rest.
+// Cody's J&T2.0 sheet (GZCL Free Compendium, Nov 2016): "Training Max is an estimated daily 2RM";
+// upper-body T2a runs about 5%/week lighter than lower (close-grip bench 50/55/60/62.5/65 then
+// 70/75/80/82.5/85% of the bench TM; legs-up bench 45/50/55/57.5/60 then 65/70/75/77.5/80%).
 // Modelling: RM sets are RPE 9 (the r/gzcl wiki: "1–2 reps in the tank"). Block-2 drop sets use
 // `ofTop`, whose pct is of the top set's e1RM (w × (1 + r/30)), so 85% of a 6RM is 0.85 / 1.2.
-// The 1RM tests are their own days in weeks 6 and 12 and set TM = 90% of the single. That
-// TM definition is ours, because the post never gives one. T2b/T3 RMs change every week, so
+// The 1RM tests are their own days in weeks 6 and 12; the test single should be a confident
+// double, i.e. your daily 2RM, so it becomes the block-2 TM. T2b/T3 RMs change every week, so
 // they're fixed slots with the targets in the week label. The week-6 T3 10RM work is left off
 // the test day. Exercise picks follow Liftosaur's layout. The post leaves selection to the lifter.
 //
-// The Rippler (12 weeks). The r/gzcl wiki gives weeks 1–4 of Cody's write-up:
-//   T1 (% of a 2RM TM): 85%×5×3, 90%×3×4+, 87.5%×4×3, 92.5%×2×5. Two weeks up 5%, one week down 2.5%.
-//   T2 (% of a 5RM TM for that movement): 80%×6×5, 85%×5×5, 90%×4×5+, 82.5%×6×4.
-// Weeks 5–12 are RECONSTRUCTED from Liftosaur's 12-week version, which lists % of 1RM.
-// Converted back (2RM ≈ 94% and 5RM ≈ 86% of 1RM), it matches weeks 1–4 exactly and continues
-// the same pattern. T2 is off in weeks 11–12. T3 is 5×10+ (Cody's Boostcamp week 1).
+// The Rippler (12 weeks), from the "The Rippler" tab of Cody's GZCL Free Compendium (Nov 2016):
+//   T1 (% of a 2RM TM), reps × sets: 85% 5×3, 90% 3×4+, 87.5% 4×3, 92.5% 2×5, 90% 4×3+, 95% 2×4,
+//      92.5% 3×3, 97.5% 1×9+, 95% 2×3+, 100% max reps × 1, 90% 2×4+, week 12 test.
+//   T2 (% of a 5RM TM for that movement): 80% 6×5, 85% 5×5, 90% 4×5+, 82.5% 6×4, 87.5% 5×4,
+//      92.5% 4×4+, 85% 6×3, 90% 5×3, 95% 4×3+, 100% 3×5+, weeks 11–12 off.
+//   T3 (a 10RM goal weight): every set max reps with 1–2 in reserve; 5 sets weeks 1–3, 4 weeks
+//      4–6, 3 weeks 7–9, 2 in week 10, off weeks 11–12. Weight goes up after weeks 3, 6 and 9 by
+//      that session's total reps: week 3 >70 +15 lb, >60 +10, >50 +5; week 6 >60/>50/>40;
+//      week 9 >50/>40/>30.
 //
 // The GZCL Method (4-week wave), from "The GZCL Method, Simplified" (blog, 2014). Goal weight is
 // an everyday 2–3RM. The post works squat and bench days:
@@ -74,6 +82,15 @@ const JNT_T2A: PercentSet[][] = [
   S(0.5, 10, 4), S(0.6, 8, 4), S(0.7, 6, 4), S(0.75, 4, 5), S(0.8, 2, 7), [],
   S(0.7, 6, 5), S(0.75, 5, 5), S(0.8, 4, 5), S(0.825, 3, 6), S(0.85, 2, 7), [],
 ];
+/** Upper-body T2a from Cody's sheet: close-grip bench and legs-up bench, % of the bench TM. */
+const JNT_T2A_CG: PercentSet[][] = [
+  S(0.5, 10, 4), S(0.55, 8, 4), S(0.6, 6, 4), S(0.625, 4, 5), S(0.65, 2, 7), [],
+  S(0.7, 6, 5), S(0.75, 5, 5), S(0.8, 4, 5), S(0.825, 3, 6), S(0.85, 2, 7), [],
+];
+const JNT_T2A_LEGSUP: PercentSet[][] = [
+  S(0.45, 10, 4), S(0.5, 8, 4), S(0.55, 6, 4), S(0.575, 4, 5), S(0.6, 2, 7), [],
+  S(0.65, 6, 5), S(0.7, 5, 5), S(0.75, 4, 5), S(0.775, 3, 6), S(0.8, 2, 7), [],
+];
 const JNT_TEST: PercentSet[][] = Array.from({ length: 12 }, () => [{ rpe: 9, reps: 1 }]);
 const JNT_WEEKS = [
   "Wk 1 · T1 10RM · T2b 15RM · T3 20RM",
@@ -82,9 +99,9 @@ const JNT_WEEKS = [
   "Wk 4 · T1 4RM · T2b 8RM · T3 14RM",
   "Wk 5 · T1 2RM · T2b 6RM · T3 12RM",
   "Wk 6 · 1RM test",
-  "Wk 7 · T1 6RM, drops 85% of it · T2b 15RM · T3 off",
-  "Wk 8 · T1 4RM, drops 85% of it · T2b 12RM · T3 18RM",
-  "Wk 9 · T1 2RM, drops 85% of it · T2b 10RM · T3 16RM",
+  "Wk 7 · T1 6RM, drops 85% of it · T2b 12RM · T3 off",
+  "Wk 8 · T1 4RM, drops 85% of it · T2b 10RM · T3 18RM",
+  "Wk 9 · T1 2RM, drops 85% of it · T2b 8RM · T3 16RM",
   "Wk 10 · T1 5RM, drops 90% of it · T2b 6RM · T3 14RM",
   "Wk 11 · T1 3RM, drops 90% of it · T2b off · T3 12RM",
   "Wk 12 · 1RM test",
@@ -98,7 +115,7 @@ export const gzclJnt2: ProgramTemplate = {
   id: "gzcl-jnt2",
   name: "Jacked & Tan 2.0",
   author: "Cody Lefever (GZCL)",
-  source: "Cody's blog post 'Jacked & Tan 2.0' (swoleateveryheight.blogspot.com, 2016); exercise picks from Liftosaur",
+  source: "Cody's blog post 'Jacked & Tan 2.0' (swoleateveryheight.blogspot.com, 2016) and his J&T2.0 sheet (GZCL Free Compendium); exercise picks from Liftosaur",
   summary: "12-week powerbuilding block. Each T1 works up to a rep max and then does drop sets. Volume tapers into heavier work, with 1RM tests in weeks 6 and 12.",
   category: "gzcl",
   level: "intermediate",
@@ -108,13 +125,13 @@ export const gzclJnt2: ProgramTemplate = {
   build() {
     const day = (n: number, name: string, t1: string, slots: SlotDef[]): DayDef[] => [
       { id: `D${n}`, name: `Day ${n} · ${name}`, weeks: MAIN_WEEKS, slots: [pctSlot(`d${n}-t1`, "T1", t1, t1, JNT_T1), ...slots] },
-      { id: `D${n}-test`, name: `Day ${n} · ${name} 1RM test`, weeks: [5, 11], slots: [pctSlot(`d${n}-test`, "T1", t1, t1, JNT_TEST, { type: "e1rm", setIndex: 0, pct: 0.9 }, "work up to a 1RM you could nearly double. New TM = 90% of it")] },
+      { id: `D${n}-test`, name: `Day ${n} · ${name} 1RM test`, weeks: [5, 11], slots: [pctSlot(`d${n}-test`, "T1", t1, t1, JNT_TEST, { type: "e1rm", setIndex: 0, pct: 1 }, "work up to a 1RM you could nearly double (your daily 2RM). It becomes the new TM")] },
     ];
     const days = [
       ...day(1, "Squat", "squat", [pctSlot("d1-t2a", "T2", "deficitDeadlift", "deadlift", JNT_T2A), t2b("d1-t2b", "chestSupportedRow"), t3("d1-t3a", "tricepPushdown"), t3("d1-t3b", "hammerCurl")]),
-      ...day(2, "Bench", "bench", [pctSlot("d2-t2a", "T2", "cgBench", "bench", JNT_T2A), t2b("d2-t2b", "dbOhp"), t3("d2-t3a", "shrug"), t3("d2-t3b", "facePull")]),
+      ...day(2, "Bench", "bench", [pctSlot("d2-t2a", "T2", "cgBench", "bench", JNT_T2A_CG), t2b("d2-t2b", "dbOhp"), t3("d2-t3a", "shrug"), t3("d2-t3b", "facePull")]),
       ...day(3, "Deadlift", "deadlift", [pctSlot("d3-t2a", "T2", "frontSquat", "frontSquat", JNT_T2A), t2b("d3-t2b", "latPulldown"), t3("d3-t3a", "legExtension"), t3("d3-t3b", "bicepCurl")]),
-      ...day(4, "OHP", "ohp", [pctSlot("d4-t2a", "T2", "inclineBench", "inclineBench", JNT_T2A), t2b("d4-t2b", "dbRow"), t3("d4-t3a", "overheadTricep"), t3("d4-t3b", "lateralRaise")]),
+      ...day(4, "OHP", "ohp", [pctSlot("d4-t2a", "T2", "feetUpBench", "bench", JNT_T2A_LEGSUP, undefined, "legs-up bench"), t2b("d4-t2b", "dbRow"), t3("d4-t3a", "overheadTricep"), t3("d4-t3b", "lateralRaise")]),
     ];
     // Weekly order: D1 D2 D3 D4 in main weeks, the test days in weeks 6 and 12.
     const order = ["D1", "D1-test", "D2", "D2-test", "D3", "D3-test", "D4", "D4-test"];
@@ -124,8 +141,9 @@ export const gzclJnt2: ProgramTemplate = {
       sessionsPerWeek: 4,
       days: order.map((id) => days.find((d) => d.id === id)!),
       cycle: { weeks: 12, finite: true, weekNames: JNT_WEEKS },
-      maxLabel: "Training max",
+      maxLabel: "Training max (daily 2RM)",
       notes: [
+        "Training max = an estimated daily 2RM (a weight you could double on any day).",
         "T1: work up to the week's rep max (1–2 reps in the tank), then the drop sets. The last drop set is a rep-out.",
         "Weeks 1–5 drop sets are % of TM. Weeks 7–11 drop sets are % of the RM you just hit (shown as % of top).",
         "Weeks 6 and 12: test a 1RM that should be a confident double. Week 6 resets the TM for block 2.",
@@ -135,9 +153,9 @@ export const gzclJnt2: ProgramTemplate = {
     };
   },
   defaults(unit: Unit) {
-    // TM ≈ 90% of 1RM for a 315/225/405/145 lifter.
+    // TM = daily 2RM ≈ 94% of 1RM for a 315/225/405/145 lifter (front squat 255).
     return {
-      trainingMaxes: convAll(unit, { squat: 285, bench: 205, deadlift: 365, ohp: 130, frontSquat: 225, inclineBench: 165 }),
+      trainingMaxes: convAll(unit, { squat: 295, bench: 210, deadlift: 380, ohp: 135, frontSquat: 240 }),
       startWeights: convAll(unit, {
         "d1-t2b": 50, "d1-t3a": 50, "d1-t3b": 30, "d2-t2b": 50, "d2-t3a": 70, "d2-t3b": 40,
         "d3-t2b": 120, "d3-t3a": 90, "d3-t3b": 30, "d4-t2b": 70, "d4-t3a": 40, "d4-t3b": 20,
@@ -151,7 +169,7 @@ export const gzclJnt2: ProgramTemplate = {
 const RIP_T1: PercentSet[][] = [
   S(0.85, 5, 3), S(0.9, 3, 4, true), S(0.875, 4, 3), S(0.925, 2, 5),
   S(0.9, 4, 3, true), S(0.95, 2, 4), S(0.925, 3, 3), S(0.975, 1, 9, true),
-  S(0.95, 2, 3, true), S(1, 1, 1), S(0.9, 2, 4, true), [{ rpe: 10, reps: 1 }],
+  S(0.95, 2, 3, true), [{ pct: 1, reps: 2, amrap: true }], S(0.9, 2, 4, true), [{ rpe: 10, reps: 1 }],
 ];
 const RIP_T2: PercentSet[][] = [
   S(0.8, 6, 5), S(0.85, 5, 5), S(0.9, 4, 5, true), S(0.825, 6, 4),
@@ -159,13 +177,28 @@ const RIP_T2: PercentSet[][] = [
   S(0.95, 4, 3, true), S(1, 3, 5, true), [], [],
 ];
 const rip = (id: string, tier: Tier, lift: string) => pctSlot(id, tier, lift, lift, tier === "T1" ? RIP_T1 : RIP_T2);
-const rt3 = (id: string, lift: string) => fixed(id, "T3", lift, 5, 10, undefined, "10+ every set (max-rep sets, short rest)");
+const RIP_T3_SETS = [5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 0, 0];
+/** After weeks 3, 6 and 9: total reps that session → +5 / +10 / +15 lb ("more than" each threshold). */
+const RIP_T3_CHECKS: [number, [number, number, number]][] = [[2, [51, 61, 71]], [5, [41, 51, 61]], [8, [31, 41, 51]]];
+const t3Sets = (w: number): PercentSet[] => Array.from({ length: RIP_T3_SETS[w] }, () => ({ pct: 1, reps: 10, amrap: true }));
+/** A T3 lift: the weekly sets, with the check weeks split into their own slots so each can carry its thresholds. */
+function rt3(id: string, lift: string): SlotDef[] {
+  const checks = new Set(RIP_T3_CHECKS.map(([w]) => w));
+  const note = "10RM goal weight: every set max reps, 1–2 in reserve";
+  return [
+    pctSlot(id, "T3", lift, lift, RIP_T3_SETS.map((_, w) => (checks.has(w) ? [] : t3Sets(w))), undefined, note),
+    ...RIP_T3_CHECKS.map(([cw, [a, b, c]]): SlotDef => pctSlot(`${id}-w${cw + 1}`, "T3", lift, lift, RIP_T3_SETS.map((_, w) => (w === cw ? t3Sets(w) : [])),
+      { type: "totalReps", table: [{ minReps: 0, increments: 0 }, { minReps: a, increments: 1 }, { minReps: b, increments: 2 }, { minReps: c, increments: 3 }], applyAt: "weekEnd" },
+      `${note} · total reps today set the next block's weight`)),
+  ];
+}
+const RIP_T3_LIFTS = ["dbOhp", "lateralRaise", "pullUp", "bicepCurl", "dbInclineBench", "pullover", "row", "rearDeltFly"];
 
 export const gzclRippler: ProgramTemplate = {
   id: "gzcl-rippler",
   name: "The Rippler",
   author: "Cody Lefever (GZCL)",
-  source: "r/gzcl wiki 'The Rippler' (weeks 1–4); weeks 5–12 reconstructed from Liftosaur's 12-week version (converted from % of 1RM)",
+  source: "GZCL Free Compendium (Nov 2016), 'The Rippler' tab; r/gzcl wiki 'The Rippler'",
   summary: "12-week upper/lower split. T1 intensity goes two weeks up and one week down. T2 runs three-week linear waves. Lower reps and higher intensity than Jacked & Tan.",
   category: "gzcl",
   level: "intermediate",
@@ -178,18 +211,21 @@ export const gzclRippler: ProgramTemplate = {
       name: "The Rippler",
       sessionsPerWeek: 4,
       days: [
-        { id: "1", name: "Day 1 · Bench", slots: [rip("d1-t1", "T1", "bench"), rip("d1-t2", "T2", "inclineBench"), rt3("d1-t3a", "dbOhp"), rt3("d1-t3b", "lateralRaise")] },
-        { id: "2", name: "Day 2 · Squat", slots: [rip("d2-t1", "T1", "squat"), rip("d2-t2", "T2", "stiffLegDeadlift"), rt3("d2-t3a", "pullUp"), rt3("d2-t3b", "bicepCurl")] },
-        { id: "3", name: "Day 3 · OHP", slots: [rip("d3-t1", "T1", "ohp"), rip("d3-t2", "T2", "cgBench"), rt3("d3-t3a", "dbInclineBench"), rt3("d3-t3b", "pullover")] },
-        { id: "4", name: "Day 4 · Deadlift", slots: [rip("d4-t1", "T1", "deadlift"), rip("d4-t2", "T2", "frontSquat"), rt3("d4-t3a", "row"), rt3("d4-t3b", "rearDeltFly")] },
+        { id: "1", name: "Day 1 · Bench", slots: [rip("d1-t1", "T1", "bench"), rip("d1-t2", "T2", "inclineBench"), ...rt3("d1-t3a", "dbOhp"), ...rt3("d1-t3b", "lateralRaise")] },
+        { id: "2", name: "Day 2 · Squat", slots: [rip("d2-t1", "T1", "squat"), rip("d2-t2", "T2", "stiffLegDeadlift"), ...rt3("d2-t3a", "pullUp"), ...rt3("d2-t3b", "bicepCurl")] },
+        { id: "3", name: "Day 3 · OHP", slots: [rip("d3-t1", "T1", "ohp"), rip("d3-t2", "T2", "cgBench"), ...rt3("d3-t3a", "dbInclineBench"), ...rt3("d3-t3b", "pullover")] },
+        { id: "4", name: "Day 4 · Deadlift", slots: [rip("d4-t1", "T1", "deadlift"), rip("d4-t2", "T2", "frontSquat"), ...rt3("d4-t3a", "row"), ...rt3("d4-t3b", "rearDeltFly")] },
       ],
       cycle: {
         weeks: 12, finite: true,
         weekNames: ["Wk 1", "Wk 2 · AMRAP T1", "Wk 3 · down week, AMRAP T2", "Wk 4 · recovery", "Wk 5", "Wk 6", "Wk 7", "Wk 8", "Wk 9", "Wk 10", "Wk 11 · no T2", "Wk 12 · test 1RM, no T2"],
       },
-      maxLabel: "TM (T1 = 2RM, T2 = 5RM)",
+      maxLabel: "TM (T1 = 2RM, T2 = 5RM, T3 = 10RM)",
+      tmIncrement: Object.fromEntries(RIP_T3_LIFTS.map((l) => [l, { lb: 5, kg: 2.5 }])),
       notes: [
-        "Each movement has its own TM: a 2RM for the T1 lifts, a 5RM for the T2 lifts.",
+        "Each movement has its own TM: a 2RM for the T1 lifts, a 5RM for the T2 lifts, a 10RM goal weight for the T3 lifts (bodyweight = 0).",
+        "Week 10 T1: as many reps as you can at 100% of the 2RM.",
+        "T3: every set max reps. After weeks 3, 6 and 9 the session's total reps raise the weight: week 3 51+/61+/71+ → +5/+10/+15 lb, week 6 41+/51+/61+, week 9 31+/41+/51+.",
         "AMRAPs leave 1–2 reps in the tank.",
         "Week 12: work up to a new 1RM. Go easy on the cycle-2 TMs.",
       ],
@@ -198,8 +234,9 @@ export const gzclRippler: ProgramTemplate = {
   defaults(unit: Unit) {
     // 2RM ≈ 94% and 5RM ≈ 86% of 1RM (squat 315, bench 225, deadlift 405, OHP 145).
     return {
-      trainingMaxes: convAll(unit, { squat: 295, bench: 210, deadlift: 380, ohp: 135, inclineBench: 160, stiffLegDeadlift: 255, cgBench: 175, frontSquat: 215 }),
-      startWeights: convAll(unit, { "d1-t3a": 40, "d1-t3b": 20, "d2-t3a": 0, "d2-t3b": 30, "d3-t3a": 50, "d3-t3b": 40, "d4-t3a": 135, "d4-t3b": 15 }),
+      trainingMaxes: convAll(unit, { squat: 295, bench: 210, deadlift: 380, ohp: 135, inclineBench: 160, stiffLegDeadlift: 255, cgBench: 175, frontSquat: 215,
+        dbOhp: 40, lateralRaise: 20, pullUp: 0, bicepCurl: 30, dbInclineBench: 50, pullover: 40, row: 135, rearDeltFly: 15 }),
+      startWeights: {},
     };
   },
 };

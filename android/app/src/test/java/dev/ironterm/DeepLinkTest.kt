@@ -39,7 +39,15 @@ class DeepLinkTest {
         assertEquals("https://gym.example.com", normalizeServerUrl(" gym.example.com/ "))
         assertEquals("https://gym.example.com", normalizeServerUrl("https://gym.example.com:443/app"))
         assertEquals("http://192.168.1.5:3000", normalizeServerUrl("http://192.168.1.5:3000"))
+        assertEquals("http://[::1]:8787", normalizeServerUrl("http://[::1]:8787/"))
+        assertEquals("http://[fd00::5]:8787", normalizeServerUrl("http://[fd00::5]:8787"))
+        assertEquals("https://[2001:db8::1]", normalizeServerUrl("[2001:db8::1]"))
         assertNull(normalizeServerUrl(""))
         assertNull(normalizeServerUrl("ftp://x"))
+        assertEquals("https://gym.example.com", normalizeServerUrl("HTTPS://Gym.Example.com"))
+        assertEquals("http://gym.example.com", normalizeServerUrl("http://gym.example.com:80/x?y=1#z"))
+        assertEquals("http://[::1]:8787", normalizeServerUrl("http://[::1]:8787"))
+        assertNull(normalizeServerUrl("https://bad host"))
+        assertNull(normalizeServerUrl("https://"))
     }
 }

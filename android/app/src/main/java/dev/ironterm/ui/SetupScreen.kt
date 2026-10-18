@@ -35,7 +35,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.ironterm.BuildConfig
+import dev.ironterm.data.Cleartext
 import dev.ironterm.Fmt
+import androidx.compose.ui.window.Dialog
+import dev.ironterm.data.ConnectPrompt
 import dev.ironterm.data.SourceMode
 import dev.ironterm.widget.ColorTheme
 
@@ -75,6 +78,10 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
                 TButton("▣ Scan QR", modifier = Modifier.fillMaxWidth(), onClick = actions::scanQr)
                 Spacer(Modifier.height(12.dp))
                 Field("Server URL", url, { url = it }, placeholder = "https://gym.example.com", keyboard = KeyboardType.Uri)
+                Cleartext.warning(url)?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Mono(it, size = 10.sp, color = T.down)
+                }
                 Spacer(Modifier.height(12.dp))
                 Field("App token", token, { token = it }, placeholder = "ht_…", secret = true)
                 Spacer(Modifier.height(8.dp))
@@ -149,7 +156,7 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
         }
         if (state.mode == SourceMode.SERVER && state.configured) {
             Section("Program & lifts") {
-                Mono("Choosing a program, its options and mapping lifts to your Hevy exercises happen in the web app.", size = 11.sp, color = T.dim)
+                Mono("Pick and start a program in MORE → PROGRAM. Program options and mapping lifts to your Hevy exercises are in the web app.", size = 11.sp, color = T.dim)
                 Spacer(Modifier.height(10.dp))
                 TButton("Advanced setup (web) ↗", modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { actions.openWeb("/#set") }
             }
@@ -256,5 +263,35 @@ private fun ThemeSwatch(th: ColorTheme, selected: Boolean, modifier: Modifier, o
         }
         Spacer(Modifier.height(6.dp))
         Mono(th.displayName.uppercase(), size = 10.sp, color = if (selected) T.amber else T.dim, bold = selected)
+    }
+}
+
+/**
+ * Connect link / QR confirmation. Shows the server host prominently: the link could come from any
+ * web page or printed code, and accepting it sends your workouts to that server.
+ */
+@Composable
+fun ConnectConfirmDialog(prompt: ConnectPrompt, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    Dialog(onDismissRequest = onCancel) {
+        Column(Modifier.fillMaxWidth().border(1.dp, T.amber).background(T.bg).padding(16.dp)) {
+            Label("Connect to this server?")
+            Spacer(Modifier.height(14.dp))
+            Mono(prompt.host, size = 18.sp, bold = true, color = T.text)
+            Spacer(Modifier.height(10.dp))
+            Mono("Only continue if this is your own ${dev.ironterm.Brand.NAME} server. The workouts you log will be sent there.", size = 11.sp, color = T.dim)
+            if (prompt.insecure) {
+                Spacer(Modifier.height(10.dp))
+                Mono("! Plain http: the token and your data travel unencrypted. Only OK on your own network.", size = 11.sp, color = T.down)
+            }
+            prompt.replaces?.let {
+                Spacer(Modifier.height(10.dp))
+                Mono("This replaces $it.", size = 11.sp, color = T.amber)
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TButton("Cancel", modifier = Modifier.weight(1f), onClick = onCancel)
+                TButton("Connect", modifier = Modifier.weight(1f), primary = true, onClick = onConfirm)
+            }
+        }
     }
 }

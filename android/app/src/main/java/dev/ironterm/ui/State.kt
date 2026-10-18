@@ -66,6 +66,8 @@ data class DataUi(
     val programs: Load<dev.ironterm.data.app.ProgramCatalog> = Load(),
     /** keyed by ProgramBrowse.detailKey(id, options) */
     val programDetail: Map<String, Load<dev.ironterm.data.app.ProgramDetail>> = emptyMap(),
+    /** keyed by ProgramBrowse.bodyKey(id, options, mode) */
+    val programBody: Map<String, Load<dev.ironterm.data.app.ProgramBody>> = emptyMap(),
     val startingProgram: Boolean = false,
     /** POST start failed: shown in the start sheet */
     val startError: String? = null,
@@ -146,6 +148,9 @@ interface AppActions {
     fun disconnect() {}
     fun clearTest() {}
     fun scanQr() {}
+    /** connect link / QR: the user accepted [UiState.pendingConnect] */
+    fun confirmConnect() {}
+    fun cancelConnect() {}
     fun checkUpdates() {}
     fun startUpdate() {}
     fun allowInstalls() {}
@@ -165,6 +170,8 @@ interface AppActions {
     fun pushRoutines() {}
     fun loadPrograms(force: Boolean = false) {}
     fun loadProgramDetail(id: String, options: Map<String, String> = emptyMap(), force: Boolean = false) {}
+    /** [mode]: "load" | "gaps" */
+    fun loadProgramBody(id: String, options: Map<String, String> = emptyMap(), mode: String = "load", force: Boolean = false) {}
     /** POST start; [onDone] runs after the server switched (the UI then shows PROGRAM). */
     fun startProgram(id: String, body: dev.ironterm.data.app.ProgramStartBody, onDone: () -> Unit = {}) {}
     fun clearStartError() {}

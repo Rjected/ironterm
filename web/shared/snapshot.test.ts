@@ -25,7 +25,8 @@ describe("snapshot", () => {
     const n = s.program!.next!;
     expect(n.exercises.length).toBeGreaterThan(1);
     expect(n.exercises[0].summary).toMatch(/\d+×\d+/);
-    expect(n.exercises[0].top).toBeGreaterThan(0);
+    // (a 5RM test day has no prescribed weight for that lift)
+    expect(n.exercises.some((e) => e.top > 0)).toBe(true);
   });
   it("covers this week, lifts and recovery", () => {
     expect(s.week.days.map((d) => d.dow)).toEqual(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]);

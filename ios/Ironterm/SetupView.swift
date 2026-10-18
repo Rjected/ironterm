@@ -157,6 +157,11 @@ struct SetupView: View {
                 scanButton(prominent: false)
                 Field(label: "SERVER URL", text: $serverText, placeholder: "https://gym.example.com", secure: false, keyboard: .URL)
                 Field(label: "APP TOKEN", text: $token, placeholder: "ht_…", secure: true)
+                if savedTokenForOtherHost, let saved = model.serverURL?.host {
+                    Text("The saved token belongs to \(saved) and is never sent to another server. Enter a token created on this server.")
+                        .font(T.mono(10)).foregroundStyle(T.amber).fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("token-other-host")
+                }
             } else {
                 Text("Only a Hevy API key (hevy.com → Settings → Developer). The phone reads your workouts from Hevy and computes the graph, streak, totals and lift e1RMs itself. No program, GYM logging, recovery or insights in this mode.")
                     .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
@@ -213,9 +218,18 @@ struct SetupView: View {
 
     var serverOrigin: URL? { ConnectLink.origin(serverText) }
 
+    /// The prefilled saved token is still in the field but the URL now points at another server.
+    var savedTokenForOtherHost: Bool {
+        guard choice == .server, let url = serverOrigin else { return false }
+        let t: String = token.trimmingCharacters(in: .whitespaces)
+        return !ConnectLink.mayUseToken(t, for: url, savedToken: model.appToken, savedServer: model.serverURL)
+    }
+
     var canSubmit: Bool {
         if model.demo { return false }
-        return choice == .server ? (serverOrigin != nil && !token.trimmingCharacters(in: .whitespaces).isEmpty) : !apiKey.trimmingCharacters(in: .whitespaces).isEmpty
+        if choice == .direct { return !apiKey.trimmingCharacters(in: .whitespaces).isEmpty }
+        let hasToken: Bool = !token.trimmingCharacters(in: .whitespaces).isEmpty
+        return serverOrigin != nil && hasToken && !savedTokenForOtherHost
     }
 
     func test() async {
@@ -293,6 +307,7 @@ struct Field: View {
                 .autocorrectionDisabled()
                 if secure {
                     Button { reveal.toggle() } label: { Image(systemName: reveal ? "eye.slash" : "eye").foregroundStyle(T.faint) }
+                        .accessibilityLabel(reveal ? "Hide \(label)" : "Show \(label)")
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 9)

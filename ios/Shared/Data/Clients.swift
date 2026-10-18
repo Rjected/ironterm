@@ -21,6 +21,15 @@ enum ApiError: LocalizedError, Equatable {
     }
 
     var isAuth: Bool { if case .unauthorized = self { return true } else { return false } }
+
+    /// A transport failure. iOS refuses plain http:// to anything but the local network (App
+    /// Transport Security); say that plainly rather than the system's generic sentence.
+    static func transport(_ error: Error) -> ApiError {
+        if (error as? URLError)?.code == .appTransportSecurityRequiresSecureConnection {
+            return .network("iOS only allows http:// to servers on your local network. Use https:// for this server.")
+        }
+        return .network(error.localizedDescription)
+    }
 }
 
 /// Task delegate for every request that carries a credential (the `ht_…` Bearer token or the Hevy
@@ -75,7 +84,7 @@ struct ServerClient {
 
     private func send(_ r: URLRequest) async throws -> Data {
         let (data, resp): (Data, URLResponse)
-        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.network(error.localizedDescription) }
+        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.transport(error) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 || code == 403 { throw ApiError.unauthorized(.server) }
         guard (200..<300).contains(code) else { throw ApiError.http(code, String(data: data, encoding: .utf8) ?? "") }
@@ -97,7 +106,7 @@ struct HevyClient {
         r.setValue(apiKey, forHTTPHeaderField: "api-key")
         r.setValue("application/json", forHTTPHeaderField: "Accept")
         let (data, resp): (Data, URLResponse)
-        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.network(error.localizedDescription) }
+        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.transport(error) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 || code == 403 { throw ApiError.unauthorized(.direct) }
         // Hevy answers 404 for a page past the end

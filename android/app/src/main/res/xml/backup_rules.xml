@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older (allowBackup="false" already disables backup there): same exclusions as data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="ironterm_settings.xml" />
+    <exclude domain="sharedpref" path="ironterm_prefs.xml" />
+    <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_prefs__.xml" />
+</full-backup-content>

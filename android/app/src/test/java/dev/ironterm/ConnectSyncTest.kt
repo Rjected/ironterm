@@ -17,10 +17,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import okhttp3.mockwebserver.Dispatcher
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.RecordedRequest
+import dev.ironterm.testing.Dispatcher
+import dev.ironterm.testing.MockResponse
+import dev.ironterm.testing.MockWebServer
+import dev.ironterm.testing.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -106,7 +106,7 @@ class ConnectSyncTest {
         val st = store.status()
         assertTrue("synced", st.lastSuccessAt > 0)
         assertNull(st.lastError)
-        assertEquals(Snapshot.SOURCE_SERVER, store.read()!!.source)
+        assertEquals(Snapshot.SOURCE_SERVER, store.read()!!.origin)
 
         assertTrue("the old sync was cancelled", oldJob.isCancelled)
         releaseOld.countDown()

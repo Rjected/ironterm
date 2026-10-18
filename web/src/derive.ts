@@ -4,13 +4,14 @@ import type { HevyWorkout } from "../shared/hevy";
 import { BIG_FOUR, LIFTS, matchLift } from "../shared/lifts";
 import { planDay, replay, type PlannedSession, type ProgramDef, type ProgramState } from "../shared/program";
 import { buildProgram } from "../shared/programs";
+import { e1rmsFrom, fillMissing } from "../shared/fill";
 import {
   addDays, dailyCells, durationMin, liftHistory, localDate, weekStart, weekStreak, weeklyTotals, workoutVolumeKg,
   type DayCell, type GraphMetric, type LiftPoint,
 } from "../shared/stats";
 import { fromKg, loadStep, roundTo, type Unit } from "../shared/units";
 import type { WhoopWorkout } from "../shared/whoop";
-import { applyRamp } from "../shared/travel";
+import { applyRamp, rampInfo, sessionMainLifts, type RampInfo } from "../shared/travel";
 import { detectStalls, programStalls, type LiftStall, type ProgramStall } from "../shared/stall";
 import { loadFor, personalChart, type RpeChart } from "../shared/rpe";
 import type { Bootstrap } from "./api";
@@ -45,6 +46,8 @@ export interface Derived {
   e1rmNow: (lift: string) => number | null;
   /** a program day's plan with RPE-only sets given loads from your chart */
   plan: (dayIndex?: number) => PlannedSession | null;
+  /** coming back from a break: what the ramp is doing to the next session, in words */
+  reentry: RampInfo | null;
 }
 
 export function derive(b: Bootstrap, metric: GraphMetric): Derived {
@@ -54,9 +57,10 @@ export function derive(b: Bootstrap, metric: GraphMetric): Derived {
   const asc = [...b.workouts].sort((a, c) => a.start_time.localeCompare(c.start_time));
   const map = b.program?.liftMap;
 
-  const def = b.program ? buildProgram(b.program) : null;
-  const state = def && b.program ? replay(def, b.program, asc, { today, reentry: b.settings.reentry === false ? false : undefined }) : null;
-  const cfg = b.program;
+  // A config saved before its template changed may lack a start weight or TM: fill it (not saved).
+  const cfg = b.program ? fillMissing(b.program, (need) => e1rmsFrom(asc, unit, today, need, map, tz)) : null;
+  const def = cfg ? buildProgram(cfg) : null;
+  const state = def && cfg ? replay(def, cfg, asc, { today, reentry: b.settings.reentry === false ? false : undefined }) : null;
 
   const seen = new Set<string>();
   for (const w of asc) for (const e of w.exercises) { const l = matchLift(e.title, e.exercise_template_id, map); if (l) seen.add(l); }
@@ -108,6 +112,7 @@ export function derive(b: Bootstrap, metric: GraphMetric): Derived {
     whoop: b.whoop?.workouts ?? [],
     progStalls: def && state ? programStalls(def, state, { unit }) : [],
     rpe, e1rmNow, plan,
+    reentry: state?.reentry ? rampInfo(state.reentry, sessionMainLifts(next), cfg?.templateId) : null,
     workouts: [...asc].reverse(),
     byId: new Map(asc.map((w) => [w.id, w])),
     cells, def, state, next, lifts, liftKeys,
@@ -125,6 +130,16 @@ export function e1rmAt(points: LiftPoint[], date: string): number | null {
   // No session since `date` means there's no change to report.
   if (!points.length || points[points.length - 1].date <= date) return null;
   return v;
+}
+
+/**
+ * Best e1RM in the 28 days up to `date` (null when there's no session in that window). Programs
+ * alternate heavy and light days for a lift, so "the last session" swings by 40% from one day
+ * to the next; this is the number DASHBOARD, the native home screen and the widgets all show.
+ */
+export function bestAt(points: { date: string; e1rm: number }[], date: string, windowDays = 28): number | null {
+  const inWin = points.filter((p) => p.date <= date && p.date > addDays(date, -windowDays));
+  return inWin.length ? Math.max(...inWin.map((p) => p.e1rm)) : null;
 }
 
 /** Rolling best e1RM — smooths out light days so the trend reads cleanly. */

@@ -10,8 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.browser.customtabs.CustomTabColorSchemeParams
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,11 +40,9 @@ class MainActivity : ComponentActivity() {
 
             override fun openWeb(path: String) {
                 val base = Settings.get(this@MainActivity).serverUrl ?: return
-                val colors = CustomTabColorSchemeParams.Builder().setToolbarColor(0xFF000000.toInt()).setNavigationBarColor(0xFF000000.toInt()).build()
-                runCatching {
-                    CustomTabsIntent.Builder().setDefaultColorSchemeParams(colors).setShowTitle(true).build()
-                        .launchUrl(this@MainActivity, Uri.parse(base.trimEnd('/') + path))
-                }.onFailure { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(base.trimEnd('/') + path))) }
+                val uri = Uri.parse(base.trimEnd('/') + path)
+                runCatching { startActivity(customTab(uri)) }
+                    .onFailure { runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) } }
             }
 
             override fun gymStart(dayIndex: Int?, empty: Boolean) {
@@ -65,6 +61,18 @@ class MainActivity : ComponentActivity() {
                 vm.addFriend(target, note, share)
             }
         }
+    }
+
+    /**
+     * A Custom Tab without androidx.browser: the Custom Tabs protocol is just these intent extras
+     * (a null session binder asks the browser for a Custom Tab). Browsers that don't support it
+     * open the page normally.
+     */
+    private fun customTab(uri: Uri): Intent = Intent(Intent.ACTION_VIEW, uri).apply {
+        putExtras(Bundle().apply { putBinder("android.support.customtabs.extra.SESSION", null) })
+        putExtra("android.support.customtabs.extra.TOOLBAR_COLOR", 0xFF000000.toInt())
+        putExtra("android.support.customtabs.extra.NAVIGATION_BAR_COLOR", 0xFF000000.toInt())
+        putExtra("android.support.customtabs.extra.TITLE_VISIBILITY", 1) // show the page title
     }
 
     private fun askNotifications() {

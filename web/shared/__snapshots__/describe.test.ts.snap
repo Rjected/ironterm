@@ -14,14 +14,14 @@ Day 4 · Squat: MAIN SQUAT · SUPP SQUAT
 [Main · % of training max] (Overhead Press, Deadlift, Bench Press, Back Squat)
 5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%.
 [Supplemental · % of training max] (Overhead Press, Deadlift, Bench Press, Back Squat)
-Every week: 5×10 @ 50%. Skipped on deload weeks."
+Every week: 5×10 @ 50%."
 `;
 
 exports[`describeProgram > snapshots > gzclp 1`] = `
 "4 sessions a week · four different days
 Open-ended: keep running it as long as you progress.
 
-Day A1 · Squat: T1 SQUAT · T2 BENCH · T3 LAT PD · T3 CURL
+Day A1 · Squat: T1 SQUAT · T2 BENCH · T3 LAT PD
 Day B1 · OHP: T1 OHP · T2 DEADLIFT · T3 DB ROW
 Day A2 · Bench: T1 BENCH · T2 SQUAT · T3 LAT PD
 Day B2 · Deadlift: T1 DEADLIFT · T2 OHP · T3 DB ROW
@@ -29,11 +29,9 @@ Day B2 · Deadlift: T1 DEADLIFT · T2 OHP · T3 DB ROW
 [T1 · 5×3+ → 6×2+ → 10×1+] (Back Squat, Overhead Press, Bench Press, Deadlift)
 5×3+ (last set as many reps as you can). Get every rep and add 10 lb on Back Squat and Deadlift and 5 lb on Overhead Press and Bench Press next time. If you miss a rep, move to 6×2+, then 10×1+ at the same weight. When 10×1+ stalls too, test a new 5-rep max and restart at 85% of it.
 [T2 · 3×10 → 3×8 → 3×6] (Bench Press, Deadlift, Back Squat, Overhead Press)
-3×10. Get every rep and add 5 lb on Bench Press and Overhead Press and 10 lb on Deadlift and Back Squat next time. If you miss a rep, move to 3×8, then 3×6 at the same weight. When 3×6 stalls too, go back to 3×10 at the weight you last started it with, plus 10 lb on Bench Press and Overhead Press and 20 lb on Deadlift and Back Squat.
+3×10. Get every rep and add 5 lb on Bench Press and Overhead Press and 10 lb on Deadlift and Back Squat next time. If you miss a rep, move to 3×8, then 3×6 at the same weight. When 3×6 stalls too, go back to 3×10 at the weight you last did it with, plus 10 lb on Bench Press and Overhead Press and 20 lb on Deadlift and Back Squat.
 [T3 · 3×15+] (Lat Pulldown, Dumbbell Row)
-3×15+. When the last set reaches 25 reps, add 5 lb next time; until then, keep the weight and push the last set.
-[T3 · 4×12+] (Bicep Curl)
-4×12+. When the last set reaches 18 reps, add 5 lb next time; until then, keep the weight and push the last set."
+3×15+. When the first two sets get 15 and the last set reaches 25 reps, add 5 lb next time; until then, keep the weight and push the last set."
 `;
 
 exports[`describeProgram > snapshots > nsuns5 1`] = `
@@ -72,11 +70,11 @@ Day 4 · OHP (weeks 1–6, 8–13 and 15–20): MAIN OHP · SUPP PAUSE SQ
 Deload Day 4 · OHP (weeks 7, 14 and 21): MAIN OHP · SUPP PAUSE SQ
 
 [Main · % of max] (Back Squat, Bench Press, Deadlift, Overhead Press)
-Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%.
+Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%. Skipping a planned set at that weight, or coming up short on one, counts as 2+ short.
 [Main · % of max] (Back Squat, Bench Press, Deadlift, Overhead Press)
 Weeks 7, 14 and 21: 5×5 @ 60%.
 [Supplemental · % of max] (Incline Bench Press, Sumo Deadlift, Front Squat, Push Press, Close-Grip Bench, Pause Squat)
-Changes every week over 21 weeks: sets of 2–14 reps at 60–85%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%.
+Changes every week over 21 weeks: sets of 2–14 reps at 60–85%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%. Skipping a planned set at that weight, or coming up short on one, counts as 2+ short.
 [Supplemental · % of max] (Incline Bench Press, Sumo Deadlift, Front Squat, Push Press, Close-Grip Bench, Pause Squat)
 Weeks 7, 14 and 21: 5×5 @ 50%."
 `;

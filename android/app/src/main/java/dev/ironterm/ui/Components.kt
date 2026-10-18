@@ -42,6 +42,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +63,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -175,7 +179,7 @@ fun EmptyNote(title: String, body: String) {
 fun BackBar(title: String, onBack: () -> Unit, right: @Composable RowScope.() -> Unit = {}) {
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.clickable(onClickLabel = "Back", onClick = onBack).padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Mono("‹", size = 20.sp, color = T.amber, bold = true)
+            Mono("‹", Modifier.semantics { contentDescription = "Back" }, size = 20.sp, color = T.amber, bold = true)
         }
         Mono(title.uppercase(), Modifier.weight(1f), size = 14.sp, color = T.text, bold = true, maxLines = 1)
         right()
@@ -268,6 +272,14 @@ fun SearchField(value: String, onChange: (String) -> Unit, placeholder: String, 
 @Composable
 fun BoxScope.Sheet(visible: Boolean, onDismiss: () -> Unit, maxHeightFraction: Float = 0.92f, content: @Composable ColumnScope.() -> Unit) {
     if (visible) BackHandler(onBack = onDismiss)
+    // A text field in the sheet (exercise search, workout name…) keeps the keyboard up after the sheet
+    // closes, covering the screen underneath: drop focus when it closes.
+    val focus = LocalFocusManager.current
+    var wasVisible by remember { mutableStateOf(visible) }
+    LaunchedEffect(visible) {
+        if (wasVisible && !visible) focus.clearFocus(force = true)
+        wasVisible = visible
+    }
     AnimatedVisibility(visible, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.matchParentSize()) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss))
     }
