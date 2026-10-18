@@ -70,7 +70,6 @@ export function history(workouts: HevyWorkout[], log: LogEntry[], tz: string, da
   for (let d = since; d < today; d = addDays(d, 1)) {
     if (days.includes(dow(d)) && !skip(d) && !m.get(d)?.workouts.length) get(d).missed = true;
   }
-
   return m;
 }
 
