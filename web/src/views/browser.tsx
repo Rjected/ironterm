@@ -1,5 +1,5 @@
 // Programs: the browsable list (search + filters + results) and a program's own page
-// (ABOUT · RULES · WORKOUTS, START THIS PROGRAM). The page reads GET /api/app/programs/{id}, the
+// (ABOUT · RULES · WORKOUTS · BODY, START THIS PROGRAM). The page reads GET /api/app/programs/{id}, the
 // same document the native apps render (docs/api/programs.md).
 
 import { useEffect, useMemo, useState } from "preact/hooks";
@@ -12,6 +12,7 @@ import type { ProgramWeekExercise } from "../../shared/appapi";
 import { api, type Bootstrap, type ProgramDetail } from "../api";
 import { Picker } from "../components/picker";
 import { Seg, Tier } from "../ui";
+import { ProgramBodyTab } from "./program-body";
 import "../programs.css";
 
 const CATS: [ProgramCategory | "all", string][] = [
@@ -86,7 +87,7 @@ export function ProgramBrowser(props: { selected: string | null; active: string 
   );
 }
 
-type Tab = "about" | "rules" | "workouts";
+type Tab = "about" | "rules" | "workouts" | "body";
 
 function lengthText(l: ReturnType<typeof programLength>): string {
   if (l.kind === "block") return `a ${l.weeks}-week block, then it ends`;
@@ -150,7 +151,7 @@ export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => vo
       {editing && props.editor && <div class="pp-edit">{props.editor(() => setEditing(false))}</div>}
 
       <div class="pp-tabs" role="tablist">
-        {(["about", "rules", "workouts"] as Tab[]).map((x) => (
+        {(["about", "rules", "workouts", "body"] as Tab[]).map((x) => (
           <button role="tab" aria-selected={tab === x} class={tab === x ? "on" : ""} id={`tab-${x}`} onClick={() => setTab(x)}>{x.toUpperCase()}</button>
         ))}
       </div>
@@ -205,6 +206,8 @@ export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => vo
           ))}
         </div>
       )}
+
+      {d && tab === "body" && <ProgramBodyTab id={id} opts={opts} defaultDays={d.start.trainingDays} />}
 
       {d && tab === "workouts" && d.weeks.length > 0 && (
         <div class="pp-body">
