@@ -47,7 +47,7 @@ enum DirectAggregator {
 
     struct Cell { var value: Double; var level: Int }
 
-    /// Quartiles of non-zero days, the same interpolation as normalize.rs / dailyCells().
+    /// Quartiles of non-zero days, the same interpolation as dailyCells() in web/shared/stats.ts.
     static func levels(_ values: [String: Double]) -> [String: Cell] {
         let sorted = values.values.sorted()
         func q(_ p: Double) -> Double {
