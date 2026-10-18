@@ -100,7 +100,7 @@ interface ProgramBody {
     week: number;                         // 1-based
     muscle: MuscleId; short: string;
     from: string; to: string;             // "MON A1" → "TUE B1"
-    gapH: number; share: number;          // hours apart · share of the last dose left (0–1)
+    gapH: number; share: number;          // hours apart · residual ÷ the last dose (can pass 1)
     prev: string[]; now: string[];        // lifts behind each hit
   }[];
   overlapsByWeek: number[];               // count per week (length = weeks)

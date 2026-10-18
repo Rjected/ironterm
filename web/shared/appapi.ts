@@ -692,7 +692,7 @@ export interface ProgramBodyOverlap {
   /** "MON A1" → "TUE B1" */
   from: string; to: string;
   gapH: number;
-  /** share of the previous hit's fatigue still there, 0–1 */
+  /** residual fatigue as a share of the previous hit's dose (can pass 1 when older sessions add up) */
   share: number;
   prev: string[]; now: string[];
 }
