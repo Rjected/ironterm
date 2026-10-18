@@ -77,7 +77,7 @@ describe("all LiftVault templates", () => {
 
   it("finite programs run to completion", () => {
     const expected: [ProgramTemplate, number, Record<string, string>?][] = [
-      [smolov, 35], [magOrt, 10], [gzclUhf5, 25], [gzclUhf9, 45], [gzclUhf9, 53, { taper: "on" }], [gzclGgWave, 64], [canditoAdvBench, 21], [canditoAdvSquat, 30],
+      [smolov, 36], [magOrt, 10], [gzclUhf5, 25], [gzclUhf9, 45], [gzclUhf9, 53, { taper: "on" }], [gzclGgWave, 64], [canditoAdvBench, 21], [canditoAdvSquat, 30],
     ];
     for (const [t, sessions, o] of expected) {
       const { def, cfg } = setup(t, undefined, o);
@@ -87,13 +87,14 @@ describe("all LiftVault templates", () => {
   });
 });
 
-describe("Smolov (vs LiftVault sheet: squat 300, power clean 200, box squat 315)", () => {
+describe("Smolov (smolovjr.com + LiftVault sheet: squat 300, power clean 200, box squat 315)", () => {
   const { def, cfg } = setup(smolov, { squat: 300, powerClean: 200, boxSquat: 315 });
 
   it("intro and base loads match the sheet, including +20 / +30 lb base jumps", () => {
     expect(loads(def, cfg, "W1D1", "-sq")).toEqual([195, 195, 195, 210, 225, 225, 240]);
     expect(loads(def, cfg, "W1D3", "-sq")).toEqual([210, 210, 210, 210, 225, 240, 240, 270]);
-    expect(loads(def, cfg, "W2D1", "-sq")).toEqual([255, 255, 255, 255]);
+    // smolovjr.com intro week 2: 1×5 @ 80 / 82.5 / 85%
+    expect([1, 2, 3].map((d) => loads(def, cfg, `W2D${d}`, "-sq"))).toEqual([[240], [250], [255]]);
     const base: [string, number[]][] = [["D1", [210, 230, 240]], ["D2", [225, 245, 255]], ["D3", [240, 260, 270]], ["D4", [255, 275, 285]]];
     for (const [d, want] of base) expect([3, 4, 5].map((w) => loads(def, cfg, `W${w}${d}`, "-sq")[0])).toEqual(want);
     expect(reps(def, cfg, "W3D1", "-sq")).toEqual(Array(4).fill(9));
@@ -115,7 +116,10 @@ describe("Smolov (vs LiftVault sheet: squat 300, power clean 200, box squat 315)
     expect(loads(def, cfg, "W9D2", "-sq", s1)).toEqual([255, 300, 340, 385, 360, 360]);
     expect(loads(def, cfg, "W10D3", "-sq", s1)).toEqual([275, 320, 360, 385, 385, 385, 385]);
     expect(loads(def, cfg, "W12D3", "-sq", s1)).toEqual([320, 385, 405, 405, 405]);
-    expect(loads(def, cfg, "W13D1", "-sq", s1)).toEqual([320, 360, 360, 360, 360]);
+    // smolovjr.com week 13: 70×3, 80×3, 90 2×5, 95 3×4 · 75×4, 85 4×4 · test
+    expect(loads(def, cfg, "W13D1", "-sq", s1)).toEqual([300, 340, 385, 385, 405, 405, 405]);
+    expect(loads(def, cfg, "W13D2", "-sq", s1)).toEqual([320, 360, 360, 360, 360]);
+    expect(def.cycle!.weeks).toBe(13);
   });
 });
 
@@ -191,15 +195,16 @@ describe("GZCL GG Wave LP (1RMs B200 S300 D400 OHP135)", () => {
   it("T1 80% / T2 70% plus weekly increments, waves restart one step up", () => {
     expect(wk(0, "bench", "T1").sets.map((x) => x.weight)).toEqual(Array(7).fill(160));
     expect(wk(0, "bench", "T1").sets.map((x) => x.reps)).toEqual([6, 1, 1, 1, 1, 1, 1]);
-    expect(wk(1, "bench", "T1").sets[0].weight).toBe(165);
-    expect(wk(4, "bench", "T1").sets[0].weight).toBe(165);
+    // the sheet's text: "Add 5kg/10lb a week, 2.5kg/5lb for OHP"
+    expect(wk(1, "bench", "T1").sets[0].weight).toBe(170);
+    expect(wk(4, "bench", "T1").sets[0].weight).toBe(170);
     expect(wk(4, "bench", "T1").sets.map((x) => x.reps)).toEqual([5, 1, 1, 1, 1, 1]);
-    expect(wk(15, "bench", "T1").sets[0].weight).toBe(190);
+    expect(wk(15, "bench", "T1").sets[0].weight).toBe(220);
     expect(wk(0, "bench", "T2").sets.map((x) => [x.weight, x.reps])).toEqual([[210, 10], [210, 5], [210, 5], [210, 5], [210, 5]]);
     expect(wk(8, "bench", "T2").sets.map((x) => x.reps)).toEqual([7, 4, 4, 3, 3]);
-    expect(wk(15, "bench", "T2").sets[0].weight).toBe(240);
+    expect(wk(15, "bench", "T2").sets[0].weight).toBe(270);
     expect(wk(0, "ohp", "T1").sets[0].weight).toBe(107.5);
-    expect(wk(1, "ohp", "T1").sets[0].weight).toBe(110);
+    expect(wk(1, "ohp", "T1").sets[0].weight).toBe(112.5);
   });
 });
 
@@ -320,6 +325,15 @@ describe("German Volume Training", () => {
     const dl = planDay(p2.def, p2.cfg, initialState(p2.def, p2.cfg), 1).exercises[0];
     expect([dl.lift, dl.sets.length, dl.sets[0].reps, dl.sets[0].weight]).toEqual(["deadlift", 10, 6, 280]);
   });
+  // Poliquin's phase 2: B exercises 3×6 (fly, EZ-bar row) and 3×12–15 (twisting crunch, calves);
+  // the arms/shoulders day stays dips + incline hammer curls with bent-over and seated laterals.
+  it("phase 2 B work and arms day follow Poliquin's text", () => {
+    const p2 = gvt.build({ phase: "2" });
+    const lifts = (id: string) => p2.days.find((d) => d.id === id)!.slots.map((x) => `${x.lift} ${x.progression.kind === "double" ? x.progression.reps.join("-") : ""}`.trim());
+    expect(lifts("A")).toEqual(["dbInclineBench", "pullUp", "chestFly 6-6", "row 6-6"]);
+    expect(lifts("B")).toEqual(["deadlift", "legCurl", "crunch 12-15", "calfRaise 12-15"]);
+    expect(lifts("C")).toEqual(["dip", "hammerCurl", "rearDeltFly 10-12", "lateralRaise 10-12"]);
+  });
 });
 
 describe("Arnold split", () => {
@@ -336,10 +350,11 @@ describe("Arnold split", () => {
 describe("Bromley simplest beginner", () => {
   const { def, cfg } = setup(bromleyBeginner);
 
-  it("4×6+: last set beats 6 → add weight, a hard 6 → hold", () => {
-    const up = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-02-01", [[title("squat"), [[135, 6], [135, 6], [135, 6], [135, 11]]], [title("bench"), [[95, 6], [95, 6], [95, 6], [95, 6]]]]), 0);
+  // Bromley's Read Me: "Add a little each session" while you get the 4×6; a short set → same weight.
+  it("4×6+: all 24 reps → add weight; a missed rep → hold", () => {
+    const up = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-02-01", [[title("squat"), [[135, 6], [135, 6], [135, 6], [135, 11]]], [title("bench"), [[95, 6], [95, 6], [95, 6], [95, 6]]], [title("ohp"), [[65, 6], [65, 6], [65, 6], [65, 5]]]]), 0);
     expect(up.slots["brm-squat"].weight).toBe(145);
-    expect(up.slots["brm-bench"].weight).toBe(95);
+    expect(up.slots["brm-bench"].weight).toBe(100);
   });
 
   it("stage 2 adds a variations day", () => {

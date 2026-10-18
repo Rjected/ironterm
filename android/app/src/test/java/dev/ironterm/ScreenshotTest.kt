@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.view.View
 import android.widget.FrameLayout
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
@@ -174,6 +175,12 @@ class ScreenshotTest {
     @Test fun gym_keypad() = shot("gym_keypad", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = live.copy(restEndsAt = null))), before = {
         compose.onAllNodes(androidx.compose.ui.test.hasContentDescription("LB value")).onFirst().performClick()
     })
+    @Test fun gym_remove_set_is_named() {
+        val s = Live.addExercise(Live.emptySession("lb", Live.iso(now - 60_000)).copy(id = "e2"), "bench")
+        compose.setContent { TerminalTheme { AppScreen(server, AppActions.None, Nav(Tabs.GYM), {}, serverData, GymUi(GymState(session = s)), now = now, ticking = false) } }
+        compose.waitForIdle()
+        compose.onAllNodes(hasContentDescription("Remove set")).assertCountEquals(1)
+    }
     @Test fun gym_empty_session() = shot("gym_empty_session", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = Live.emptySession("lb", Live.iso(now - 60_000)).copy(id = "e1"))))
     private fun summary(state: String, error: String? = null) = FinishSummary(
         sessionId = live.id, title = live.title, unit = "lb", sets = 14, volume = 11355.0, durationSec = 66 * 60, exercises = 3,
@@ -224,7 +231,10 @@ class ScreenshotTest {
 
     // ═════════════ MORE ═════════════
     @Test fun more() = shot("more", server, Nav(Tabs.MORE), serverData)
-    @Test fun calendar() = shot("calendar", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData)
+    @Test fun calendar() = shot("calendar", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, before = {
+        // icon-only controls are named for TalkBack
+        listOf("Back", "Previous month", "Next month").forEach { compose.onAllNodes(hasContentDescription(it)).assertCountEquals(1) }
+    })
     @Test fun calendar_360() = shot("calendar_360", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, width = 360)
     @Test fun calendar_day() = shot("calendar_day", server, Nav(Tabs.MORE, listOf(Route.Calendar)), serverData, before = click("13"))
     @Test fun program() = shot("program", server, Nav(Tabs.MORE, listOf(Route.Program)), serverData)

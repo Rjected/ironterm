@@ -1,6 +1,15 @@
 import XCTest
 @testable import Ironterm
 
+final class ATSMessageTests: XCTestCase {
+    func testPlainHttpToAPublicServerExplainsItself() {
+        let ats = ApiError.transport(URLError(.appTransportSecurityRequiresSecureConnection))
+        XCTAssertEqual(ats, .network("iOS only allows http:// to servers on your local network. Use https:// for this server."))
+        let offline = ApiError.transport(URLError(.notConnectedToInternet))
+        XCTAssertEqual(offline, .network(URLError(.notConnectedToInternet).localizedDescription))
+    }
+}
+
 /// In-process HTTP stub: every request made through `StubProtocol.session` is answered by `handler`.
 final class StubProtocol: URLProtocol {
     static var handler: ((URLRequest) -> (Int, Data))?

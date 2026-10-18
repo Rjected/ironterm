@@ -4,8 +4,8 @@ import dev.ironterm.update.CheckResult
 import dev.ironterm.update.ReleaseParser
 import dev.ironterm.update.UpdateChecker
 import kotlinx.coroutines.runBlocking
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import dev.ironterm.testing.MockResponse
+import dev.ironterm.testing.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

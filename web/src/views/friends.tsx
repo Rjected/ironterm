@@ -27,6 +27,11 @@ const SHARE_TEXT: Record<Share, string> = {
   full: "everything in LIFTS plus every set, workout notes and your latest bodyweight",
 };
 
+/** The day an item happened, in the viewer's own zone (items carry UTC instants). */
+const viewerDay = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso.slice(0, 10) : new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+};
 const who = (a: { name: string | null; handle: string | null; server: string }) => a.name ?? (a.handle ? `@${a.handle}` : a.server.replace(/^https?:\/\//, ""));
 const host = (s: string) => s.replace(/^https?:\/\//, "");
 const errMsg = (e: unknown) => (e instanceof ApiError || e instanceof Error ? e.message : String(e));
@@ -181,7 +186,7 @@ function ItemCard(props: { it: FeedItem; unit: string | null; author?: AuthoredI
       <header>
         {props.author && <button class="fr-author" onClick={props.onAuthor}>{who(props.author)}</button>}
         <span class={`fr-kind ${it.kind}`}>{it.kind === "session" ? "SESSION" : it.kind === "pr" ? "PR" : "ACHIEVEMENT"}</span>
-        <span class="faint" title={it.at}>{shortDate(it.at.slice(0, 10))} · {ago(it.at)}</span>
+        <span class="faint" title={it.at}>{shortDate(viewerDay(it.at))} · {ago(it.at)}</span>
       </header>
       <div class="fr-head">{t.head}</div>
       {t.lines && t.lines.length > 0 && <div class="fr-lines">{t.lines.map((l) => <div>{l}</div>)}</div>}

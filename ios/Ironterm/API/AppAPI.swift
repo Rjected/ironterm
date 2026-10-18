@@ -105,7 +105,7 @@ struct AppAPI {
     /// rather than a revoked token.
     func perform(_ r: URLRequest, forbiddenIsAuth: Bool = true) async throws -> Data {
         let (data, resp): (Data, URLResponse)
-        do { (data, resp) = try await session.data(for: r) } catch { throw ApiError.network(error.localizedDescription) }
+        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.transport(error) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 || (code == 403 && forbiddenIsAuth) { throw ApiError.unauthorized(.server) }
         guard (200..<300).contains(code) else {
