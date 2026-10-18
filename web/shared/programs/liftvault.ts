@@ -797,7 +797,7 @@ export const bromleyBeginner: ProgramTemplate = {
   name: "Bromley's Simplest Beginner Program",
   author: "Alex Bromley (Empire Barbell)",
   source: "LiftVault: SIMPLEST Beginner Program (Alex Bromley) spreadsheet, stages 1 and 2",
-  summary: "The big five lifts for 4×6+ (add weight while the last set beats 6) plus arm work to failure; start A/B, then add a variation day.",
+  summary: "The big five lifts for 4×6+ (add a little weight every session) plus arm work to failure; start A/B, then add a variation day.",
   category: "novice",
   level: "beginner",
   daysPerWeek: [3, 4, 5],
@@ -806,7 +806,7 @@ export const bromleyBeginner: ProgramTemplate = {
     const three = o.stage === "3day";
     const main = (id: string, lift: string, upper: boolean): SlotDef => ({
       id, lift, tier: "MAIN", restSeconds: 180, note: "Last set as many reps as possible. When it's a hard 6, move on to the next stage / vary the lift.",
-      progression: { kind: "stages", stages: [{ sets: 4, reps: 6, amrap: true }], advance: { type: "amrapAtLeast", reps: 7 }, onFinalFail: { type: "hold" }, increment: upper ? w8(5, 2.5) : w8(10, 5) },
+      progression: { kind: "stages", stages: [{ sets: 4, reps: 6, amrap: true }], advance: { type: "baseVolume" }, onFinalFail: { type: "hold" }, increment: upper ? w8(5, 2.5) : w8(10, 5) },
     });
     const toF = (id: string, lift: string, note?: string) => doubleSlot(id, lift, "ACC", 3, [8, 12], w8(5, 2.5), ["3 sets to failure, aim for 8–12", note].filter(Boolean).join(" · "));
     const days: DayDef[] = [
@@ -820,7 +820,7 @@ export const bromleyBeginner: ProgramTemplate = {
       sessionsPerWeek: 3,
       days,
       notes: [
-        "4×6+: pick a weight where the first three sets feel almost too easy. Add weight every session the last set beats 6 (upper +2.5–5 lb, lower +5–10 lb).",
+        "4×6+: pick a weight where the first three sets feel almost too easy. Add a little every session you get all 24 reps (upper +2.5–5 lb, lower +5–10 lb; the top of the range is used here).",
         "3×F: three sets to failure. Over 12 reps → add weight; under 8 → take some off.",
         "When the big lifts stall, graduate to Bullmastiff (Bromley's 4-day template).",
       ],

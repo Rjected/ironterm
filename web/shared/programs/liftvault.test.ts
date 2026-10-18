@@ -350,10 +350,11 @@ describe("Arnold split", () => {
 describe("Bromley simplest beginner", () => {
   const { def, cfg } = setup(bromleyBeginner);
 
-  it("4×6+: last set beats 6 → add weight, a hard 6 → hold", () => {
-    const up = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-02-01", [[title("squat"), [[135, 6], [135, 6], [135, 6], [135, 11]]], [title("bench"), [[95, 6], [95, 6], [95, 6], [95, 6]]]]), 0);
+  // Bromley's Read Me: "Add a little each session" while you get the 4×6; a short set → same weight.
+  it("4×6+: all 24 reps → add weight; a missed rep → hold", () => {
+    const up = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-02-01", [[title("squat"), [[135, 6], [135, 6], [135, 6], [135, 11]]], [title("bench"), [[95, 6], [95, 6], [95, 6], [95, 6]]], [title("ohp"), [[65, 6], [65, 6], [65, 6], [65, 5]]]]), 0);
     expect(up.slots["brm-squat"].weight).toBe(145);
-    expect(up.slots["brm-bench"].weight).toBe(95);
+    expect(up.slots["brm-bench"].weight).toBe(100);
   });
 
   it("stage 2 adds a variations day", () => {

@@ -381,12 +381,13 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
     out.push(`Start at ${st[0]}. Get every rep and move to the next scheme at the same weight (${steps}). ${end} Miss a rep and repeat the same scheme next time.`);
     return { title: `${st[0]} → ${st[st.length - 1]}${p.climb.loadPct > 0 ? `, then +${pct(p.climb.loadPct)}` : ""}`, text: out.join(" ") };
   }
-  out.push(`${st[0]}${st[0].endsWith("+") ? " (last set as many reps as you can)" : ""}. Get every rep and add ${incs.text} next time.`);
+  const pass = p.count === "total" ? `Get at least ${p.stages[0].sets * p.stages[0].reps} reps across the sets (extra reps on the last set count)` : p.count === "lastSet" ? `Get at least ${p.stages[0].reps} on the last set` : "Get every rep";
+  out.push(`${st[0]}${st[0].endsWith("+") ? " (last set as many reps as you can)" : ""}. ${pass} and add ${incs.text} next time.`);
   if (p.amrapBonus) {
     const bonus = wr.perLift(slots.map((s) => ({ lift: s.lift, v: wr.slotInc(s)! })), p.amrapBonus.increments);
     out.push(`Get ${p.amrapBonus.reps}+ on the last set and add ${p.amrapBonus.increments === 2 ? "double" : `${p.amrapBonus.increments}×`} that (${bonus.text}) instead.`);
   }
-  const miss = n > 1 ? `If you miss reps ${word(n)} sessions in a row` : "If you miss a rep";
+  const miss = n > 1 ? `If you miss reps ${word(n)} sessions in a row` : p.count === "total" ? "If you fall short of that" : p.count === "lastSet" ? "If the last set falls short" : "If you miss a rep";
   const f = p.onFinalFail;
   const bump = f.type === "reset" ? wr.perLift(slots.map((s) => ({ lift: s.lift, v: wr.slotInc(s)! })), f.bumpIncrements) : null;
   const final = f.type === "retest" ? `test a new ${f.rmReps}-rep max and restart at ${pct(f.pct)} of it`
