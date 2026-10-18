@@ -2,7 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
@@ -302,6 +302,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
         const opt: Record<string, string> = {};
         for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
         const r = appProgramDetail(b, decodeURIComponent(sub.slice(9)), opt);
+        return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
+      }
+      const bodyM = sub.match(/^programs\/([^/]+)\/body$/);
+      if (bodyM) {
+        const opt: Record<string, string> = {};
+        for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
+        const mode = q.get("mode") ?? "load";
+        if (mode !== "load" && mode !== "gaps") return json({ error: "mode must be load or gaps" }, { status: 400 });
+        const days = parseDays(q.get("days"));
+        if (days && "error" in days) return json({ error: days.error }, { status: 400 });
+        const r = appProgramBody(b, decodeURIComponent(bodyM[1]), { opt, mode, days, svg: q.get("svg") !== "0" });
         return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
       }
     }
