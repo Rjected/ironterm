@@ -105,7 +105,8 @@ export function parseJsonc(text) {
 async function buildWorker() {
   const configPath = existsSync(join(root, "wrangler.jsonc")) ? join(root, "wrangler.jsonc") : join(root, "wrangler.example.jsonc");
   const config = parseJsonc(readFileSync(configPath, "utf8"));
-  const out = join(dist, config.name ?? "ironterm");
+  // same folder name as @cloudflare/vite-plugin: the worker name with - as _
+  const out = join(dist, (config.name ?? "ironterm").replace(/-/g, "_"));
   rmSync(out, { recursive: true, force: true });
   const r = await build({
     entryPoints: [join(root, config.main ?? "worker/index.ts")],
