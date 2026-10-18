@@ -10,6 +10,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { bodyLimit, capStream, declaredTooLarge } from "./bodylimit";
 import { setPeerFetch } from "../worker/social/net";
 import { peerFetch } from "./peerfetch";
 import { PAGE_HEADERS } from "../worker/headers";
@@ -101,7 +102,7 @@ function toRequest(req: IncomingMessage): Request {
   // or with TRUST_PROXY=1 from the proxy's X-Forwarded-For.
   const fwd = TRUST_PROXY ? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() : null;
   headers.set("cf-connecting-ip", fwd || req.socket.remoteAddress || "unknown");
-  const body = req.method === "GET" || req.method === "HEAD" ? undefined : (Readable.toWeb(req) as ReadableStream);
+  const body = req.method === "GET" || req.method === "HEAD" ? undefined : capStream(Readable.toWeb(req) as ReadableStream<Uint8Array>, bodyLimit(new URL(req.url ?? "/", "http://x").pathname));
   return new Request(`${proto}://${host}${req.url}`, { method: req.method, headers, body, duplex: "half" } as RequestInit);
 }
 
@@ -130,6 +131,10 @@ createServer(async (req, res) => {
     if (!loginConfigured && !isLocal(req) && !peer) {
       res.writeHead(403, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "No login configured for this server. Set APP_PASSWORD or Google sign-in (see SELF_HOSTING.md)." }));
+    }
+    if (declaredTooLarge(req.headers["content-length"], bodyLimit(new URL(req.url ?? "/", "http://x").pathname))) {
+      res.writeHead(413, { "content-type": "application/json", connection: "close" });
+      return res.end(JSON.stringify({ error: "Request body too large." }));
     }
     await send(res, await worker.fetch!(toRequest(req) as never, env as never, ctx as never));
   } catch (e) {

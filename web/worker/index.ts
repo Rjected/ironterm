@@ -556,7 +556,8 @@ export default {
     } catch (e) {
       console.error(e);
       if (e instanceof BadRequest) return json({ error: e.message }, { status: 400 });
-      const status = e instanceof HevyError ? 502 : 500;
+      // BodyTooLarge: the self-hosted server cut off an oversized upload (server/bodylimit.ts)
+      const status = e instanceof HevyError ? 502 : e instanceof Error && e.name === "BodyTooLarge" ? 413 : 500;
       return withSecurityHeaders(json({ error: e instanceof Error ? e.message : String(e) }, { status }));
     }
   },
