@@ -68,7 +68,7 @@ interface ProgramDetail extends ProgramSummary {
 What the program does to each muscle, before you start it: one full cycle laid on a weekly schedule
 and run through the same load and recovery model as the BODY screen (`web/shared/recovery.ts`).
 A separate call because the two figures are ~260 KB. Samples: `docs/api/app/programs-gzclp-body.json`
-(load, with SVGs) and `programs-531-body-gaps.json` (gaps, `svg=0`).
+and `programs-gzclp-body-gaps.json` (load / gaps, with SVGs), `programs-531-body-gaps.json` (4 weeks, `svg=0`).
 
 - `mode`: `load` (default) colours by weekly hard sets; `gaps` by lowest readiness across the week.
   Only the figures, `legend` and the order of `muscles` change; every muscle carries both values.

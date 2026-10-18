@@ -256,6 +256,7 @@ describe("app API", () => {
       expect(gaps.legend).toEqual(["recovered", "taxed"]);
       expect(gaps.muscles[0].gap).toBe(Math.max(...gaps.muscles.map((m) => m.gap)));
       expect(gaps.svgFront).not.toBe(g.svgFront);
+      await fixture("programs-gzclp-body-gaps", gaps);
 
       // training days matter: back-to-back days overlap more than spread ones
       const packed = body("531", { days: [0, 1, 2, 3] });
