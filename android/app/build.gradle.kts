@@ -99,7 +99,8 @@ dependencies {
     // QR connect: Google code scanner (Play services UI, no CAMERA permission)
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 
-    // Encrypted credentials
+    // Only to read (once) credentials stored by older versions; Settings now uses the Android Keystore.
+    // Remove together with Settings.migrateLegacy after a few releases.
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Tests
