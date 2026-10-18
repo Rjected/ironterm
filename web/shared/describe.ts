@@ -444,9 +444,10 @@ export function describeProgram(def: ProgramDef, opts: DescribeOptions = {}): Pr
     const names = c.weekNames?.slice(0, c.weeks);
     overview.push(`Repeats in ${c.weeks}-week cycles${names?.length === c.weeks ? `: ${list(names)}` : ""}.`);
   } else overview.push("Open-ended: keep running it as long as you progress.");
-  if (c?.tmIncrease && (!c.finite || c.tmIncreaseEvery)) {
+  if (c?.tmIncrease && (!c.finite || c.tmIncreaseEvery || c.tmIncreaseAt)) {
     const every = c.tmIncreaseEvery ?? c.weeks;
-    const when = every === 1 ? "Every week" : c.tmIncreaseEvery ? `Every ${every} weeks` : "After each cycle";
+    const when = c.tmIncreaseAt ? `At the end of ${weekList(c.tmIncreaseAt)}${c.finite ? "" : " of each cycle"}`
+      : every === 1 ? "Every week" : c.tmIncreaseEvery ? `Every ${every} weeks` : "After each cycle";
     const items = Object.entries(c.tmIncrease).map(([lift, v]) => ({ lift, v }));
     const by = new Map<string, string[]>();
     for (const x of items) { const k = wr.signed(x.v); by.set(k, [...(by.get(k) ?? []), name(x.lift)]); }

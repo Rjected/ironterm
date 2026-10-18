@@ -24,9 +24,11 @@ jobs:
           persist-credentials: false
 
       # newest stable Xcode on the runner image, not the image default
-      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
-        with:
-          xcode-version: latest-stable
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|rc' | sort -V | tail -1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
 
       - name: Show Xcode version
         run: xcodebuild -version

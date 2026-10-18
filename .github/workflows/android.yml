@@ -28,8 +28,13 @@ jobs:
         with:
           java-version: "17"
           distribution: temurin
+          cache: gradle
 
-      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+      # What gradle/actions/setup-gradle used to check: the committed wrapper jar is an official
+      # Gradle release (this is the published checksum of the Gradle 8.4 wrapper jar).
+      # The distribution it downloads is checked by distributionSha256Sum.
+      - name: Verify Gradle wrapper
+        run: echo "0336f591bc0ec9aa0c9988929b93ecc916b3c1d52aed202c7381db144aa0ef15  gradle/wrapper/gradle-wrapper.jar" | sha256sum -c -
 
       - name: Unit + screenshot tests
         run: ./gradlew testDebugUnitTest
@@ -73,8 +78,13 @@ jobs:
         with:
           java-version: "17"
           distribution: temurin
+          cache: gradle
 
-      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+      # What gradle/actions/setup-gradle used to check: the committed wrapper jar is an official
+      # Gradle release (this is the published checksum of the Gradle 8.4 wrapper jar).
+      # The distribution it downloads is checked by distributionSha256Sum.
+      - name: Verify Gradle wrapper
+        run: echo "0336f591bc0ec9aa0c9988929b93ecc916b3c1d52aed202c7381db144aa0ef15  gradle/wrapper/gradle-wrapper.jar" | sha256sum -c -
 
       - name: Decode signing key
         env:
