@@ -42,7 +42,9 @@ fun normalizeServerUrl(input: String): String? {
     }
     val url = s.toHttpUrlOrNull() ?: return null
     val port = if (url.port == okhttp3.HttpUrl.defaultPort(url.scheme)) "" else ":${url.port}"
-    return "${url.scheme}://${url.host}$port"
+    // HttpUrl.host is the bare address for IPv6 ("::1"); a URL needs it in brackets.
+    val host = if (':' in url.host) "[${url.host}]" else url.host
+    return "${url.scheme}://$host$port"
 }
 
 /** GET /api/snapshot with the app token. */
@@ -61,7 +63,7 @@ class ServerClient(
                 res.code == 401 || res.code == 403 -> throw AuthException()
                 !res.isSuccessful -> throw HttpStatusException(res.code, "Server error ${res.code}")
                 else -> try {
-                    SnapshotJson.parse(body).copy(source = Snapshot.SOURCE_SERVER)
+                    SnapshotJson.parse(body).copy(origin = Snapshot.SOURCE_SERVER)
                 } catch (e: Exception) {
                     throw IOException("Server sent an unexpected response (is this a ${dev.ironterm.Brand.NAME} server?)", e)
                 }

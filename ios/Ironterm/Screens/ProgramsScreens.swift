@@ -174,7 +174,7 @@ struct ActiveMark: View {
 // MARK: - program page
 
 enum ProgramTab: String, CaseIterable, Identifiable {
-    case about, rules, workouts
+    case about, rules, workouts, body
     var id: String { rawValue }
 }
 
@@ -270,6 +270,7 @@ struct ProgramDetailContent: View {
             case .about: ProgramAboutTab(d: d, loading: loading, opts: $opts)
             case .rules: ProgramRulesTab(d: d)
             case .workouts: ProgramWorkoutsTab(d: d, week: $week)
+            case .body: ProgramBodyTab(id: d.id, opts: opts)
             }
         }
     }

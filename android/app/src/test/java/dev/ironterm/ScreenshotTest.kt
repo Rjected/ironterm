@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
@@ -185,6 +186,20 @@ class ScreenshotTest {
         val err = "No Hevy exercise found for cableFly. Map it in Settings › Lifts."
         shot("gym_summary_failed", server, Nav(Tabs.GYM), serverData, GymUi(GymState(summary = summary(FinishState.FAILED, err), outbox = listOf(OutOp(OutOp.FINISH, live.id, live, now, attempts = 3, failed = true, error = err)))))
     }
+
+    // ── local mode: the server has no Hevy key, so nothing may claim it went to Hevy ──
+    private val local get() = server.copy(snapshot = snap.copy(demo = false, source = Snapshot.LOG_LOCAL))
+    private fun noHevy() = listOf("to Hevy", "in Hevy", "Hevy instead").forEach { compose.onAllNodes(hasText(it, substring = true, ignoreCase = true)).assertCountEquals(0) }
+    @Test fun gym_finish_sheet_local() = shot("gym_finish_sheet_local", local, Nav(Tabs.GYM), serverData, liveGym, before = {
+        click("FINISH")(); compose.waitForIdle()
+        noHevy()
+        compose.onAllNodes(hasText("SAVE")).assertCountEquals(1)
+    })
+    @Test fun gym_summary_local() = shot("gym_summary_local", local, Nav(Tabs.GYM), serverData, GymUi(GymState(summary = summary(FinishState.SAVED).copy(local = true, program = true))), before = {
+        noHevy()
+        compose.onAllNodes(hasText("SAVED")).assertCountEquals(1)
+    })
+    @Test fun gym_start_local() = shot("gym_start_local", local, Nav(Tabs.GYM), serverData, before = { noHevy() })
 
     // ═════════════ LIFTS ═════════════
     @Test fun lifts() = shot("lifts", server, Nav(Tabs.LIFTS), serverData)

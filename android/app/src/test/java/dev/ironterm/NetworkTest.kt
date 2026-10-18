@@ -96,8 +96,8 @@ class NetworkTest {
         assertEquals("/api/snapshot", req.path)
         assertEquals("Bearer ht_good", req.getHeader("Authorization"))
         val cached = store.read()!!
-        assertEquals(Snapshot.SOURCE_SERVER, cached.source)
-        assertEquals(TestData.fixture.copy(source = Snapshot.SOURCE_SERVER), cached)
+        assertEquals(Snapshot.SOURCE_SERVER, cached.origin)
+        assertEquals(TestData.fixture.copy(origin = Snapshot.SOURCE_SERVER), cached)
         assertEquals(clock(), store.status().lastSuccessAt)
         assertNull(store.status().lastError)
     }
@@ -150,7 +150,7 @@ class NetworkTest {
         val r = refresher().refresh()
         assertTrue(r.toString(), r is RefreshResult.Ok)
         val s = store.read()!!
-        assertEquals(Snapshot.SOURCE_DIRECT, s.source)
+        assertEquals(Snapshot.SOURCE_DIRECT, s.origin)
         assertEquals(workouts.size, s.totals.allTime)
         assertEquals(3, hevyCalls.get()) // ceil(24/10) pages, pageSize 10
         assertEquals(listOf("squat", "bench", "deadlift", "ohp"), s.lifts.take(4).map { it.key })

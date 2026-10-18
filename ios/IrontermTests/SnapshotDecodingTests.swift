@@ -47,6 +47,17 @@ final class SnapshotDecodingTests: XCTestCase {
         XCTAssertEqual(try Snapshot.decode(s.encoded()), s)
     }
 
+    func testSourceSaysWhetherHevyIsConnected() throws {
+        var s = try Snapshot.decode(fixtureData())
+        XCTAssertFalse(s.isLocal, "older servers send no source")
+        s.source = "local"
+        let local = try Snapshot.decode(s.encoded())
+        XCTAssertEqual(local.source, "local")
+        XCTAssertTrue(local.isLocal)
+        s.source = "hevy"
+        XCTAssertFalse(s.isLocal)
+    }
+
     func testLenientToAdditionsAndNulls() throws {
         let json = """
         {"v":1,"generatedAt":"2026-01-01T00:00:00Z","today":"2026-01-01","unit":"kg","tz":"UTC","demo":false,

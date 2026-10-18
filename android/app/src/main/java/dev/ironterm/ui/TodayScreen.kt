@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
 fun TodayScreen(state: UiState, data: DataUi, gym: GymUi, actions: AppActions, now: Long, onGym: () -> Unit, onGo: (Route) -> Unit, onHistory: () -> Unit) {
     LaunchedEffect(state.mode) { actions.load(Screens.HOME) }
     val home: AppHome? = data.home.data
-    val s: Snapshot? = home?.snapshot?.takeIf { it.today.isNotEmpty() }?.copy(source = state.snapshot?.source ?: Snapshot.SOURCE_SERVER) ?: state.snapshot
+    val s: Snapshot? = home?.snapshot?.takeIf { it.today.isNotEmpty() }?.copy(origin = state.snapshot?.origin ?: Snapshot.SOURCE_SERVER) ?: state.snapshot
     if (s == null) {
         if (data.home.error != null) ErrorState(data.home.error, data.home.auth, onRetry = { actions.refresh(); actions.load(Screens.HOME, true) })
         else LoadingState("Today")
@@ -175,7 +175,7 @@ private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit) {
         Mono(listOfNotNull(s.program.name, next.weekName, next.date?.let { Fmt.day(it) }).joinToString(" · ").uppercase(), size = 11.sp, color = T.faint)
         if (next.reentry) {
             Spacer(Modifier.height(6.dp))
-            Mono("Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
+            Mono(next.reentryNote ?: "Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
         }
         Spacer(Modifier.height(10.dp))
         next.exercises.forEachIndexed { i, e ->
