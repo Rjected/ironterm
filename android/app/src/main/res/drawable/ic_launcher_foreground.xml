@@ -1,45 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ironterm: amber barbell over a terminal cursor, on black. 108dp canvas, 66dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Background square grid pattern representing the workout graph -->
-    <group android:translateX="24" android:translateY="24">
-        <!-- Row 1 -->
-        <path android:fillColor="#1E88E5" android:pathData="M4,4h8v8h-8z"/>
-        <path android:fillColor="#42A5F5" android:pathData="M16,4h8v8h-8z"/>
-        <path android:fillColor="#1565C0" android:pathData="M28,4h8v8h-8z"/>
-        <path android:fillColor="#64B5F6" android:pathData="M40,4h8v8h-8z"/>
-        <path android:fillColor="#1E88E5" android:pathData="M52,4h8v8h-8z"/>
-        
-        <!-- Row 2 -->
-        <path android:fillColor="#42A5F5" android:pathData="M4,16h8v8h-8z"/>
-        <path android:fillColor="#64B5F6" android:pathData="M16,16h8v8h-8z"/>
-        <path android:fillColor="#1E88E5" android:pathData="M28,16h8v8h-8z"/>
-        <path android:fillColor="#1565C0" android:pathData="M40,16h8v8h-8z"/>
-        <path android:fillColor="#42A5F5" android:pathData="M52,16h8v8h-8z"/>
-        
-        <!-- Row 3 -->
-        <path android:fillColor="#1565C0" android:pathData="M4,28h8v8h-8z"/>
-        <path android:fillColor="#1E88E5" android:pathData="M16,28h8v8h-8z"/>
-        <path android:fillColor="#64B5F6" android:pathData="M28,28h8v8h-8z"/>
-        <path android:fillColor="#42A5F5" android:pathData="M40,28h8v8h-8z"/>
-        <path android:fillColor="#1565C0" android:pathData="M52,28h8v8h-8z"/>
-        
-        <!-- Row 4 -->
-        <path android:fillColor="#64B5F6" android:pathData="M4,40h8v8h-8z"/>
-        <path android:fillColor="#1565C0" android:pathData="M16,40h8v8h-8z"/>
-        <path android:fillColor="#42A5F5" android:pathData="M28,40h8v8h-8z"/>
-        <path android:fillColor="#1E88E5" android:pathData="M40,40h8v8h-8z"/>
-        <path android:fillColor="#64B5F6" android:pathData="M52,40h8v8h-8z"/>
-        
-        <!-- Row 5 -->
-        <path android:fillColor="#1E88E5" android:pathData="M4,52h8v8h-8z"/>
-        <path android:fillColor="#42A5F5" android:pathData="M16,52h8v8h-8z"/>
-        <path android:fillColor="#1565C0" android:pathData="M28,52h8v8h-8z"/>
-        <path android:fillColor="#64B5F6" android:pathData="M40,52h8v8h-8z"/>
-        <path android:fillColor="#1E88E5" android:pathData="M52,52h8v8h-8z"/>
-    </group>
+    <!-- bar -->
+    <path android:fillColor="#FFB000" android:pathData="M26,51h56v4h-56z" />
+    <!-- left plates -->
+    <path android:fillColor="#FFB000" android:pathData="M30,37h6v32h-6z" />
+    <path android:fillColor="#FFB000" android:pathData="M38,41h5v24h-5z" />
+    <!-- right plates -->
+    <path android:fillColor="#FFB000" android:pathData="M72,37h6v32h-6z" />
+    <path android:fillColor="#FFB000" android:pathData="M65,41h5v24h-5z" />
+    <!-- collars -->
+    <path android:fillColor="#FFB000" android:pathData="M24,49h3v8h-3z" />
+    <path android:fillColor="#FFB000" android:pathData="M81,49h3v8h-3z" />
+    <!-- cursor -->
+    <path android:fillColor="#DCDCDC" android:pathData="M49,73h10v4h-10z" />
 </vector>

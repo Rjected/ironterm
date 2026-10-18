@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Found {} workouts", workouts.len());
     
     let daily_volumes = aggregate::aggregate_daily_volume(&workouts);
-    
+
     render::render_graph(&daily_volumes, args.weeks, args.ascii);
     
     Ok(())

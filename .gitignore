@@ -12,3 +12,16 @@ android/local.properties
 # IDE
 .idea/
 *.iml
+
+# Kotlin / Gradle caches
+android/.kotlin/
+.gradle/
+
+# Xcode
+xcuserdata/
+DerivedData/
+ios/build/
+
+# macOS / tools
+.DS_Store
+.claude/

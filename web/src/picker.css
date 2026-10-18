@@ -1,0 +1,45 @@
+.pick { position: relative; display: inline-block; min-width: 0; max-width: 100%; }
+.pick-btn { display: flex; align-items: center; gap: 8px; width: 100%; cursor: pointer; text-align: left; }
+.pick-val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-caret { color: var(--amber); font-size: var(--fs-s); }
+.pick.open .pick-btn { border-color: var(--amber); }
+
+.pick-scrim { display: none; }
+.pick-pop {
+  position: absolute; z-index: 60; top: calc(100% + 2px); left: 0;
+  min-width: max(100%, 260px); max-width: min(440px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--line-2); box-shadow: 0 10px 30px rgba(0, 0, 0, .7);
+  display: flex; flex-direction: column;
+}
+.pick-sheet-head { display: none; }
+.pick .pick-q { margin: 6px; width: calc(100% - 12px); box-sizing: border-box; }
+.pick-list { max-height: 340px; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 4px; }
+.pick-group {
+  position: sticky; top: 0; background: var(--panel); color: var(--amber); font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; padding: 8px 10px 3px; border-top: 1px solid var(--line);
+}
+.pick-group:first-child { border-top: 0; }
+.pick-opt { display: flex; align-items: baseline; gap: 6px; padding: 5px 10px 5px 6px; cursor: pointer; color: var(--fg); }
+.pick-opt.hi { background: var(--raise); color: var(--hi); }
+.pick-opt.on .pick-label { color: var(--amber); }
+.pick-mark { width: 10px; flex: none; color: var(--amber); font-size: 9px; }
+.pick-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-hint { color: var(--faint); font-size: var(--fs-s); white-space: nowrap; }
+.pick-empty { padding: 10px; color: var(--faint); }
+
+/* phones: a bottom sheet with big tap targets */
+@media (max-width: 699px) {
+  .pick-scrim { display: block; position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, .6); }
+  .pick-pop {
+    position: fixed; left: 0; right: 0; top: auto; bottom: var(--bottom); max-width: none; min-width: 0;
+    max-height: calc(75vh - var(--bottom)); border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pick-sheet-head {
+    display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 4px;
+    color: var(--dim); font-size: var(--fs-s); letter-spacing: .08em; text-transform: uppercase;
+  }
+  .pick-x { background: none; border: 1px solid var(--line-2); color: var(--dim); font: inherit; font-size: 10px; padding: 3px 6px; }
+  .pick-list { max-height: none; flex: 1; }
+  .pick-opt { padding: 11px 12px 11px 8px; }
+  .pick .pick-q { font-size: 16px; } /* no iOS zoom-on-focus */
+}

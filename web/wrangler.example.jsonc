@@ -1,0 +1,28 @@
+{
+  // Copy to wrangler.jsonc (gitignored) and fill in your own values:
+  //   cp wrangler.example.jsonc wrangler.jsonc
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ironterm",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-15",
+  "assets": { "not_found_handling": "single-page-application", "run_worker_first": ["/api/*", "/auth/*"] },
+  "d1_databases": [
+    // Create with: wrangler d1 create ironterm  (then paste the id here)
+    { "binding": "DB", "database_name": "ironterm", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  // Backup sync: catches edits/deletes the webhook doesn't report.
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "vars": {
+    "TIMEZONE": "America/New_York",
+    // Who may sign in (Google sign-in and/or Cloudflare Access), comma separated
+    "ALLOWED_EMAILS": "you@example.com"
+    // Login: pick one (see README):
+    //  a) Google sign-in in the app: "GOOGLE_CLIENT_ID": "….apps.googleusercontent.com"  + secret GOOGLE_CLIENT_SECRET
+    //  b) Cloudflare Access in front: "ACCESS_TEAM_DOMAIN": "yourteam.cloudflareaccess.com", "ACCESS_AUD": "<application audience tag>"
+    //  c) Password: secret APP_PASSWORD
+  },
+  "workers_dev": true,
+  // Per-version preview URLs would skip your login setup.
+  "preview_urls": false
+  // Secrets (wrangler secret put …): HEVY_API_KEY, SESSION_SECRET, WEBHOOK_SECRET, and APP_PASSWORD or GOOGLE_CLIENT_SECRET
+}

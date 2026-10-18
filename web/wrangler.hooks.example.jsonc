@@ -1,0 +1,17 @@
+{
+  // Optional webhook receiver (copy to wrangler.hooks.jsonc). The same Worker code deployed
+  // with no login, so only the signed webhook endpoints answer; everything else fails closed.
+  // Useful when Cloudflare Access sits in front of the main app and Hevy can't get through it.
+  // Shares the D1 database with the main app. Deploy: pnpm deploy:hooks
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ironterm-hooks",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-15",
+  "d1_databases": [
+    { "binding": "DB", "database_name": "ironterm", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "vars": { "TIMEZONE": "America/New_York" },
+  "workers_dev": true,
+  "preview_urls": false
+  // Secrets: HEVY_API_KEY, WEBHOOK_SECRET (same values as the main app)
+}

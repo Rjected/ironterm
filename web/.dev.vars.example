@@ -1,0 +1,10 @@
+# Copy to .dev.vars. Leave HEVY_API_KEY empty to run in demo mode with generated data.
+HEVY_API_KEY=
+# Optional password gate (skip it if you put Cloudflare Access in front).
+APP_PASSWORD=
+SESSION_SECRET=change-me
+# Hevy webhook "authorization header" value is: Bearer <WEBHOOK_SECRET>
+WEBHOOK_SECRET=change-me-too
+# WHOOP developer app (developer-dashboard.whoop.com); redirect URL = <origin>/api/whoop/callback
+WHOOP_CLIENT_ID=
+WHOOP_CLIENT_SECRET=

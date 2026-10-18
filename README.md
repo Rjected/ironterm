@@ -1,119 +1,109 @@
-# Hevy GitHub Graph
+<div align="center">
 
-Display your [Hevy](https://hevy.com) workout history as a GitHub-style contribution graph.
+# IRONTERM
 
-![Terminal Example](https://img.shields.io/badge/Terminal-CLI-green) ![Android Widget](https://img.shields.io/badge/Android-Widget-blue) ![iOS Widget](https://img.shields.io/badge/iOS-Widget-silver)
+**A Bloomberg-terminal for your lifting.** A web app, Android and iOS apps, and home-screen widgets for people who log their training in [Hevy](https://hevy.com).
 
-## Features
+[![Web](https://github.com/Rjected/ironterm/actions/workflows/web.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/web.yml)
+[![Android](https://github.com/Rjected/ironterm/actions/workflows/android.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/android.yml)
+[![iOS](https://github.com/Rjected/ironterm/actions/workflows/ios.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/ios.yml)
+[![CLI](https://github.com/Rjected/ironterm/actions/workflows/cli.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/cli.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-ffb000.svg)](LICENSE)
 
-- **CLI Tool**: Terminal-based contribution graph with color/ASCII output
-- **Android Widget**: Home screen widget showing your workout activity at a glance
-- **iOS Widget**: WidgetKit-based home screen widget for iPhone and iPad
-- Intensity levels based on training volume (weight × reps)
-- Quantile-based normalization (like GitHub's contribution graph)
+<img src="docs/screens/web/tour.gif" alt="Ironterm web app tour: dashboard, body map, program, gym mode, lifts, insights, calendar" width="900">
 
-## CLI Usage
+</div>
+
+> **Unofficial.** Ironterm uses Hevy's public API with *your own* API key. It is not affiliated with or endorsed by Hevy. Ironterm has no backend of its own: you run the server, or use the phone apps on their own.
+
+## What it does
+
+- **Runs your program from your real log.** It includes ~60 templates: GZCLP and the GZCL family, 5/3/1 variants, nSuns, Sheiko, Candito, Calgary Barbell, SBS, Smolov, and more. Your Hevy history is replayed through the program's rules, so the weights pick up where you actually are. You can push the next sessions to Hevy as routines, or log them in the app's own **gym mode** and save the workout to Hevy.
+- **The year at a glance.** A GitHub-style contribution graph, streaks, volume, e1RM trends, PR walls, and stalls caught early.
+- **Body map.** Per-muscle weekly load and recovery from a detailed anatomical figure (male / female), with overlaps where a muscle is hit before it has recovered.
+- **Nerd stuff.** e1RM formula shootout, INOL / Prilepin, lift ratios, strength projections, landmarks, sleep and recovery vs. performance (WHOOP), and program what-ifs.
+- **Life happens.** A calendar, trips that pause your program instead of failing it, hotel-gym sessions, and a re-entry ramp after a break.
+- **Notes** on workouts and exercises, synced back to Hevy.
+- **Phone apps and widgets.** Activity graph, next workout, this week, lifts and recovery, each in several sizes. Lock-screen widgets on iOS.
+
+## Screens
+
+<table>
+  <tr>
+    <td width="60%"><img src="docs/screens/web/dash.png" alt="Dashboard"></td>
+    <td width="40%"><img src="docs/screens/web/phone-dash.png" alt="Dashboard on a phone" width="220"> <img src="docs/screens/web/phone-gym.png" alt="Gym mode on a phone" width="220"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screens/web/body.png" alt="Body map"></td>
+    <td><img src="docs/screens/web/ins.png" alt="Insights"></td>
+  </tr>
+</table>
+
+| Android app | Android widgets | iOS app | iOS widget |
+|---|---|---|---|
+| <img src="docs/screens/android/app_today.png" width="200" alt="Android TODAY tab"> | <img src="docs/screens/android/emulator_home_widgets_4x2.png" width="200" alt="Android home-screen widgets"> | <img src="docs/screens/ios/today.png" width="200" alt="iOS TODAY tab"> | <img src="docs/screens/ios/system-home-widget.png" width="200" alt="iOS home-screen widget"> |
+
+More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget at every size) · [iOS](docs/screens/ios).
+
+## How it fits together
+
+```
+ Hevy ──API──▶ server (web/) ──/api/snapshot──▶ Android / iOS apps + widgets
+   ▲            Cloudflare Workers + D1          (or Direct mode: phone ↔ Hevy API,
+   └─push/notes─ or Node + SQLite (Docker)        no server at all)
+```
+
+| Directory | |
+|---|---|
+| [`web/`](web/) | The app: a Preact UI plus an API. Runs on **Cloudflare Workers + D1** or **anywhere with Docker / Node + SQLite** ([self-hosting](web/SELF_HOSTING.md)). |
+| [`android/`](android/) | Native Kotlin / Compose app with Glance widgets. Updates itself over the air from GitHub Releases. |
+| [`ios/`](ios/) | Native SwiftUI app with WidgetKit widgets, including the lock screen. |
+| [`src/`](src/) | `ironterm-graph`: a terminal CLI that prints your contribution graph. |
+| [`docs/api/`](docs/api/) | The small JSON API the apps read. |
+
+## Get started
+
+**1. A Hevy API key.** In Hevy go to Settings → Developer (needs Hevy Pro).
+
+**2. Run the web app.**
 
 ```bash
-# Set your Hevy API key
+cd web && pnpm install && pnpm dev     # http://localhost:5173, demo data until you add a key
+```
+
+Then host it on one of these:
+
+- **Docker / Node anywhere:** `cp .env.example .env && docker compose up -d`. See [SELF_HOSTING.md](web/SELF_HOSTING.md).
+- **Cloudflare (free tier):** see [web/README.md](web/README.md).
+
+**3. Phones.** In the web app go to **SETUP → APPS & WIDGETS → CREATE**, then scan the QR code from the app's SETUP. The apps also have a **Direct** mode that needs nothing but your Hevy API key (graph, streaks and lifts; no program or recovery).
+
+- Android: install the APK from [Releases](https://github.com/Rjected/ironterm/releases/latest). After that it updates itself.
+- iOS: build with Xcode. See [ios/README.md](ios/README.md); a free Apple ID works.
+
+## CLI
+
+```bash
 export HEVY_API_KEY="your-api-key"
-
-# Run with default settings (52 weeks)
-cargo run
-
-# Customize weeks shown
-cargo run -- --weeks 26
-
-# ASCII mode (for terminals without color support)
-cargo run -- --ascii
+cargo run                   # last 52 weeks
+cargo run -- --weeks 26 --ascii
 ```
 
-## Android Widget
+## Development
 
-The Android app provides a home screen widget that displays your workout contribution graph.
+Every directory builds on its own, and CI runs each one:
 
-### Features
+| | Check |
+|---|---|
+| web | `pnpm typecheck && pnpm test && pnpm build:node` (and the Docker image) |
+| android | `./gradlew testDebugUnitTest assembleDebug` (unit, network and screenshot tests) |
+| ios | `xcodebuild -project Ironterm.xcodeproj -scheme Ironterm test` |
+| cli | `cargo test` |
 
-- Resizable widget (4x2 recommended)
-- Multiple color themes (GitHub Green, Blue, Purple, Orange, Red)
-- Background sync via WorkManager
-- Encrypted API key storage
-- Tap to refresh
+## Credits
 
-### Building
-
-```bash
-cd android
-./gradlew assembleDebug
-```
-
-The APK will be at `android/app/build/outputs/apk/debug/app-debug.apk`.
-
-## iOS Widget
-
-The iOS app provides a home screen widget using WidgetKit.
-
-### Features
-
-- Small, Medium, and Large widget sizes
-- Multiple color themes (Blue, Green, Purple, Orange)
-- Shared data between app and widget via App Groups
-- Tap to configure in the companion app
-
-### Building
-
-1. Open `ios/HevyGraphWidget.xcodeproj` in Xcode
-2. Select your development team in Signing & Capabilities
-3. Build and run on your device or simulator
-
-### Usage
-
-1. Open the Hevy Graph app and enter your API key
-2. Select your preferred color theme
-3. Tap "Sync Workouts" to fetch your data
-4. Add the widget to your home screen (long press → + → search "Hevy Graph")
-
-## Getting Your Hevy API Key
-
-1. Log in to [Hevy](https://hevy.com)
-2. Go to Settings → Developer Settings
-3. Generate an API key
-
-## Project Structure
-
-```
-.
-├── src/                    # Rust CLI
-│   ├── main.rs             # Entry point
-│   ├── api.rs              # Hevy API client
-│   ├── models.rs           # Data models
-│   ├── aggregate.rs        # Volume aggregation
-│   ├── normalize.rs        # Quantile normalization
-│   ├── render.rs           # Terminal graph rendering
-│   └── cli.rs              # CLI argument parsing
-├── android/                # Android widget app
-│   └── app/src/main/java/com/hevy/graphwidget/
-│       ├── data/           # API, database, repository
-│       ├── widget/         # Widget provider, renderer
-│       ├── work/           # Background sync worker
-│       └── ui/             # Configuration activity
-└── ios/                    # iOS widget app
-    ├── HevyGraphWidget/    # Main app
-    │   ├── Models/         # Workout, ColorTheme
-    │   ├── Data/           # HevyClient, DataStore, Aggregator
-    │   └── Views/          # ContributionGraphView
-    └── HevyGraphWidgetExtension/  # WidgetKit extension
-```
-
-## TODO
-
-- [x] **iPhone Support**: iOS widget with WidgetKit
-- [ ] **Other Fitness Apps**: Support for additional workout tracking apps
-  - Strong
-  - Fitbod
-  - Apple Health
-  - Strava (for cardio-focused users)
+The male anatomy art is by Ryan Graves (CC BY 4.0), via muscle_mapper. The female figure outline is from react-native-body-highlighter (MIT). Program designs belong to their authors: Cody Lefever (GZCL), Jim Wendler, and others, as credited in each template.
 
 ## License
 
-MIT
+[MIT](LICENSE)

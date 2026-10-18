@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+public/fonts/*
+!public/fonts/.gitkeep
+.prod-secrets.json
+data/
+.env
+# personal Cloudflare config (see wrangler*.example.jsonc)
+wrangler.jsonc
+wrangler.hooks.jsonc
