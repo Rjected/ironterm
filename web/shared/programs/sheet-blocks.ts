@@ -2,9 +2,9 @@
 // (one DayDef per week × day, ids "W3D2"), generated from compact spec strings so the tables
 // below can be read side by side with the source sheets.
 //
-//   candito6    Candito 6 Week Strength Program (Jonnie Candito). Percentages backed out of the
-//               "Candito 6 Week Program.xlsx" (1RMs 250/185/295 lb, loads rounded to 5 lb) and the
-//               rules from the program PDF / sheet notes.
+//   candito6    Candito 6 Week Strength Program (Jonnie Candito). Loads from the formulas in
+//               "Candito 6 Week Program.xlsx" (MROUND(1RM × %) ± a few lb) and the rules from the
+//               program PDF / sheet notes.
 //   clarence14  14 Week Powerlifting by Clarence0. RPE-based; sets/reps/RPEs copied from the
 //               sheet plus the program guide doc.
 //   complete16  "Complete 16-week Program" (the Calgary Barbell 16-week program, Bryce Krawczyk).
@@ -169,14 +169,12 @@ const same = (n: number, spec: string) => Array.from({ length: n }, () => spec);
 
 // ───────────────────────── Candito 6 Week ─────────────────────────
 //
-// Source: "Candito 6 Week Program.xlsx" (computed loads for 1RMs B185/S250/D295 lb,
-// percentages recovered by dividing and checking the sheet's 5-lb rounding) and "Candito 6 Week
-// Strength Program.pdf". Where a load fits two percentages the 2.5%-step pattern was used:
-//   W2 bench set 3 (82.5 or 85 → 82.5), W3 day 2 bench (82.5 or 85 → 85), W4 day 2 bench set 1
-//   (82.5 or 85 → 85). W4 heavy deadlift triple is 270 of 295 = 91.5%; no round % reproduces it.
-// Rules modelled: W2 MR10 sets (fewer than 8 / 7 reps → max −2.5%), W5 1–4 rep sets set the
-// projected max (×1.03 / 1.06 / 1.09 for 2 / 3 / 4 reps), week 6 max test. Not modelled: "if you
-// fail a required rep, reduce your max by 2.5%" (sheet; the PDF says 5%) — use an adjustment.
+// Source: the formulas in "Candito 6 Week Program.xlsx" (read 2026-10-18; many loads are
+// MROUND(1RM × %) ± 5 lb, ± 2.5 kg in kg mode, encoded as "%+5lb") and "Candito 6 Week Strength
+// Program.pdf". Rules modelled: "If you ever fail a required rep, reduce your max by 2.5%" (sheet
+// Inputs A25; the PDF's 11/18/13 update says 5%) on every plain % slot, W2 MR10 sets (fewer than
+// 8 / 7 reps → max −2.5%), W5 1–4 rep sets set the projected max (×1.03 / 1.06 / 1.09 for
+// 2 / 3 / 4 reps), week 6 max test. Sessions: 5, 5, 4, 4, 3 (weeks 1–5).
 
 const C_ROW_W1 = "4x6-10|reps 10, 10, 8, 6 · progress gradually";
 const C_PRESS_W1 = "4x8-12|reps 12, 12, 10, 8 · progress gradually";
@@ -218,29 +216,29 @@ const CANDITO: Block[] = [
       { label: "lower", rows: [
         ["squat", "squat", ["1x8+@80%;5x3@80%+5lb"], { note: "MR10: max reps, stop at 10; fewer than 8 → max −2.5%. Then extra volume 5×3 at MR10 weight +5 lb / 2.5 kg, 60s rest", tmRule: mr10() }],
         ["stiffLegDeadlift", null, ["3x8"], { note: C_DLV }], ...lowerOpt()] },
-      { label: "upper", rows: [["bench", "bench", ["1x10@72.5%;1x8@77.5%;1x6-8@82.5%"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
+      { label: "upper", rows: [["bench", "bench", ["1x10@72.5%;1x8@77.5%;1x6-8@80%+5lb"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
       { label: "lower", rows: [
-        ["squat", "squat", ["1x7+@82.5%;10x3@82.5%-10lb"], { note: "MR10: max reps, stop at 10. Back-off at MR10 weight −10 lb / 5 kg: 10 reps → 10×3, 8–9 → 8×3, 7 → 5×3, under 7 → skip and max −2.5%", tmRule: mr10() }],
+        ["squat", "squat", ["1x7+@80%+5lb;10x3@80%-5lb"], { note: "MR10: max reps, stop at 10. Back-off at MR10 weight −10 lb / 5 kg: 10 reps → 10×3, 8–9 → 8×3, 7 → 5×3, under 7 → skip and max −2.5%", tmRule: mr10() }],
         ["stiffLegDeadlift", null, ["3x8"], { note: C_DLV }], ...lowerOpt()] },
-      { label: "upper", rows: [["bench", "bench", ["1x10@72.5%;1x8@77.5%;1x6-8@82.5%"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
-      { label: "upper", rows: [["bench", "bench", ["1x1+@77.5%|max reps"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
+      { label: "upper", rows: [["bench", "bench", ["1x10@72.5%;1x8@77.5%;1x6-8@80%+5lb"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
+      { label: "upper", rows: [["bench", "bench", ["1x1+@80%-5lb|max reps"]], ...upperAcc(C_ROW_W2, C_PRESS_W2, C_OPT_UP)] },
     ],
   },
   {
     weeks: [2],
     days: [
-      { label: "lower", rows: [["squat", "squat", ["3x4-6@87.5%"]], ["deadlift", "deadlift", ["2x3-6@87.5%|no accessories this week"]]] },
+      { label: "lower", rows: [["squat", "squat", ["3x4-6@85%+5lb"]], ["deadlift", "deadlift", ["2x3-6@87.5%|no accessories this week"]]] },
       { label: "upper", rows: [["bench", "bench", ["3x4-6@85%"]], ...upperAcc("3x6", "3x6", null)] },
-      { label: "lower", rows: [["squat", "squat", ["1x4-6@90%"]], ["stiffLegDeadlift", null, ["1x8"], { note: C_DLV }]] },
-      { label: "upper", rows: [["bench", "bench", ["3x4-6@87.5%"]], ...upperAcc("3x6", "3x6", null)] },
+      { label: "lower", rows: [["squat", "squat", ["1x4-6@85%+10lb"]], ["stiffLegDeadlift", null, ["1x8"], { note: C_DLV }]] },
+      { label: "upper", rows: [["bench", "bench", ["3x4-6@85%+5lb"]], ...upperAcc("3x6", "3x6", null)] },
     ],
   },
   {
     weeks: [3],
     days: [
-      { label: "lower", rows: [["squat", "squat", ["1x3@87.5%;1x3@90%;1x3@92.5%"]], ["stiffLegDeadlift", null, ["2x6"], { note: C_DLV }], ...lowerOpt()] },
-      { label: "upper", rows: [["bench", "bench", ["1x3@85%;1x3@87.5%;1x3@90%"]], ...upperAcc(C_ROW_W1, C_PRESS_W1, C_OPT_UP)] },
-      { label: "lower", rows: [["squat", "squat", ["1x3@92.5%;1x1-2@95%"]], ["deadlift", "deadlift", ["1x3@91.5%;1x1-2@95%"]], ...lowerOpt()] },
+      { label: "lower", rows: [["squat", "squat", ["1x3@90%-5lb;1x3@90%;1x3@90%+5lb"]], ["stiffLegDeadlift", null, ["2x6"], { note: C_DLV }], ...lowerOpt()] },
+      { label: "upper", rows: [["bench", "bench", ["1x3@87.5%-5lb;1x3@90%-5lb;1x3@90%"]], ...upperAcc(C_ROW_W1, C_PRESS_W1, C_OPT_UP)] },
+      { label: "lower", rows: [["squat", "squat", ["1x3@90%+5lb;1x1-2@95%"]], ["deadlift", "deadlift", ["1x3@90%+5lb;1x1-2@95%"]], ...lowerOpt()] },
       { label: "upper", rows: [["bench", "bench", ["1x3@87.5%;1x2-4@90%;1x1-2@95%"]], ...upperAcc(C_ROW_W1, C_PRESS_W1, C_OPT_UP)] },
     ],
   },
@@ -272,7 +270,7 @@ export const candito6: ProgramTemplate = {
   summary: "Six-week upper/lower block off your 1RMs: conditioning, hypertrophy, linear max OT, heavy acclimation, then 1–4 rep max sets and a max test. 3–5 sessions a week.",
   category: "strength",
   level: "intermediate",
-  daysPerWeek: [4],
+  daysPerWeek: [3, 4, 5],
   weeks: 6,
   options: [
     { key: "week6", label: "Week 6", default: "test", choices: [
@@ -291,7 +289,12 @@ export const candito6: ProgramTemplate = {
       templateId: "candito6",
       name: "Candito 6 Week",
       sessionsPerWeek: 4,
-      days: buildDays("cd", blocks),
+      // "If you ever fail a required rep, reduce your max by 2.5%": every plain % slot of the big three.
+      days: buildDays("cd", blocks).map((d) => ({
+        ...d,
+        slots: d.slots.map((sl) => (sl.progression.kind === "percent" && !sl.progression.tmRule && BIG3.has(sl.progression.tmLift)
+          ? { ...sl, progression: { ...sl.progression, tmRule: { type: "missCut" as const, pct: 0.025 } } } : sl)),
+      })),
       maxLabel: "1RM",
       cycle: {
         weeks, finite: true,
@@ -299,7 +302,7 @@ export const candito6: ProgramTemplate = {
       },
       notes: [
         "Percentages are of your real 1RM.",
-        "Fail a required rep: drop that lift's max 2.5% (sheet; the PDF says 5%) with an adjustment, and move on.",
+        "Fail a required rep: that lift's max drops 2.5% (the sheet's rule; the PDF's later update says 5%). Don't repeat the workout.",
         "Accessories: pick a weight, stay moderate, add weight gradually over the 6 weeks. Optional exercises can be skipped.",
         "Week 5's 1–4 rep sets set your projected max; week 6 either tests it, deloads, or is skipped.",
       ],

@@ -161,6 +161,7 @@ struct ActionErrorStrip: View {
                 Text(e).font(T.mono(10)).foregroundStyle(T.text).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
                 Button { social.actionError = nil } label: { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
+                    .accessibilityLabel("Dismiss")
                     .foregroundStyle(T.dim)
                     .accessibilityLabel("Dismiss")
             }

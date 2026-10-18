@@ -156,7 +156,7 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
         }
         if (state.mode == SourceMode.SERVER && state.configured) {
             Section("Program & lifts") {
-                Mono("Choosing a program, its options and mapping lifts to your Hevy exercises happen in the web app.", size = 11.sp, color = T.dim)
+                Mono("Pick and start a program in MORE → PROGRAM. Program options and mapping lifts to your Hevy exercises are in the web app.", size = 11.sp, color = T.dim)
                 Spacer(Modifier.height(10.dp))
                 TButton("Advanced setup (web) ↗", modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { actions.openWeb("/#set") }
             }
