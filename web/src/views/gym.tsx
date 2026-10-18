@@ -113,7 +113,6 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
   };
   const discard = async () => {
     clearTimeout(saveT.current);
-
     await api.discardLive().catch(() => {});
     try { localStorage.removeItem("ht-live"); } catch { /* ignore */ }
     setS(null);

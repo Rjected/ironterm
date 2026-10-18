@@ -5,6 +5,27 @@ import { fmt, plates, type Unit } from "../shared/units";
 import type { LiftStall } from "../shared/stall";
 import type { RpeChart } from "../shared/rpe";
 import type { Derived } from "./derive";
+import type { RampInfo } from "../shared/travel";
+
+/** Coming back from a break: what the ramp does to the next session, plus comeback blocks after a long one. */
+export function ReentryNote(props: { info: RampInfo; onOpen: (templateId: string) => void }) {
+  const r = props.info;
+  return (
+    <div class="warnbox reentry" style={{ borderColor: "var(--amber)", color: "var(--amber)" }}>
+      <div>{r.text}</div>
+      {r.lifts.length > 1 && (
+        <div class="faint" style={{ marginTop: "4px" }}>
+          {r.lifts.map((x) => `${LIFTS[x.lift]?.short ?? x.name} ${x.back ? "FULL" : `${Math.round(x.load * 100)}% · ${Math.round(x.volume * 100)}% VOL`}`).join("  ·  ")}
+        </div>
+      )}
+      {r.suggest.length > 0 && (
+        <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {r.suggest.map((s) => <button class="btn" onClick={() => props.onOpen(s.templateId)}>{s.name.toUpperCase()}</button>)}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Panel(props: { n?: string; title: string; sub?: ComponentChildren; act?: ComponentChildren; span?: number; children: ComponentChildren; class?: string }) {
   return (

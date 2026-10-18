@@ -75,6 +75,8 @@ struct Snapshot: Codable, Equatable {
         var when: String
         var date: String?
         var reentry: Bool
+        /// what the re-entry ramp does to this session, in words
+        var reentryNote: String?
         var exercises: [Exercise]
 
         struct Exercise: Codable, Equatable {

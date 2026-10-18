@@ -10,6 +10,9 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { setPeerFetch } from "../worker/social/net";
+import { peerFetch } from "./peerfetch";
+import { PAGE_HEADERS } from "../worker/headers";
 import { isLocal } from "./local";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -33,7 +36,8 @@ const ASSETS = {
   async fetch(req: Request): Promise<Response> {
     const path = decodeURIComponent(new URL(req.url).pathname);
     let file = normalize(join(STATIC, path));
-    if (!file.startsWith(STATIC)) return new Response("Not found", { status: 404 });
+    // _headers is Workers Assets config (served as headers there, never as a file)
+    if (!file.startsWith(STATIC) || path === "/_headers") return new Response("Not found", { status: 404 });
     if (!existsSync(file) || statSync(file).isDirectory()) {
       // like Workers' SPA mode: unknown pages get the app, unknown files 404
       if (extname(path)) return new Response("Not found", { status: 404 });
@@ -42,7 +46,7 @@ const ASSETS = {
     if (!existsSync(file)) return new Response("Build the client first (pnpm build:node).", { status: 500 });
     const immutable = path.startsWith("/assets/");
     return new Response(Readable.toWeb(createReadStream(file)) as ReadableStream, {
-      headers: { "content-type": TYPES[extname(file)] ?? "application/octet-stream", "cache-control": immutable ? "public, max-age=31536000, immutable" : "no-cache" },
+      headers: { ...PAGE_HEADERS, "content-type": TYPES[extname(file)] ?? "application/octet-stream", "cache-control": immutable ? "public, max-age=31536000, immutable" : "no-cache" },
     });
   },
 };
@@ -51,10 +55,15 @@ const ASSETS = {
 const KEYS = [
   "HEVY_API_KEY", "APP_PASSWORD", "SESSION_SECRET", "WEBHOOK_SECRET", "TIMEZONE", "ALLOWED_EMAILS",
   "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "WHOOP_CLIENT_ID", "WHOOP_CLIENT_SECRET",
-  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN",
+  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN", "SOCIAL_ALLOW_PRIVATE",
 ];
 const env: Record<string, unknown> = { DB, ASSETS };
 for (const k of KEYS) if (process.env[k]) env[k] = process.env[k];
+
+// Friend servers and directories are URLs other people choose: never let them point this box at
+// its own LAN or loopback, unless that's explicitly what you want (local testing, a private network).
+const on = (v: unknown) => v === "1" || v === "true";
+if (!on(env.SOCIAL_ALLOW_HTTP) && !on(env.SOCIAL_ALLOW_PRIVATE)) setPeerFetch(peerFetch as typeof fetch);
 
 const pending = new Set<Promise<unknown>>();
 const ctx = {
