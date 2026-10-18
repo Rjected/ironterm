@@ -76,11 +76,11 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Candito 6 Week Strength (`candito6`) | | not yet re-checked | |
-| Candito 6 Week Advanced Bench (`candito-adv-bench`) | | not yet re-checked | |
-| Candito 9 Week Advanced Squat (`candito-adv-squat`) | | not yet re-checked | |
-| Clarence0 14 Week (`clarence14`) | | not yet re-checked | |
-| Calgary Barbell 16 Week (`complete16`) | | not yet re-checked | |
+| Candito 6 Week Strength (`candito6`) | Candito 6 Week Program.xlsx (formulas) + Candito 6 Week Strength Program.pdf | exact. Loads follow the sheet's formulas, MROUND(1RM×%) ± 5 lb. Covered rules: the 2.5% cut for a failed required rep (the PDF's later update says 5%), W2 MR10 rules, the W5 projection and the W6 options. The W2D3 back-off count (10/8/5×3 by MR10 reps) is a note, and 10×3 is always planned. | 2026-10-18 |
+| Candito 6 Week Advanced Bench (`candito-adv-bench`) | LiftVault sheet (formulas); [Candito's explanation PDF](https://web.archive.org/web/20210815012557/http://www.canditotraininghq.com/app/download/963608244/Candito+Advanced+Bench+Program+Explanation.pdf) | approximation: every week matches. Ranges plan their low end (W3 bench 75–80% → 75%). The W4D2 bonus back-offs and the "drop max 2.5–5% and redo the set" rule are notes. | 2026-10-18 |
+| Candito 9 Week Advanced Squat (`candito-adv-squat`) | LiftVault sheet (formulas) | approximation: every week and both checkpoint formulas match. The W8 "to 92.5%" top end plans at 90%. No Candito-authored squat PDF was found. | 2026-10-18 |
+| Clarence0 14 Week (`clarence14`) | 14 Week Powerlifting by Clarence0 sheet + guide doc | exact: all sets, reps and RPEs for weeks 1–14. The 8RM/5RM sets also re-estimate the max, which the sheet only uses for strict press %. | 2026-10-18 |
+| Calgary Barbell 16 Week (`complete16`) | Complete 16-week Program.xlsx = [LiftVault's Calgary Barbell 16-week sheet](https://liftvault.com/programs/powerlifting/calgary-barbell-16-week-8-week-program-spreadsheets/) | approximation: every set, rep, % and RPE matches. The weeks 12–15 back-offs are "% of E1RM" in the sheet but % of your max here (noted). "F"/"R" sets aren't defined in the sheet and are planned at the top-set RPE. | 2026-10-18 |
 
 ## Advanced / peaking
 
