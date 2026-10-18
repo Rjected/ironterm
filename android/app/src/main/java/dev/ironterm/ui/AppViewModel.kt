@@ -15,6 +15,7 @@ import dev.ironterm.update.UpdateInfo
 import dev.ironterm.update.UpdateStore
 import java.io.File
 import dev.ironterm.data.ConnectLink
+import dev.ironterm.data.ConnectPrompt
 import dev.ironterm.data.RefreshResult
 import dev.ironterm.data.Refresher
 import dev.ironterm.data.Settings
@@ -60,6 +61,8 @@ data class UiState(
     val noticeError: Boolean = false,
     val goToday: Boolean = false,
     val update: UpdateUi = UpdateUi(),
+    /** connect link / QR waiting for the user to confirm the server */
+    val pendingConnect: ConnectPrompt? = null,
 ) {
     val configured: Boolean get() = when (mode) {
         SourceMode.SERVER -> serverUrl.isNotBlank() && token.isNotBlank()
@@ -180,7 +183,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     private fun reload(transform: UiState.() -> UiState = { this }) {
         val fresh = load()
-        _state.update { cur -> fresh.copy(loading = cur.loading, testing = cur.testing, testResult = cur.testResult, notice = cur.notice, noticeError = cur.noticeError, goToday = cur.goToday, update = cur.update).transform() }
+        _state.update { cur -> fresh.copy(loading = cur.loading, testing = cur.testing, testResult = cur.testResult, notice = cur.notice, noticeError = cur.noticeError, goToday = cur.goToday, update = cur.update, pendingConnect = cur.pendingConnect).transform() }
     }
 
     override fun refresh() = refresh(afterConnect = false)
@@ -249,11 +252,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         }
     }
 
+    /** Deep link or QR: ask first. Nothing is stored or sent until [confirmConnect]. */
     fun connectFromLink(link: ConnectLink) {
-        _state.update { it.copy(notice = "Connecting to ${link.server}…", noticeError = false) }
-        settings.connectServer(link.server, link.token)
+        _state.update { it.copy(pendingConnect = ConnectPrompt.of(link, settings.mode, settings.serverUrl)) }
+    }
+
+    override fun confirmConnect() {
+        val p = _state.value.pendingConnect ?: return
+        _state.update { it.copy(pendingConnect = null, notice = "Connecting to ${p.host}…", noticeError = false) }
+        settings.connectServer(p.link.server, p.link.token)
         afterConnect()
     }
+
+    override fun cancelConnect() = _state.update { it.copy(pendingConnect = null) }
 
     private fun afterConnect() {
         // Nothing from the previous source may land now: screen loads in flight are dropped (generation),

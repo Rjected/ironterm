@@ -94,6 +94,7 @@ fun AppScreen(
     val go: (Route) -> Unit = { onNav(nav.push(it)) }
     val back: () -> Unit = { onNav(nav.pop()) }
     val setup: () -> Unit = { onNav(Nav(Tabs.MORE, listOf(Route.Setup))) }
+    state.pendingConnect?.let { ConnectConfirmDialog(it, onConfirm = actions::confirmConnect, onCancel = actions::cancelConnect) }
     Column(Modifier.fillMaxSize().background(T.bg).windowInsetsPadding(WindowInsets.safeDrawing)) {
         if (top == Route.Gallery) {
             GalleryScreen(state, onBack = back)

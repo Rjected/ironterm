@@ -13,7 +13,7 @@ samples in `docs/api/app/programs*.json`.
 
 interface ProgramSummary {
   id: string; name: string; author: string;
-  category: "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking";
+  category: "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "comeback";
   level: "beginner" | "intermediate" | "advanced";
   daysPerWeek: number[];                  // [3] or [3, 4]
   weekCount: number | null;               // length of one run in weeks; null = open-ended
