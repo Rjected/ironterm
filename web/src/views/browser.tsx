@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { LIFTS } from "../../shared/lifts";
-import { allSlots, schemeLabel, usesStartWeight, type ProgramCategory, type ProgramConfig, type ProgramTemplate } from "../../shared/program";
+import { allSlots, lengthTag, programLength, schemeLabel, usesStartWeight, type LengthKind, type ProgramCategory, type ProgramConfig, type ProgramTemplate } from "../../shared/program";
 import { getTemplate, TEMPLATES } from "../../shared/programs";
 import { DOW } from "../../shared/recovery";
 import { fmt, type Unit } from "../../shared/units";
@@ -18,12 +18,19 @@ const CATS: [ProgramCategory | "all", string][] = [
   ["all", "ALL"], ["gzcl", "GZCL"], ["novice", "NOVICE"], ["strength", "STRENGTH"], ["powerlifting", "PL"], ["hypertrophy", "HYPERTROPHY"], ["peaking", "PEAKING"], ["comeback", "COMEBACK"],
 ];
 
-const meta = (t: Pick<ProgramTemplate, "daysPerWeek" | "weeks" | "level">) =>
-  [`${t.daysPerWeek.join("/")}D/WK`, t.weeks ? `${t.weeks} WK` : "ONGOING", t.level.toUpperCase()].join(" · ");
+// computed once: programLength builds each template
+const LENGTHS = new Map(TEMPLATES.map((t) => [t.id, programLength(t)]));
+const lengthOf = (t: ProgramTemplate) => LENGTHS.get(t.id) ?? programLength(t);
+
+const meta = (t: ProgramTemplate) =>
+  [`${t.daysPerWeek.join("/")}D/WK`, lengthTag(lengthOf(t)), t.level.toUpperCase()].join(" · ");
+
+const LENGTH_CHIPS: [LengthKind | "any", string][] = [["any", "ANY LENGTH"], ["ongoing", "ONGOING"], ["cycles", "CYCLES FOREVER"], ["block", "BLOCKS"]];
 
 export function ProgramBrowser(props: { selected: string | null; active: string | null; onPick: (id: string) => void }) {
   const [cat, setCat] = useState<ProgramCategory | "all">("all");
   const [days, setDays] = useState<number | 0>(0);
+  const [len, setLen] = useState<LengthKind | "any">("any");
   const [q, setQ] = useState("");
   const list = useMemo(() => {
     // "531" finds "5/3/1": compare letters and digits only
@@ -32,9 +39,10 @@ export function ProgramBrowser(props: { selected: string | null; active: string 
     return TEMPLATES.filter((p) =>
       (cat === "all" || p.category === cat) &&
       (!days || p.daysPerWeek.includes(days)) &&
+      (len === "any" || lengthOf(p).kind === len) &&
       (!words.length || words.every((w) => norm(`${p.name} ${p.author} ${p.summary}`).includes(w))),
     );
-  }, [cat, days, q]);
+  }, [cat, days, len, q]);
   const counts = useMemo(() => Object.fromEntries(CATS.map(([c]) => [c, c === "all" ? TEMPLATES.length : TEMPLATES.filter((p) => p.category === c).length])), []);
   // show the selected program in the list when it opens (desktop two-pane)
   useEffect(() => { if (props.selected) document.querySelector(`.psplit-list .card[data-id="${CSS.escape(props.selected)}"]`)?.scrollIntoView({ block: "nearest" }); }, []);
@@ -53,6 +61,11 @@ export function ProgramBrowser(props: { selected: string | null; active: string 
       <div class="chips" role="group" aria-label="Days per week">
         {([[0, "ANY DAYS"], [2, "2D"], [3, "3D"], [4, "4D"], [5, "5D"], [6, "6D"]] as const).map(([v, l]) => (
           <button class={v === days ? "on" : ""} aria-pressed={v === days} onClick={() => setDays(v)}>{l}</button>
+        ))}
+      </div>
+      <div class="chips" role="group" aria-label="Length">
+        {LENGTH_CHIPS.map(([v, l]) => (
+          <button class={v === len ? "on" : ""} aria-pressed={v === len} onClick={() => setLen(v)}>{l}</button>
         ))}
       </div>
       <div class="cards pcards">
@@ -75,8 +88,14 @@ export function ProgramBrowser(props: { selected: string | null; active: string 
 
 type Tab = "about" | "rules" | "workouts";
 
+function lengthText(l: ReturnType<typeof programLength>): string {
+  if (l.kind === "block") return `a ${l.weeks}-week block, then it ends`;
+  if (l.kind === "cycles") return `${l.weeks}-week cycles that repeat forever, maxes rising each time round`;
+  return "ongoing: progress session to session for as long as it works";
+}
+
 /** A program's page. `onBack` shows the ← link (phones). */
-export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => void; onSaved: (msg: string) => void; editor?: (close: () => void) => preact.ComponentChildren }) {
+export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => void; onOpen?: (id: string) => void; onSaved: (msg: string) => void; editor?: (close: () => void) => preact.ComponentChildren }) {
   const { id, b } = props;
   const t = getTemplate(id);
   const isActive = b.program?.templateId === id;
@@ -146,7 +165,8 @@ export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => vo
           <dl class="pp-dl">
             <dt>AUTHOR</dt><dd>{t.author}</dd>
             <dt>SOURCE</dt><dd>{t.source}</dd>
-            <dt>LENGTH</dt><dd>{t.weeks ? `${t.weeks} weeks` : "open-ended"} · {t.daysPerWeek.join(" or ")} days a week</dd>
+            <dt>LENGTH</dt><dd>{lengthText(lengthOf(t))} · {t.daysPerWeek.join(" or ")} days a week</dd>
+            {d.next && <><dt>THEN</dt><dd>{d.next.when}{d.next.id && d.next.id !== t.id && props.onOpen ? <> <button class="linkbtn" onClick={() => props.onOpen!(d.next!.id!)}>→ {d.next.name}</button></> : null}</dd></>}
             <dt>WEIGHTS</dt><dd>{d.basis === "active" ? "your current weights in this program" : d.basis === "e1rm" ? "worked out from your current e1RMs" : "the template's example numbers (no history yet)"}</dd>
           </dl>
           {d.options.length > 0 && (
@@ -193,7 +213,7 @@ export function ProgramPage(props: { id: string; b: Bootstrap; onBack?: () => vo
           </div>
           <p class="note">
             {d.weeks[week].name && /week/i.test(d.weeks[week].name!) ? d.weeks[week].name : `Week ${d.weeks[week].week}${d.weeks[week].name ? ` · ${d.weeks[week].name}` : ""}`} · {d.weeks[week].days.length} sessions
-            {t.weeks ? "" : " · as if every session goes to plan"} · {unit}
+            {lengthOf(t).kind === "block" ? "" : " · as if every session goes to plan"} · {unit}
           </p>
           <div class="pp-days">
             {d.weeks[week].days.map((day) => (

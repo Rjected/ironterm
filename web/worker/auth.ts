@@ -32,6 +32,26 @@ export async function isAuthed(req: Request, secret: string): Promise<boolean> {
   return safeEqual(m[2], await hmac(secret, m[1]));
 }
 
+// ───────── CSRF ─────────
+// Cookies (our session, Cloudflare Access's CF_Authorization) ride along on same-site requests,
+// and with no login on localhost there's no cookie at all to stop any page from POSTing
+// text/plain JSON at us. So a state-changing request must come from our own pages: judged by
+// Sec-Fetch-Site (every current browser) or, failing that, Origin. A request with neither isn't
+// from a browser page (curl, the apps). Bearer-token requests carry no ambient credential.
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/** null when the request may proceed, else why not. `origins`: this app's own origins. */
+export function csrfBlock(req: Request, origins: string[]): string | null {
+  if (SAFE_METHODS.has(req.method)) return null;
+  if (/^Bearer\s+\S+$/i.test(req.headers.get("authorization") ?? "")) return null;
+  const site = req.headers.get("sec-fetch-site");
+  if (site) return site === "same-origin" || site === "none" ? null : `cross-site request (${site})`;
+  const origin = req.headers.get("origin");
+  if (origin) return origins.includes(origin) ? null : "cross-origin request";
+  return null;
+}
+
 // ───────── Cloudflare Access (Google login in front of the app) ─────────
 // Access signs every request with a JWT. Verifying it here means a request that skips Access
 // (e.g. a stray *.workers.dev URL) still gets rejected.

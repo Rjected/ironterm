@@ -85,8 +85,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
-    // Advanced setup (web) in a Custom Tab; server-rendered body figure (SVG)
-    implementation("androidx.browser:browser:1.8.0")
+    // Server-rendered body figure (SVG)
     implementation("com.caverock:androidsvg-aar:1.4")
 
     // Widgets

@@ -18,6 +18,12 @@ interface ProgramSummary {
   daysPerWeek: number[];                  // [3] or [3, 4]
   weekCount: number | null;               // length of one run in weeks; null = open-ended
                                           // (not `weeks`: ProgramDetail uses that name for the plan)
+  length: "block" | "cycles" | "ongoing"; // block: ends after weekCount weeks ("12-WEEK BLOCK")
+                                          // cycles: a cycle that repeats forever, maxes rising each lap ("CYCLES FOREVER", 5/3/1)
+                                          // ongoing: no weeks, progress session to session ("ONGOING", GZCLP)
+  cycleWeeks: number | null;              // weeks per cycle (cycles) or the block length (block); null when ongoing
+  next: { id: string | null;              // what to run when it ends or stalls for good; id/name when it's in the catalog
+          name: string | null; when: string } | null;
   summary: string;                        // one-line, hand-written
 }
 ```

@@ -27,8 +27,9 @@ import type { HevyWorkout } from "./hevy";
 import { BIG_FOUR, LIFTS, liftName, matchLift } from "./lifts";
 import { emptySession, sessionFromPlan, type LiveSession } from "./live";
 import { MUSCLE, MUSCLES, type MuscleId } from "./muscles";
-import { allSlots, applyWorkout, firstScheduled, initialState, planDay, schemeLabel, usesStartWeight, type Outcome, type PlannedSession, type ProgramCategory, type ProgramConfig, type ProgramDef, type ProgramState, type ProgramTemplate } from "./program";
+import { allSlots, applyWorkout, firstScheduled, initialState, planDay, programLength, schemeLabel, usesStartWeight, type LengthKind, type Outcome, type PlannedSession, type ProgramCategory, type ProgramConfig, type ProgramDef, type ProgramState, type ProgramTemplate } from "./program";
 import { defaultConfig, getTemplate, TEMPLATES } from "./programs";
+import { nextStep } from "./programs/next";
 import { describeProgram, type ProgramRules } from "./describe";
 import { startingConfig } from "./simulate";
 import { standardPct } from "./rpe";
@@ -495,6 +496,12 @@ export interface ProgramSummary {
   daysPerWeek: number[];
   /** length of one run in weeks; null = open-ended */
   weekCount: number | null;
+  /** block: ends after weekCount weeks · cycles: a cycleWeeks-week cycle that repeats forever · ongoing: no weeks */
+  length: LengthKind;
+  /** weeks in one cycle (cycles), or the block length (block); null when ongoing */
+  cycleWeeks: number | null;
+  /** what to run when it ends or stalls for good */
+  next: { id: string | null; name: string | null; when: string } | null;
   summary: string;
 }
 export interface AppProgramList { active: string | null; programs: ProgramSummary[] }
@@ -528,7 +535,13 @@ export interface ProgramDetail extends ProgramSummary {
 const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "comeback"];
 
 function programSummary(t: ProgramTemplate): ProgramSummary {
-  return { id: t.id, name: t.name, author: t.author, category: t.category, level: t.level, daysPerWeek: [...t.daysPerWeek], weekCount: t.weeks ?? null, summary: t.summary };
+  const len = programLength(t);
+  const n = nextStep(t);
+  const to = n?.id ? getTemplate(n.id) : undefined;
+  return {
+    id: t.id, name: t.name, author: t.author, category: t.category, level: t.level, daysPerWeek: [...t.daysPerWeek], weekCount: t.weeks ?? null,
+    length: len.kind, cycleWeeks: len.weeks, next: n ? { id: to?.id ?? null, name: to?.name ?? null, when: n.when } : null, summary: t.summary,
+  };
 }
 
 /** Every template, grouped by category (catalog order inside each). */
