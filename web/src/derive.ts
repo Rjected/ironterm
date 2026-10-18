@@ -127,7 +127,18 @@ export function e1rmAt(points: LiftPoint[], date: string): number | null {
   return v;
 }
 
+/**
+ * Best e1RM in the 28 days up to `date` (null when there's no session in that window). Programs
+ * alternate heavy and light days for a lift, so "the last session" swings by 40% from one day
+ * to the next; this is the number DASHBOARD, the native home screen and the widgets all show.
+ */
+export function bestAt(points: { date: string; e1rm: number }[], date: string, windowDays = 28): number | null {
+  const inWin = points.filter((p) => p.date <= date && p.date > addDays(date, -windowDays));
+  return inWin.length ? Math.max(...inWin.map((p) => p.e1rm)) : null;
+}
+
 /** Rolling best e1RM — smooths out light days so the trend reads cleanly. */
+
 export function rollingBest(points: LiftPoint[], windowDays = 28): { date: string; v: number }[] {
   return points.map((p, i) => {
     let best = p.e1rm;
