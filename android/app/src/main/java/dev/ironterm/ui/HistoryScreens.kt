@@ -159,7 +159,7 @@ fun WorkoutScreen(id: String, state: UiState, data: DataUi, actions: AppActions,
             }
         }
         val w = load.data
-        if (w != null) Sheet(editing, { editing = false }) { NotesEditor(w, data.savingNotes) { edit -> actions.saveNotes(id, edit); editing = false } }
+        if (w != null) Sheet(editing, { editing = false }) { NotesEditor(w, data.savingNotes, local = state.snapshot?.isLocal == true) { edit -> actions.saveNotes(id, edit); editing = false } }
     }
 }
 
@@ -220,13 +220,13 @@ private fun WorkoutDetail(w: AppWorkout, refreshing: Boolean, onRefresh: () -> U
 }
 
 @Composable
-private fun NotesEditor(w: AppWorkout, saving: Boolean, onSave: (NotesEdit) -> Unit) {
+private fun NotesEditor(w: AppWorkout, saving: Boolean, local: Boolean, onSave: (NotesEdit) -> Unit) {
     var desc by remember(w) { mutableStateOf(w.note) }
     val notes = remember(w) { mutableStateListOf(*w.exercises.map { it.note.orEmpty() }.toTypedArray()) }
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
         Mono("EDIT NOTES", size = 12.sp, color = T.amber, bold = true)
         Spacer(Modifier.height(4.dp))
-        Mono("Saved to Hevy. Only the notes change; sets stay as logged.", size = 10.sp, color = T.faint)
+        Mono(if (local) "Saved on your server. Only the notes change; sets stay as logged." else "Saved to Hevy. Only the notes change; sets stay as logged.", size = 10.sp, color = T.faint)
         Spacer(Modifier.height(12.dp))
         Mono("WORKOUT", size = 9.sp, color = T.dim)
         Spacer(Modifier.height(4.dp))

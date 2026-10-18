@@ -1,6 +1,3 @@
-# Rust
-/target
-
 # Android
 android/.gradle/
 android/app/build/
