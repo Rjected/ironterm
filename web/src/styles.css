@@ -403,3 +403,9 @@ table.t.rpe td, table.t.rpe th { text-align: center; padding-inline: 4px; }
 .ex > .inp { margin: 2px 0 6px; font-size: var(--fs-s); }
 .qr-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .qr { display: block; flex: none; border: 1px solid var(--line-2); }
+
+/* EDIT SETUP › swap exercises */
+.swaps { display: grid; gap: 6px; }
+.swap-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; align-items: center; }
+.swap-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.swap-row select { min-width: 0; width: 100%; }

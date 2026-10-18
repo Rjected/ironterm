@@ -10,6 +10,7 @@ import { Panel, Seg, ago } from "../ui";
 import { ProgramBrowser, ProgramPage, SetupEditor } from "./browser";
 import { Picker } from "../components/picker";
 import { AppsPanel } from "./apps";
+import { programSwaps, withSwap } from "../../shared/swap-list";
 import { ImportPanel } from "./import";
 
 const narrow = () => typeof matchMedia !== "undefined" && matchMedia("(max-width: 699px)").matches;
@@ -96,6 +97,24 @@ export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved
     <div class="pp-start">
       <h5>EDIT SETUP{dirty ? " *" : ""}</h5>
       <SetupEditor cfg={cfg} setCfg={edit} onUnit={(u) => setS({ ...s, unit: u })} />
+      {def && (
+        <div class="field">
+          <label>SWAP EXERCISES <span class="faint">· do something else wherever the program has it; closest matches first</span></label>
+          <div class="swaps">
+            {programSwaps(cfg).map((r) => (
+              <div class="swap-row">
+                <span>{r.name}</span>
+                <select class="inp" value={r.to?.lift ?? ""} aria-label={`Swap ${r.name}`}
+                  onChange={(e) => { const to = (e.target as HTMLSelectElement).value || null; edit((c) => withSwap(c, r.lift, to)); }}>
+                  <option value="">{r.name} (as written)</option>
+                  {r.to && !r.options.some((o) => o.lift === r.to!.lift) && <option value={r.to.lift}>{r.to.name}</option>}
+                  {r.options.map((o) => <option value={o.lift}>{o.name} · {Math.round(o.score * 100)}% alike</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div class="field">
         <label>TRAINING DAYS <span class="faint">· {days.length} picked{days.length !== per ? ` · program has ${per} a week` : ""}</span></label>
         <div class="chips dow" role="group" aria-label="Training days">

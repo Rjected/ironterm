@@ -107,3 +107,14 @@ describe("POST /api/app/program/swap (swapLift)", () => {
   });
 });
 
+
+import { withSwap } from "./swap-list";
+describe("withSwap (EDIT SETUP and the swap endpoint)", () => {
+  it("is a no-op for the swap it already has, and throws on a bad one", () => {
+    const cfg = withSwap(monolith(), "dip", "pushUp");
+    expect(withSwap(cfg, "dip", "pushUp")).toBe(cfg);
+    expect(() => withSwap(cfg, "legPress", "squat")).toThrow();
+    expect(() => withSwap(cfg, "dip", "dip")).toThrow();
+    expect(withSwap(cfg, "dip", null).swaps).toEqual({});
+  });
+});
