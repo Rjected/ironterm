@@ -192,3 +192,85 @@ object ProgramStartResultSerializer : kotlinx.serialization.KSerializer<ProgramS
         return ProgramStartResult(ok, doc)
     }
 }
+
+/**
+ * GET /api/app/programs/{id}/body?mode=load|gaps&opt.* (docs/api/programs.md): what the program does to
+ * each muscle (weekly hard sets vs range, overlaps, a summary) and the two coloured figures.
+ */
+@Serializable
+data class ProgramBody(
+    val id: String = "",
+    /** "load" | "gaps" */
+    val mode: String = "load",
+    val sex: String = "m",
+    /** Mon = 0 */
+    val trainingDays: List<@Serializable(LenientInt::class) Int> = emptyList(),
+    /** calendar weeks measured; per-week numbers average over them */
+    @Serializable(LenientInt::class) val weeks: Int = 1,
+    val svgFront: String = "",
+    val svgBack: String = "",
+    val legend: List<String> = emptyList(),
+    val muscles: List<ProgramBodyMuscle> = emptyList(),
+    val overlaps: List<ProgramBodyOverlap> = emptyList(),
+    val overlapsByWeek: List<@Serializable(LenientInt::class) Int> = emptyList(),
+    val summary: ProgramBodySummary = ProgramBodySummary(),
+)
+
+@Serializable
+data class ProgramBodyMuscle(
+    val id: String = "",
+    val name: String = "",
+    val short: String = "",
+    val group: String = "",
+    /** 0–1 colour on the LOAD figure */
+    val load: Double = 0.0,
+    /** 0–1 colour on the GAPS figure (1 − lowest readiness) */
+    val gap: Double = 0.0,
+    val sets: Double = 0.0,
+    val hardSets: Double = 0.0,
+    /** weekly hard-set range [lo, hi], null = indirect only */
+    val target: List<Double>? = null,
+    /** "none" | "low" | "ok" | "high" | "n/a" */
+    val status: String = "none",
+    val hits: Double = 0.0,
+    val minGapH: Double? = null,
+    val recoverH: Double? = null,
+    val minReadiness: Double = 1.0,
+    /** per week */
+    val overlaps: Double = 0.0,
+    val lifts: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProgramBodyOverlap(
+    @Serializable(LenientInt::class) val week: Int = 1,
+    val muscle: String = "",
+    val short: String = "",
+    /** "MON A1" → "TUE B1" */
+    val from: String = "",
+    val to: String = "",
+    val gapH: Double = 0.0,
+    /** residual fatigue as a share of the previous dose (can pass 1 when older sessions add up) */
+    val share: Double = 0.0,
+    val prev: List<String> = emptyList(),
+    val now: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProgramBodySummary(
+    val mostTrained: List<BodyMuscleRef> = emptyList(),
+    val gaps: List<BodyMuscleRef> = emptyList(),
+    val overlapping: List<BodyMuscleRef> = emptyList(),
+    val overlapsPerWeek: Double = 0.0,
+    /** most trained · below range · overlaps, as sentences */
+    val lines: List<String> = emptyList(),
+)
+
+@Serializable
+data class BodyMuscleRef(
+    val id: String = "",
+    val short: String = "",
+    val hardSets: Double = 0.0,
+    val target: List<Double>? = null,
+    val perWeek: Double = 0.0,
+)

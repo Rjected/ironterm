@@ -772,7 +772,7 @@ const AML1: Wk[] = [
       ["inclineBench", "5x3"],
       ["rackPull", "3@55 3@65 3@75x2 2@85x3", "Block pull, bar 5–7 cm below knees"],
       ["dip", "5x4", "Weighted"],
-      ["legPress", "5x5"],
+      ["legPress", "5x5", "80–90% of your squat 1RM"],
       ["reverseHyper", "4x8"],
     ]],
   ],

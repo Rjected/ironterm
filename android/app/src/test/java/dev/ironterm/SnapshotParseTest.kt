@@ -21,7 +21,19 @@ class SnapshotParseTest {
         assertEquals("lb", s.unit)
         assertEquals("America/New_York", s.tz)
         assertTrue(s.demo)
-        assertEquals(Snapshot.SOURCE_SERVER, s.source)
+        assertEquals(Snapshot.SOURCE_SERVER, s.origin)
+    }
+
+    @Test fun serverSaysWhereWorkoutsComeFrom() {
+        val local = SnapshotJson.parse("""{"v":1,"source":"local"}""")
+        assertTrue(local.isLocal)
+        assertFalse(local.isDirect)
+        assertEquals(Snapshot.SOURCE_SERVER, local.origin)
+        assertFalse(SnapshotJson.parse("""{"v":1,"source":"hevy"}""").isLocal)
+        assertFalse("older servers send no source", s.isLocal)
+        // the phone's own tag survives the disk cache, and caches from before it moved still read as Direct
+        assertTrue(SnapshotJson.parse(SnapshotJson.encode(s.copy(origin = Snapshot.SOURCE_DIRECT))).isDirect)
+        assertTrue(SnapshotJson.parse("""{"v":1,"source":"direct"}""").isDirect)
     }
 
     @Test fun graphIs53MondayWeeksEndingToday() {

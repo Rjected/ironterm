@@ -63,7 +63,7 @@ describe("describeProgram", () => {
       title: "Main · % of training max", lifts: ["Overhead Press", "Deadlift", "Bench Press", "Back Squat"],
       text: "5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%.",
     });
-    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%. Skipped on deload weeks.");
+    expect(r.tiers[1].text).toBe("Every week: 5×10 @ 50%."); // BBB stays in the deload week (jimwendler.com)
     expect(r.tiers[0].text).not.toMatch(/training max/); // the title already says it
   });
 
@@ -78,7 +78,7 @@ describe("describeProgram", () => {
   it("SBS RTF: long block summarised, rep-target table", () => {
     const r = rules("sbsRtf", "kg");
     expect(r.overview[1]).toBe("A 21-week block that ends after week 21.");
-    expect(r.tiers[0].text).toBe("Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%.");
+    expect(r.tiers[0].text).toBe("Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%. Skipping a planned set at that weight, or coming up short on one, counts as 2+ short.");
     expect(r.tiers[1]).toMatchObject({ text: "Weeks 7, 14 and 21: 5×5 @ 60%." });
   });
 

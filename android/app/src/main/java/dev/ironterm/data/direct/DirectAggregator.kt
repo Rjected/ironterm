@@ -165,7 +165,7 @@ object DirectAggregator {
         return Snapshot(
             v = 1, generatedAt = now.toString(), today = today.toString(), unit = unit, tz = zone.id, demo = false,
             graph = graph, streak = streak, week = week, totals = totals, last = last,
-            program = null, lifts = lifts, recovery = null, source = Snapshot.SOURCE_DIRECT,
+            program = null, lifts = lifts, recovery = null, origin = Snapshot.SOURCE_DIRECT,
         )
     }
 

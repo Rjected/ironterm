@@ -162,6 +162,30 @@ For a long break, a short dedicated block is often easier than ramping your regu
   your pre-break e1RM and climbing a few percent a week. It starts with controlled tempo and
   progresses to paused and slow-eccentric work so soreness drops while exposure climbs.
 
+## How Ironterm uses this
+
+**The re-entry ramp** (`web/shared/program.ts`: `startRamp`, `rampNeed`; `web/shared/travel.ts`:
+`rampFactors`, `applyRamp`, `rampInfo`). It turns on automatically after 9+ days between program
+sessions, and you can switch it off on the calendar page.
+
+- **Length and start point follow the table above:** 2/3/4/6/8 base exposures, starting at
+  92/88/82/78/72% load.
+- **Each lift ramps on its own exposures, not on session count.** In a 4-day rotation where squat
+  is on 2 days, squat still gets all of its light sessions.
+- **Lower-body lifts need one more exposure** and start 10 points lower on volume. Squats with more
+  than 3 top sets also get fewer sets, not just lighter ones.
+- **Volume work is cut harder than main lifts**, and there are no AMRAPs during the ramp.
+- **Ramp sessions can't lower a weight, step down a stage, count a miss or drop a TM.** Hitting your
+  normal weight still counts as progress, and it takes that lift out of the ramp. The ramp ends as
+  soon as every main lift is back.
+- **The dashboard, calendar and apps say what's happening**, e.g. *Session 2 of 6 back after 21
+  days off: 92% load, ~67% volume, no all-out sets. Back Squat ramps slower (91%, ~55% volume).*
+  After 28+ days off they also suggest the comeback programs.
+
+**Comeback programs** (`web/shared/programs/comeback.ts`). *Return to Training* and *Squat
+Comeback* are listed under the COMEBACK category. Their maxes are your pre-break e1RMs and never
+move, and they have the ramp built in, so the re-entry ramp stays off while you run one.
+
 ## Sources
 
 1. Bosquet L, Berryman N, Dupuy O, et al. Effect of training cessation on muscular performance: a

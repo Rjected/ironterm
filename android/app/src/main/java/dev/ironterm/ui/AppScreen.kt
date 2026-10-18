@@ -94,6 +94,7 @@ fun AppScreen(
     val go: (Route) -> Unit = { onNav(nav.push(it)) }
     val back: () -> Unit = { onNav(nav.pop()) }
     val setup: () -> Unit = { onNav(Nav(Tabs.MORE, listOf(Route.Setup))) }
+    state.pendingConnect?.let { ConnectConfirmDialog(it, onConfirm = actions::confirmConnect, onCancel = actions::cancelConnect) }
     Column(Modifier.fillMaxSize().background(T.bg).windowInsetsPadding(WindowInsets.safeDrawing)) {
         if (top == Route.Gallery) {
             GalleryScreen(state, onBack = back)
@@ -130,7 +131,7 @@ private fun RouteScreen(r: Route, state: UiState, data: DataUi, gym: GymUi, acti
         is Route.Lift -> LiftDetailScreen(r.key, state, data, actions, back, go)
         is Route.Workout -> WorkoutScreen(r.id, state, data, actions, back)
         Route.Calendar -> CalendarScreen(state, data, actions, back, go, setup)
-        Route.Program -> ProgramScreen(state, data, actions, back, setup, onBrowse = { go(Route.Programs) })
+        Route.Program -> ProgramScreen(state, data, actions, back, setup, onBrowse = { go(Route.Programs) }, onOpenProgram = { go(Route.ProgramPage(it)) })
         Route.Programs -> ProgramListScreen(state, data, actions, back, setup, onOpen = { go(Route.ProgramPage(it)) })
         is Route.ProgramPage -> ProgramPageScreen(r.id, state, data, actions, back, setup, onStarted = { replace(listOf(Route.Program)) })
         Route.Body -> BodyScreen(state, data, actions, back, setup)
