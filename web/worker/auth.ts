@@ -57,29 +57,45 @@ export function csrfBlock(req: Request, origins: string[]): string | null {
 // (e.g. a stray *.workers.dev URL) still gets rejected.
 
 interface Jwk { kid: string; kty: string; n: string; e: string; alg?: string }
-let certCache: { at: number; keys: Jwk[] } | null = null;
+let certCache: { at: number; domain: string; keys: Jwk[] } | null = null;
 
 const b64url = (s: string) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
 
-export async function verifyAccess(req: Request, teamDomain: string, aud: string, allowed: string[]): Promise<string | null> {
+type CertFetch = (teamDomain: string) => Promise<{ keys: Jwk[] }>;
+const fetchCerts: CertFetch = (teamDomain) => fetch(`https://${teamDomain}/cdn-cgi/access/certs`).then((r) => r.json() as Promise<{ keys: Jwk[] }>);
+
+/** Email (or "service") for a valid Access JWT whose audience, issuer and expiry check out; else null. */
+export async function verifyAccess(req: Request, teamDomain: string, aud: string, allowed: string[], getCerts: CertFetch = fetchCerts): Promise<string | null> {
   const token = req.headers.get("cf-access-jwt-assertion") ?? (req.headers.get("cookie") ?? "").match(/CF_Authorization=([^;]+)/)?.[1];
-  if (!token) return null;
-  const [h, p, s] = token.split(".");
-  if (!h || !p || !s) return null;
-  const header = JSON.parse(new TextDecoder().decode(b64url(h)));
-  const payload = JSON.parse(new TextDecoder().decode(b64url(p)));
-  if (!certCache || Date.now() - certCache.at > 3600_000) {
-    const r = await fetch(`https://${teamDomain}/cdn-cgi/access/certs`);
-    certCache = { at: Date.now(), keys: ((await r.json()) as { keys: Jwk[] }).keys };
+  if (!token || token.length > 8192) return null;
+  const [h, p, s, extra] = token.split(".");
+  if (!h || !p || !s || extra !== undefined) return null;
+  let header: { alg?: unknown; kid?: unknown }, payload: { aud?: unknown; exp?: unknown; nbf?: unknown; iss?: unknown; email?: unknown };
+  try {
+    header = JSON.parse(new TextDecoder().decode(b64url(h)));
+    payload = JSON.parse(new TextDecoder().decode(b64url(p)));
+  } catch { return null; }
+  if (header.alg !== "RS256" || typeof header.kid !== "string") return null;
+  // Refresh hourly, and at once for a key we haven't seen (Access rotated its keys).
+  if (!certCache || certCache.domain !== teamDomain || Date.now() - certCache.at > 3600_000 || (!certCache.keys.some((k) => k.kid === header.kid) && Date.now() - certCache.at > 60_000)) {
+    certCache = { at: Date.now(), domain: teamDomain, keys: (await getCerts(teamDomain)).keys ?? [] };
   }
   const jwk = certCache.keys.find((k) => k.kid === header.kid);
   if (!jwk) return null;
   const key = await crypto.subtle.importKey("jwk", { ...jwk, alg: "RS256", ext: true } as JsonWebKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
-  const ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, b64url(s), new TextEncoder().encode(`${h}.${p}`));
-  if (!ok) return null;
-  const auds: string[] = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!auds.includes(aud) || payload.exp * 1000 < Date.now()) return null;
+  let sig: ReturnType<typeof b64url>;
+  try { sig = b64url(s); } catch { return null; }
+  if (!(await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, sig, new TextEncoder().encode(`${h}.${p}`)))) return null;
+  const now = Date.now() / 1000;
+  const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  if (!auds.includes(aud)) return null;
+  if (typeof payload.exp !== "number" || payload.exp < now) return null;
+  if (typeof payload.nbf === "number" && payload.nbf > now + 60) return null;
+  if (payload.iss !== `https://${teamDomain}`) return null;
   const email = String(payload.email ?? "").toLowerCase();
   if (allowed.length && !allowed.includes(email)) return null;
   return email || "service";
 }
+
+/** tests */
+export const resetAccessCerts = () => { certCache = null; };
