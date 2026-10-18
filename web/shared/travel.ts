@@ -147,6 +147,54 @@ export function rampNote(r: Reentry, lifts: string[] = []): string {
   return `${s} Won't count against your progression; hit your normal weight and that lift is back.`;
 }
 
+export interface RampInfo {
+  gapDays: number;
+  done: number;
+  total: number;
+  /** "Session 2 of 6 back after 21 days off" */
+  headline: string;
+  /** per main lift of the next session: where it is in its ramp */
+  lifts: { lift: string; name: string; load: number; volume: number; slower: boolean; back: boolean }[];
+  /** the whole explanation, one paragraph */
+  text: string;
+  /** a long break: comeback blocks that may suit better than ramping your program */
+  suggest: { templateId: string; name: string; weeks: string }[];
+}
+
+/** Breaks this long get a nudge toward a comeback block (docs/training/COMEBACK.md). */
+export const COMEBACK_SUGGEST_DAYS = 28;
+
+/**
+ * What the re-entry ramp is doing, in words, for the main lifts of the next session: where you
+ * are, how much lighter, which lifts ramp slower, which are already back.
+ */
+export function rampInfo(r: Reentry, lifts: string[], activeTemplate?: string): RampInfo {
+  const uniq = [...new Set(lifts)].filter((l) => LIFTS[l]);
+  const rows = uniq.map((l) => {
+    const f = rampFactors(r, l);
+    return { lift: l, name: LIFTS[l].name, load: f.load, volume: f.volume, slower: rampsSlower(l), back: f.load >= 1 };
+  });
+  const headline = `Session ${r.done + 1} of ${r.total} back after ${r.gapDays} days off`;
+  const ramping = rows.filter((x) => !x.back);
+  const lead = ramping.find((x) => !x.slower) ?? ramping[0];
+  const f = lead ?? (rows.length ? null : rampFactors(r));
+  let text = headline + (f ? `: ${pct(f.load)} load, ~${pct(f.volume)} volume, no all-out sets.` : ".");
+  const slow = ramping.filter((x) => x.slower && x !== lead);
+  if (slow.length) text += ` ${slow.map((x) => x.name).join(" and ")} ${slow.length > 1 ? "ramp" : "ramps"} slower (${pct(slow[0].load)}, ~${pct(slow[0].volume)} volume): legs get more sore, so they get one more light session.`;
+  const back = rows.filter((x) => x.back);
+  if (back.length) text += ` ${back.map((x) => x.name).join(" and ")} ${back.length > 1 ? "are" : "is"} back to full.`;
+  text += " These sessions can't count against your progression; hit your normal weight and that lift is done ramping.";
+  const suggest = r.gapDays >= COMEBACK_SUGGEST_DAYS && !activeTemplate?.startsWith("comeback")
+    ? [{ templateId: "comeback", name: "Return to Training", weeks: r.gapDays < 90 ? "3" : "4" }, { templateId: "comeback-squat", name: "Squat Comeback", weeks: r.gapDays < 90 ? "3" : "4" }]
+    : [];
+  if (suggest.length) text += ` After a break this long, a short comeback block (${suggest.map((x) => x.name).join(" or ")}) can be easier than ramping your program.`;
+  return { gapDays: r.gapDays, done: r.done, total: r.total, headline, lifts: rows, text, suggest };
+}
+
+/** Main lifts of a session, for rampInfo. */
+export const sessionMainLifts = (plan: PlannedSession | null): string[] =>
+  plan ? plan.exercises.filter((e) => e.tier === "T1" || e.tier === "MAIN" || e.tier === "T2" || e.tier === "SUPP").map((e) => e.lift) : [];
+
 /**
  * Lighten a planned session for re-entry, lift by lift: main lifts a little lighter with no
  * all-out AMRAP, volume work (T2/supplemental/accessories) cut harder, and lower-body main lifts

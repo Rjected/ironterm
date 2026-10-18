@@ -96,6 +96,24 @@ describe("app API", () => {
     await fixture("program", appProgram(boot, d));
   });
 
+  it("program and snapshot explain the re-entry ramp after a break", () => {
+    expect(appProgram(boot, d).program!.reentry).toBeNull();
+    expect(appHome(boot, d).snapshot.program?.next?.reentryNote).toBeNull();
+    const last = demo.workouts.map((w) => w.start_time.slice(0, 10)).sort().at(-1)!;
+    const later = new Date(Date.parse(last) + 40 * 864e5).toISOString().slice(0, 10);
+    const b = { ...boot, today: later };
+    const bd = derive(b, "volume");
+    const r = appProgram(b, bd).program!.reentry!;
+    expect(r).toMatchObject({ done: 0, gapDays: 40, headline: `Session 1 of ${r.total} back after 40 days off` });
+    expect(r.lifts.length).toBeGreaterThan(0);
+    expect(r.lifts[0].load).toBeCloseTo(0.82, 2);
+    expect(r.summary).toContain("82% load");
+    expect(r.suggest.map((x) => x.templateId)).toEqual(["comeback", "comeback-squat"]);
+    const next = appHome(b, bd).snapshot.program!.next!;
+    expect(next.reentry).toBe(true);
+    expect(next.reentryNote).toBe(r.summary);
+  });
+
   it("body renders both modes as SVG", async () => {
     for (const mode of ["ready", "load"] as const) {
       const b = appBody(boot, mode, d);

@@ -92,6 +92,8 @@ data class NextSession(
     @SerialName("when") val whenLabel: String = "",
     val date: String? = null,
     val reentry: Boolean = false,
+    /** what the re-entry ramp does to this session, in words */
+    val reentryNote: String? = null,
     val exercises: List<PlannedExercise> = emptyList(),
 )
 

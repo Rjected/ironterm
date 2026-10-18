@@ -304,7 +304,17 @@ data class ProgramInfo(
 )
 
 @Serializable
-data class Reentry(@Serializable(LenientInt::class) val done: Int = 0, @Serializable(LenientInt::class) val total: Int = 0)
+data class Reentry(
+    @Serializable(LenientInt::class) val done: Int = 0,
+    @Serializable(LenientInt::class) val total: Int = 0,
+    @Serializable(LenientInt::class) val gapDays: Int = 0,
+    val headline: String? = null,
+    val summary: String? = null,
+    val suggest: List<ReentrySuggest> = emptyList(),
+)
+
+@Serializable
+data class ReentrySuggest(val templateId: String = "", val name: String = "", val weeks: String = "")
 
 @Serializable
 data class Slot(
