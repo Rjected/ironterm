@@ -59,7 +59,8 @@ export const gzclp: ProgramTemplate = {
     { key: "curls", label: "Extra T3 on A1", default: "off", choices: [{ value: "off", label: "None" }, { value: "on", label: "Bicep curls 4×12+" }] },
   ],
   build(o) {
-    const opts = { days: "4", t1: "default", t2: "default", t3: "default", curls: "off", ...o };
+    // Saved configs from before the curls option was opt-in have no key: keep their curls.
+    const opts = { days: "4", t1: "default", t2: "default", t3: "default", ...o, curls: o.curls ?? "on" };
     const a1 = [slot("a1-t1", "T1", "squat", opts), slot("a1-t2", "T2", "bench", opts), slot("a1-t3", "T3", "latPulldown", opts)];
     if (opts.curls === "on") a1.push(slot("a1-t3b", "T3", "bicepCurl", opts, "modified"));
     return {

@@ -13,9 +13,11 @@ const W = (id: string, ex: [string, [number, number][]][]): HevyWorkout => ({
 const n = (k: number, lb: number, reps: number, last = reps) => Array.from({ length: k }, (_, i) => [lb, i === k - 1 ? last : reps] as [number, number]);
 const BENCH = "Bench Press (Barbell)", SQ = "Squat (Barbell)", PD = "Lat Pulldown (Cable)";
 
+const DEFAULTS = Object.fromEntries(gzclp.options.map((o) => [o.key, o.default]));
+
 function setup() {
-  const def = gzclp.build({});
-  const cfg: ProgramConfig = { templateId: "gzclp", options: {}, unit: "lb", startDate: "2026-01-01", startWeights: { "a1-t1": 200, "a1-t2": 100, "a1-t3": 50, "b1-t1": 95, "b1-t2": 185, "b1-t3": 40, "a2-t1": 150, "a2-t2": 150, "a2-t3": 50, "b2-t1": 250, "b2-t2": 75, "b2-t3": 40 }, trainingMaxes: {} };
+  const def = gzclp.build(DEFAULTS);
+  const cfg: ProgramConfig = { templateId: "gzclp", options: DEFAULTS, unit: "lb", startDate: "2026-01-01", startWeights: { "a1-t1": 200, "a1-t2": 100, "a1-t3": 50, "b1-t1": 95, "b1-t2": 185, "b1-t3": 40, "a2-t1": 150, "a2-t2": 150, "a2-t3": 50, "b2-t1": 250, "b2-t2": 75, "b2-t3": 40 }, trainingMaxes: {} };
   return { def, cfg };
 }
 
@@ -26,7 +28,14 @@ describe("GZCLP", () => {
       ["T1 squat", "T2 bench", "T3 latPulldown"], ["T1 ohp", "T2 deadlift", "T3 dbRow"],
       ["T1 bench", "T2 squat", "T3 latPulldown"], ["T1 deadlift", "T2 ohp", "T3 dbRow"],
     ]);
-    expect(gzclp.build({ curls: "on" }).days[0].slots.map((s) => s.lift)).toContain("bicepCurl");
+    expect(gzclp.build({ ...DEFAULTS, curls: "on" }).days[0].slots.map((s) => s.lift)).toContain("bicepCurl");
+  });
+
+  it("curls default off for new starts, but a saved config without the key keeps them", () => {
+    expect(DEFAULTS.curls).toBe("off");
+    expect(gzclp.build(DEFAULTS).days[0].slots.map((s) => s.lift)).not.toContain("bicepCurl");
+    expect(gzclp.build({ days: "4", t1: "default", t2: "default", t3: "default" }).days[0].slots.map((s) => s.lift)).toContain("bicepCurl");
+    expect(gzclp.build({}).days[0].slots.map((s) => s.lift)).toContain("bicepCurl");
   });
 
   it("T1: 5×3+ → 6×2+ → 10×1+ at the same weight, then retest a 5RM and restart at 85%", () => {
