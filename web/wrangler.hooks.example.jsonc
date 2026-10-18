@@ -3,7 +3,7 @@
   // with no login, so only the signed webhook endpoints answer; everything else fails closed.
   // Useful when Cloudflare Access sits in front of the main app and Hevy can't get through it.
   // Shares the D1 database with the main app. Deploy: pnpm deploy:hooks
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "deploy/node_modules/wrangler/config-schema.json",
   "name": "ironterm-hooks",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-15",

@@ -1,7 +1,7 @@
 {
   // Copy to wrangler.jsonc (gitignored) and fill in your own values:
   //   cp wrangler.example.jsonc wrangler.jsonc
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "deploy/node_modules/wrangler/config-schema.json",
   "name": "ironterm",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-15",

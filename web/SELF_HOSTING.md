@@ -132,7 +132,7 @@ key and the listed flag. Run one for your group, then point every server at it w
   add `TRUST_PROXY=1` so rate limits see client addresses; `DIRECTORY_ORIGIN` if its public URL
   differs from the request's).
 - **Cloudflare:** `cp wrangler.directory.example.jsonc wrangler.directory.jsonc`,
-  `wrangler d1 create ironterm-directory`, paste the id, then `pnpm deploy:directory`.
+  `pnpm wrangler d1 create ironterm-directory`, paste the id, then `pnpm deploy:directory`.
 
 ## Phone apps
 
@@ -144,7 +144,7 @@ Everything except your workouts is a handful of settings: program, settings, tri
 
 ```sh
 # Cloudflare → file
-npx wrangler d1 execute hevy --remote --command "SELECT key, value FROM kv" --json > kv.json
+pnpm wrangler d1 execute hevy --remote --command "SELECT key, value FROM kv" --json > kv.json
 # file → self-hosted SQLite
 node -e 'const {DatabaseSync}=require("node:sqlite");const d=new DatabaseSync("data/hevy.sqlite");for(const r of require("./kv.json")[0].results)d.prepare("INSERT OR REPLACE INTO kv(key,value,updated_at) VALUES(?,?,datetime(\"now\"))").run(r.key,r.value)'
 ```
