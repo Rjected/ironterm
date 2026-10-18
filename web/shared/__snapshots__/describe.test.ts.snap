@@ -14,7 +14,7 @@ Day 4 · Squat: MAIN SQUAT · SUPP SQUAT
 [Main · % of training max] (Overhead Press, Deadlift, Bench Press, Back Squat)
 5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%.
 [Supplemental · % of training max] (Overhead Press, Deadlift, Bench Press, Back Squat)
-Every week: 5×10 @ 50%. Skipped on deload weeks."
+Every week: 5×10 @ 50%."
 `;
 
 exports[`describeProgram > snapshots > gzclp 1`] = `
