@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import type { HevyWorkout } from "../../shared/hevy";
 import { matchLift } from "../../shared/lifts";
 import { durationMin, localDate, workoutVolumeKg, workoutYears } from "../../shared/stats";
-
-import { fmt, fmtInt, fromKg } from "../../shared/units";
+import { fmt, fmtBig, fmtInt, fromKg } from "../../shared/units";
 import { Heatmap, Legend } from "../charts";
 import { whoopFor } from "../../shared/whoop";
 import type { Derived } from "../derive";
@@ -71,7 +70,7 @@ export function History(props: { d: Derived; mode: "demo" | "live" | "local"; da
                       <div class="t1">{w.title}</div>
                       <div class="ex-l">{w.exercises.map((e) => e.title.replace(/ \(.*\)/, "")).join(" · ")}</div>
                     </span>
-                    <span class="dim">{fmt(fromKg(workoutVolumeKg(w), d.unit) / 1000)}k</span>
+                    <span class="dim">{workoutVolumeKg(w) > 0 ? fmtBig(fromKg(workoutVolumeKg(w), d.unit)) : "—"}</span>
                   </button>
                 ))}
               </div>

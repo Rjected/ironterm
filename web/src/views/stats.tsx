@@ -5,7 +5,7 @@ import { cardioStats, formatDuration, formatPace, type DistUnit, type HrSession 
 import { LIFTS } from "../../shared/lifts";
 import { yearInReview } from "../../shared/review";
 import { STANDARD_LIFTS, strengthProfile, TIERS, type Sex } from "../../shared/standards";
-import { fmt, fmtInt, fromKg, toKg } from "../../shared/units";
+import { fmt, fmtBig, fmtInt, fromKg, toKg } from "../../shared/units";
 import { workoutYears } from "../../shared/stats";
 import { Bars } from "../charts";
 import type { Bootstrap } from "../api";
@@ -48,9 +48,9 @@ export function Stats(props: { b: Bootstrap; d: Derived; onSettings: (patch: Par
 
       <div class="kpis">
         <div class="kpi"><label>SESSIONS</label><div class="v">{t.sessions}</div><div class="d"><Delta v={r.deltas.sessions.diff} digits={0} /> vs {year - 1}</div></div>
-        <div class="kpi"><label>TONNAGE</label><div class="v">{fmt(t.tonnage / 1000)}k<small>{u}</small></div><div class="d"><Delta v={r.deltas.tonnage.pct != null ? r.deltas.tonnage.pct * 100 : null} pct digits={0} /></div></div>
+        <div class="kpi"><label>TONNAGE</label><div class="v">{fmtBig(t.tonnage)}<small>{u}</small></div><div class="d"><Delta v={r.deltas.tonnage.pct != null ? r.deltas.tonnage.pct * 100 : null} pct digits={0} /></div></div>
         <div class="kpi"><label>HOURS</label><div class="v">{fmt(t.hours, 0)}</div><div class="d">{fmtInt(t.sets)} sets · {fmtInt(t.reps)} reps</div></div>
-        <div class="kpi"><label>BEST MONTH</label><div class="v" style={{ fontSize: "18px" }}>{r.bestMonth ? MONTHS[Number(r.bestMonth.month.slice(5)) - 1] : "—"}</div><div class="d">{r.bestMonth ? `${r.bestMonth.sessions} sessions · ${fmt(r.bestMonth.tonnage / 1000)}k` : ""}</div></div>
+        <div class="kpi"><label>BEST MONTH</label><div class="v" style={{ fontSize: "18px" }}>{r.bestMonth ? MONTHS[Number(r.bestMonth.month.slice(5)) - 1] : "—"}</div><div class="d">{r.bestMonth ? `${r.bestMonth.sessions} sessions · ${fmtBig(r.bestMonth.tonnage)}` : ""}</div></div>
         <div class="kpi"><label>LONGEST STREAK</label><div class="v">{r.streaks.weeks?.length ?? 0}<small>wk</small></div><div class="d">{r.streaks.days ? `${r.streaks.days.length} days in a row` : "—"}</div></div>
         <div class="kpi"><label>CARDIO</label><div class="v">{fmt(t.cardioMinutes / 60)}<small>h</small></div><div class="d">{fmt(t.cardioDistance)} {dist}</div></div>
       </div>
@@ -87,7 +87,7 @@ export function Stats(props: { b: Bootstrap; d: Derived; onSettings: (patch: Par
         <div class="tbl-wrap">
           <table class="t">
             <thead><tr><th>LIFT</th><th>SETS</th><th>SESSIONS</th><th>TONNAGE</th></tr></thead>
-            <tbody>{r.topLifts.slice(0, 8).map((l) => <tr><td>{LIFTS[l.key]?.short ?? l.name}</td><td class="hi">{l.sets}</td><td class="dim">{l.sessions}</td><td class="dim">{fmt(l.tonnage / 1000)}k</td></tr>)}</tbody>
+            <tbody>{r.topLifts.slice(0, 8).map((l) => <tr><td>{LIFTS[l.key]?.short ?? l.name}</td><td class="hi">{l.sets}</td><td class="dim">{l.sessions}</td><td class="dim">{fmtBig(l.tonnage)}</td></tr>)}</tbody>
           </table>
         </div>
       </Panel>
