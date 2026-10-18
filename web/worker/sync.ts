@@ -154,15 +154,16 @@ function routineSets(ex: PlannedExercise, cfg: ProgramConfig): HevyRoutineSet[] 
  * Create or update one Hevy routine per program day with the current prescribed weights.
  * Returns the updated config (routineDays filled in) — caller saves it.
  */
-export async function pushRoutines(db: D1Database, key: string, cfg: ProgramConfig, onlyDay?: number): Promise<{ cfg: ProgramConfig; pushed: { dayId: string; routineId: string; title: string }[] }> {
+export async function pushRoutines(db: D1Database, key: string, cfg: ProgramConfig, onlyDay: number | undefined, opts: { today: string; reentry?: boolean }): Promise<{ cfg: ProgramConfig; pushed: { dayId: string; routineId: string; title: string }[] }> {
   const hevy = new Hevy(key);
   const def = buildProgram(cfg);
   if (!def) throw new Error("No active program");
+  // Same replay as the app shows (derive.ts): the lifter's local date, and their re-entry setting.
   const workouts = await allWorkouts(db);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = opts.today;
   // values missing from an older saved config are filled for this replay only (cfg itself is returned unchanged)
   const run = fillMissing(cfg, (need) => e1rmsFrom(workouts, cfg.unit, today, need, cfg.liftMap));
-  const state = replay(def, run, workouts, { today });
+  const state = replay(def, run, workouts, { today, reentry: opts.reentry === false ? false : undefined });
   const all = await templates(db, hevy);
   let folder = await kvGet<number>(db, `folder:${cfg.templateId}`);
   if (folder == null) {

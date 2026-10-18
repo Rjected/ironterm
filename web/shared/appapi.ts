@@ -131,9 +131,9 @@ export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
 
 /** The session the app starts: today's plan (or another day / empty), same as the web GYM view. */
 export function startSession(b: Bootstrap, opts: { dayIndex?: number; empty?: boolean }, now = new Date().toISOString(), d: Derived = derive(b, "volume")): LiveSession {
-  if (opts.empty || !d.def) return emptySession(d.unit, now);
+  if (opts.empty || !d.def) return emptySession(d.unit, now, d.tz);
   const plan = d.plan(opts.dayIndex);
-  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now);
+  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now, d.tz);
 }
 
 // ───────────────────────── lifts ─────────────────────────
