@@ -31,6 +31,9 @@ export async function revokeToken(db: D1Database, id: string): Promise<boolean> 
   return next.length !== all.length;
 }
 
+/** Whether an app token with this id still exists (sessions made from it die with it). */
+export const tokenExists = async (db: D1Database, id: string) => ((await kvGet<AppToken[]>(db, KEY)) ?? []).some((t) => t.id === id);
+
 /** Valid token → its record (lastUsed refreshed at most hourly). */
 export async function checkToken(db: D1Database, token: string | null | undefined): Promise<AppToken | null> {
   if (!token || !token.startsWith("ht_") || token.length > 100) return null;
