@@ -50,9 +50,11 @@ pnpm start                      # PORT=8787, DATA_DIR=./data by default
 | `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | Optional WHOOP integration. |
 | `SYNC_MINUTES` | Background sync interval, default 15. `0` turns it off. |
 | `PORT`, `HOST`, `DATA_DIR` | Defaults: 8787, 0.0.0.0, ./data. |
+| `TRUST_PROXY` | `1` behind a reverse proxy: wrong-password limits (10 per 15 min per address) then count the client address from `X-Forwarded-For` instead of the proxy's. Leave it off when the server is reachable directly, or clients could fake their address. |
 | `SOCIAL_DIRECTORY` | Optional. Directory for FRIENDS handles, e.g. `https://directory.example.com`. No default; without it friends add each other by server URL. |
 | `SOCIAL_ORIGIN` | Optional. This server's public origin, if requests reach it under another URL (normally it comes from the request and `X-Forwarded-*`). |
-| `SOCIAL_ALLOW_HTTP` | `1` allows `http://` peers. Local testing only. |
+| `SOCIAL_ALLOW_HTTP` | `1` allows `http://` peers. Local testing only. Also turns off the private-address block below. |
+| `SOCIAL_ALLOW_PRIVATE` | `1` lets this server reach friend servers and directories on private, loopback or link-local addresses (10/8, 192.168/16, 100.64/10 Tailscale, fc00::/7...). Off by default, so nobody can point your box at its own LAN. |
 
 **No login configured means local only.** If neither a password nor Google sign-in is set, the server answers only requests from the same machine that didn't come through a proxy. Anything else gets 403. Set a login before exposing it.
 

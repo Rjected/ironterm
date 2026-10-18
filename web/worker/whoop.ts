@@ -115,7 +115,8 @@ export async function syncWhoop(env: WhoopEnv, days = 30, tz = "America/New_York
 export async function verifyWebhook(env: WhoopEnv, req: Request, raw: string): Promise<boolean> {
   const sig = req.headers.get("x-whoop-signature"), ts = req.headers.get("x-whoop-signature-timestamp");
   if (!sig || !ts || !env.WHOOP_CLIENT_SECRET) return false;
-  if (Math.abs(Date.now() - Number(ts)) > 15 * 60_000) return false; // stale replay
+  // Milliseconds since the epoch. A non-number made the window check NaN > x, i.e. false: no window.
+  if (!/^\d{1,15}$/.test(ts) || Math.abs(Date.now() - Number(ts)) > 15 * 60_000) return false; // stale replay
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.WHOOP_CLIENT_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const mac = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(ts + raw)))));
   if (mac.length !== sig.length) return false;

@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { BIG_FOUR, LIFTS } from "../../shared/lifts";
 import { addDays, type GraphMetric } from "../../shared/stats";
-import { fmt, fmtInt } from "../../shared/units";
+import { fmt, fmtBig, fmtInt } from "../../shared/units";
 import { Bars, Heatmap, Legend, LineChart, Spark } from "../charts";
 import { bestAt, rollingBest, type Derived } from "../derive";
 import type { Nav } from "../app";
@@ -42,7 +42,7 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         </div>
         <div class="kpi">
           <label>VOLUME · 7D</label>
-          <div class="v">{d.vol7 >= 10000 ? fmt(d.vol7 / 1000) + "k" : fmtInt(d.vol7)}<small>{u}</small></div>
+          <div class="v">{fmtBig(d.vol7)}<small>{u}</small></div>
           <div class="d"><Delta v={d.volPrev7 ? ((d.vol7 - d.volPrev7) / d.volPrev7) * 100 : null} pct digits={0} /> wk/wk</div>
         </div>
         {big.slice(0, 2).map((l) => {

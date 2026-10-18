@@ -93,6 +93,25 @@ class ProgramScreenshotTest {
     @Test fun gzclp_workouts() = shot("gzclp_workouts", page(gz.id), tall = true, before = click("WORKOUTS"))
     @Test fun gzclp_workouts_360() = shot("gzclp_workouts_360", page(gz.id), width = 360, before = click("WORKOUTS"))
     @Test fun gzclp_workouts_week3() = shot("gzclp_workouts_week3", page(gz.id), before = clicks("WORKOUTS", "WEEK 3"))
+    @Test fun gzclp_body() = shot("gzclp_body", page(gz.id), withBody, tall = true, before = click("BODY"))
+    @Test fun gzclp_body_360() = shot("gzclp_body_360", page(gz.id), withBody, width = 360, before = click("BODY"))
+    @Test fun gzclp_body_gaps() = shot("gzclp_body_gaps", page(gz.id), withBody, tall = true, before = clicks("BODY", "GAPS"))
+    @Test fun gzclp_body_muscle_open() = shot("gzclp_body_muscle_open", page(gz.id), withBody, tall = true, before = clicks("BODY", "ERECTORS"))
+    @Test fun gzclp_body_loading() = shot("gzclp_body_loading", page(gz.id), before = click("BODY"))
+    @Test fun gzclp_body_error() = shot("gzclp_body_error", page(gz.id), data.copy(programBody = mapOf("gzclp#load" to Load.failed("Offline or server unreachable."))), before = click("BODY"))
+
+    /** Opening BODY asks for the load document; GAPS asks for the gaps one, with the page's options. */
+    @Test fun bodyLoadsPerMode() {
+        val asked = mutableListOf<String>()
+        val rec = object : AppActions { override fun loadProgramBody(id: String, options: Map<String, String>, mode: String, force: Boolean) { asked += ProgramBrowse.bodyKey(id, options, mode) } }
+        shot("gzclp_body_gaps_360", page(gz.id), withBody, actions = rec, width = 360, before = clicks("BODY", "GAPS"))
+        assertEquals(listOf("gzclp#load", "gzclp#gaps"), asked.distinct())
+    }
+
+    private val withBody: DataUi by lazy {
+        data.copy(programBody = mapOf("gzclp#load" to Load.of(ProgramFixtures.gzclpBody, now), "gzclp#gaps" to Load.of(ProgramFixtures.gzclpBodyGaps, now)))
+    }
+
     @Test fun gzclp_start_sheet() = shot("gzclp_start_sheet", page(gz.id), tall = true, before = click("RESTART THIS PROGRAM"))
 
     // ── a percent program (5/3/1) ──

@@ -6,28 +6,71 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: jobs read the repo and nothing else unless they say so.
+permissions:
+  contents: read
+
+# One run per branch or PR: a new push to a PR cancels its stale run. Pushes to main never
+# cancel each other (the Android release job publishes over-the-air updates).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # macOS runners are scarce (5 at a time) and a build takes ~25 min. The build only reads ios/,
+  # so a PR that doesn't touch ios/ or this workflow can't change its result: those PRs pass the
+  # required "ios" check on a Linux runner in seconds. Pushes to main always build.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ios: ${{ steps.diff.outputs.ios }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - id: diff
+        name: Does this change touch the iOS app?
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # A pull_request checkout is the merge commit: its first parent is the base branch.
+          CHANGED=$(git diff --name-only HEAD^1 HEAD)
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -qE '^(ios/|\.github/workflows/ios\.yml$)'; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
+
   ios:
+    needs: changes
     # The project uses folder-synchronised groups (objectVersion 77): Xcode 16+.
-    runs-on: macos-15
+    runs-on: ${{ needs.changes.outputs.ios == 'true' && 'macos-15' || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: ios
 
     steps:
-      - uses: actions/checkout@v4
+      - name: No iOS changes
+        if: needs.changes.outputs.ios != 'true'
+        working-directory: .
+        run: echo "This PR doesn't touch ios/; the iOS build is unchanged from main."
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: needs.changes.outputs.ios == 'true'
+        with:
+          persist-credentials: false
 
       # newest stable Xcode on the runner image, not the image default
       - name: Select newest Xcode
+        if: needs.changes.outputs.ios == 'true'
         run: |
           XCODE=$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|rc' | sort -V | tail -1)
           echo "Using $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
 
       - name: Show Xcode version
+        if: needs.changes.outputs.ios == 'true'
         run: xcodebuild -version
 
       - name: Build app + widgets (Debug)
+        if: needs.changes.outputs.ios == 'true'
         run: |
           xcodebuild build \
             -project Ironterm.xcodeproj \
@@ -37,6 +80,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Build tests
+        if: needs.changes.outputs.ios == 'true'
         run: |
           xcodebuild build-for-testing \
             -project Ironterm.xcodeproj \
@@ -45,6 +89,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Build app + widgets (Release)
+        if: needs.changes.outputs.ios == 'true'
         run: |
           xcodebuild build \
             -project Ironterm.xcodeproj \

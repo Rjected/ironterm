@@ -33,6 +33,10 @@ data class ProgramSummary(
     @kotlinx.serialization.json.JsonNames("weekCount")
     @Serializable(LenientIntN::class) val weeks: Int? = null,
     val summary: String = "",
+    /** "block" (ends after [weeks]) | "cycles" (repeats forever) | "ongoing" (no weeks); blank from older servers */
+    val length: String = "",
+    /** weeks per cycle (cycles) or block length (block) */
+    @Serializable(LenientIntN::class) val cycleWeeks: Int? = null,
 )
 
 @Serializable
@@ -56,8 +60,10 @@ data class ProgramDetail(
     /** the week-by-week workouts browser (the contract's `weeks` array; see [ProgramDetailSerializer]) */
     val plan: List<PlanWeek> = emptyList(),
     val start: ProgramStartPrefill = ProgramStartPrefill(),
+    val length: String = "",
+    @Serializable(LenientIntN::class) val cycleWeeks: Int? = null,
 ) {
-    val summaryRow: ProgramSummary get() = ProgramSummary(id, name, author, category, level, daysPerWeek, weeks, summary)
+    val summaryRow: ProgramSummary get() = ProgramSummary(id, name, author, category, level, daysPerWeek, weeks, summary, length, cycleWeeks)
     /** the options as they are in this document (what POST start should send) */
     val selectedOptions: Map<String, String> get() = options.associate { it.key to it.selected.ifBlank { it.default } }
 }
@@ -75,14 +81,18 @@ object ProgramDetailSerializer : JsonTransformingSerializer<ProgramDetail>(Progr
     override fun transformDeserialize(element: JsonElement): JsonElement {
         val o = element as? JsonObject ?: return element
         val m = o.toMutableMap()
+        // a week count: a number (or numeric string). `length` is also the server's "block" / "cycles" /
+        // "ongoing" kind, which must not be read as a count.
+        fun count(): JsonElement? = LENGTH_ALIASES.firstNotNullOfOrNull { k -> (o[k] as? JsonPrimitive)?.takeIf { it !is JsonNull && it.content.toDoubleOrNull() != null } }
         val w = o["weeks"]
         if (w is JsonArray) {
             m["plan"] = w
-            m["weeks"] = LENGTH_ALIASES.firstNotNullOfOrNull { k -> o[k]?.takeIf { it is JsonPrimitive && it !is JsonNull } } ?: JsonNull
+            m["weeks"] = count() ?: JsonNull
         }
         if (m["plan"] !is JsonArray) PLAN_ALIASES.firstNotNullOfOrNull { k -> o[k] as? JsonArray }?.let { m["plan"] = it }
-        if (m["weeks"] == null || m["weeks"] is JsonNull) LENGTH_ALIASES.firstNotNullOfOrNull { k -> o[k]?.takeIf { it is JsonPrimitive && it !is JsonNull } }?.let { m["weeks"] = it }
+        if (m["weeks"] == null || m["weeks"] is JsonNull) count()?.let { m["weeks"] = it }
         LENGTH_ALIASES.forEach { m.remove(it) }
+        (o["length"] as? JsonPrimitive)?.takeIf { it.isString && it.content.toDoubleOrNull() == null }?.let { m["length"] = it }
         return JsonObject(m)
     }
 }
@@ -192,3 +202,85 @@ object ProgramStartResultSerializer : kotlinx.serialization.KSerializer<ProgramS
         return ProgramStartResult(ok, doc)
     }
 }
+
+/**
+ * GET /api/app/programs/{id}/body?mode=load|gaps&opt.* (docs/api/programs.md): what the program does to
+ * each muscle (weekly hard sets vs range, overlaps, a summary) and the two coloured figures.
+ */
+@Serializable
+data class ProgramBody(
+    val id: String = "",
+    /** "load" | "gaps" */
+    val mode: String = "load",
+    val sex: String = "m",
+    /** Mon = 0 */
+    val trainingDays: List<@Serializable(LenientInt::class) Int> = emptyList(),
+    /** calendar weeks measured; per-week numbers average over them */
+    @Serializable(LenientInt::class) val weeks: Int = 1,
+    val svgFront: String = "",
+    val svgBack: String = "",
+    val legend: List<String> = emptyList(),
+    val muscles: List<ProgramBodyMuscle> = emptyList(),
+    val overlaps: List<ProgramBodyOverlap> = emptyList(),
+    val overlapsByWeek: List<@Serializable(LenientInt::class) Int> = emptyList(),
+    val summary: ProgramBodySummary = ProgramBodySummary(),
+)
+
+@Serializable
+data class ProgramBodyMuscle(
+    val id: String = "",
+    val name: String = "",
+    val short: String = "",
+    val group: String = "",
+    /** 0–1 colour on the LOAD figure */
+    val load: Double = 0.0,
+    /** 0–1 colour on the GAPS figure (1 − lowest readiness) */
+    val gap: Double = 0.0,
+    val sets: Double = 0.0,
+    val hardSets: Double = 0.0,
+    /** weekly hard-set range [lo, hi], null = indirect only */
+    val target: List<Double>? = null,
+    /** "none" | "low" | "ok" | "high" | "n/a" */
+    val status: String = "none",
+    val hits: Double = 0.0,
+    val minGapH: Double? = null,
+    val recoverH: Double? = null,
+    val minReadiness: Double = 1.0,
+    /** per week */
+    val overlaps: Double = 0.0,
+    val lifts: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProgramBodyOverlap(
+    @Serializable(LenientInt::class) val week: Int = 1,
+    val muscle: String = "",
+    val short: String = "",
+    /** "MON A1" → "TUE B1" */
+    val from: String = "",
+    val to: String = "",
+    val gapH: Double = 0.0,
+    /** residual fatigue as a share of the previous dose (can pass 1 when older sessions add up) */
+    val share: Double = 0.0,
+    val prev: List<String> = emptyList(),
+    val now: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProgramBodySummary(
+    val mostTrained: List<BodyMuscleRef> = emptyList(),
+    val gaps: List<BodyMuscleRef> = emptyList(),
+    val overlapping: List<BodyMuscleRef> = emptyList(),
+    val overlapsPerWeek: Double = 0.0,
+    /** most trained · below range · overlaps, as sentences */
+    val lines: List<String> = emptyList(),
+)
+
+@Serializable
+data class BodyMuscleRef(
+    val id: String = "",
+    val short: String = "",
+    val hardSets: Double = 0.0,
+    val target: List<Double>? = null,
+    val perWeek: Double = 0.0,
+)

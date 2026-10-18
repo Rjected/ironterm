@@ -13,14 +13,14 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| GZCLP (`gzclp`) | | not yet re-checked | |
-| Jacked & Tan 2.0 (`gzcl-jnt2`) | | not yet re-checked | |
-| The Rippler (`gzcl-rippler`) | | not yet re-checked | |
-| The GZCL Method (`gzcl-method`) | | not yet re-checked | |
-| VDIP (`gzcl-vdip`) | | not yet re-checked | |
-| UHF+ 5 Week (`gzcl-uhf-5wk`) | | not yet re-checked | |
-| UHF 9 Week (`gzcl-uhf-9wk`) | | not yet re-checked | |
-| General Gainz Wave LP (`gzcl-gg-wave`) | | not yet re-checked | |
+| GZCLP (`gzclp`) | Blacknoir's v4.5b5 sheet (LiftVault); Cody's [GZCL Applications & Adaptations](https://swoleateveryheight.blogspot.com/2016/02/gzcl-applications-adaptations.html); r/gzcl wiki; GZCLP infographic | exact. The T2 reset after 3×6 is "slightly heavier than your last 3×10, at most +20 lb"; we use the last 3×10 weight + 2 jumps (+10 lb upper / +20 lb lower). T3 needs 15/15/25. Starting weights are example prefills, not the sheet's placeholders. | 2026-10-18 |
+| Jacked & Tan 2.0 (`gzcl-jnt2`) | Cody's [Jacked & Tan 2.0](https://swoleateveryheight.blogspot.com/2016/07/jacked-tan-20.html) post and his J&T2.0 sheet (GZCL Free Compendium, Nov 2016) | approximation: T1, T2a (including the lighter upper-body percentages) and the TM (a daily 2RM, reset from the week-6 single) match. T2b/T3 RMs are fixed slots with the target RM in the week label. The sheet's per-lift T1 percentages, its third T2 and its 3–4 T3s aren't modelled; exercise picks are Liftosaur's. | 2026-10-18 |
+| The Rippler (`gzcl-rippler`) | "The Rippler" tab of the GZCL Free Compendium (Nov 2016); r/gzcl wiki | exact. T1, T2 and T3 match the sheet's table, including week 10's max-reps set and T3's set counts and total-rep load jumps after weeks 3, 6 and 9. The behind-the-neck press and barbell incline T3s are swapped for DB versions (their lifts already carry T1/T2 maxes). | 2026-10-18 |
+| The GZCL Method (`gzcl-method`) | Cody's [The GZCL Method, Simplified](https://swoleateveryheight.blogspot.com/2014/07/the-gzcl-method-simplified_13.html) | approximation: the squat and bench waves and the retest rule match the post. The deadlift and OHP days reuse those waves with our own T2/T3 picks; rows run 5×5–6 rather than fixed weekly loads. | 2026-10-18 |
+| VDIP (`gzcl-vdip`) | Cody's [Volume-Dependent Intensity Progression](https://swoleateveryheight.blogspot.com/2016/11/volume-dependent-intensity-progression.html) post; compendium VDIP tab | exact to the blog. The compendium differs at the edges (T2 30 reps = +10 there, +5 here; T3 exactly 50 = +5 there, hold here). The sheet's optional day 5 is left out. | 2026-10-18 |
+| UHF+ 5 Week (`gzcl-uhf-5wk`) | LiftVault: GZCL UHF Method + Heavy Singles (Sept 2018), UHF+ tab | exact. Every T1/T2 %, set and rep and the T3 set counts match. The sheet's week 6 (set a new TM) isn't scheduled. | 2026-10-18 |
+| UHF 9 Week (`gzcl-uhf-9wk`) | GZCL Free Compendium (Nov 2016), UHF 9 Wk tab | exact for weeks 1–11. The sheet's week 12 (test openers on day 1) is a note, not scheduled. | 2026-10-18 |
+| General Gainz Wave LP (`gzcl-gg-wave`) | GG Wave LP v1.2 sheet (/u/K-S-R, LiftVault) | approximation: the waves, rep maxes and half-sets match, with the text's increments (10 lb / 5 kg, OHP 5 lb / 2.5 kg). The sheet rounds the base load down to 2.5; here it's rounded to the nearest 2.5 lb / 1.25 kg. | 2026-10-18 |
 
 ## Wendler 5/3/1
 
@@ -76,11 +76,11 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Candito 6 Week Strength (`candito6`) | | not yet re-checked | |
-| Candito 6 Week Advanced Bench (`candito-adv-bench`) | | not yet re-checked | |
-| Candito 9 Week Advanced Squat (`candito-adv-squat`) | | not yet re-checked | |
-| Clarence0 14 Week (`clarence14`) | | not yet re-checked | |
-| Calgary Barbell 16 Week (`complete16`) | | not yet re-checked | |
+| Candito 6 Week Strength (`candito6`) | Candito 6 Week Program.xlsx (formulas) + Candito 6 Week Strength Program.pdf | exact. Loads follow the sheet's formulas, MROUND(1RM×%) ± 5 lb. Covered rules: the 2.5% cut for a failed required rep (the PDF's later update says 5%), W2 MR10 rules, the W5 projection and the W6 options. The W2D3 back-off count (10/8/5×3 by MR10 reps) is a note, and 10×3 is always planned. | 2026-10-18 |
+| Candito 6 Week Advanced Bench (`candito-adv-bench`) | LiftVault sheet (formulas); [Candito's explanation PDF](https://web.archive.org/web/20210815012557/http://www.canditotraininghq.com/app/download/963608244/Candito+Advanced+Bench+Program+Explanation.pdf) | approximation: every week matches. Ranges plan their low end (W3 bench 75–80% → 75%). The W4D2 bonus back-offs and the "drop max 2.5–5% and redo the set" rule are notes. | 2026-10-18 |
+| Candito 9 Week Advanced Squat (`candito-adv-squat`) | LiftVault sheet (formulas) | approximation: every week and both checkpoint formulas match. The W8 "to 92.5%" top end plans at 90%. No Candito-authored squat PDF was found. | 2026-10-18 |
+| Clarence0 14 Week (`clarence14`) | 14 Week Powerlifting by Clarence0 sheet + guide doc | exact: all sets, reps and RPEs for weeks 1–14. The 8RM/5RM sets also re-estimate the max, which the sheet only uses for strict press %. | 2026-10-18 |
+| Calgary Barbell 16 Week (`complete16`) | Complete 16-week Program.xlsx = [LiftVault's Calgary Barbell 16-week sheet](https://liftvault.com/programs/powerlifting/calgary-barbell-16-week-8-week-program-spreadsheets/) | approximation: every set, rep, % and RPE matches. The weeks 12–15 back-offs are "% of E1RM" in the sheet but % of your max here (noted). "F"/"R" sets aren't defined in the sheet and are planned at the top-set RPE. | 2026-10-18 |
 
 ## Advanced / peaking
 

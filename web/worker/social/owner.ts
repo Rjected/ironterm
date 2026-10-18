@@ -11,7 +11,7 @@ import {
   clearCache, friendByServer, getCache, getConfig, getFriend, identity, listFriends, listNotifications, markRead, patchFriend,
   putCache, putConfig, putFriend, removeFriend, toAuthor, toFriend, unreadCount, type FriendRow, type SocialConfig,
 } from "./db";
-import { allowHttp, directoryOf, directoryUser, fetchWellKnown, PeerError, signedFetch, timedFetch } from "./net";
+import { allowHttp, directoryOf, directoryUser, fetchWellKnown, MAX_SMALL, PeerError, peerJson, signedFetch, timedFetch } from "./net";
 import { ownFeed, selfAuthor, type SocialCtx } from "./peer";
 import { fingerprint, friendId, normOrigin } from "./sign";
 import {
@@ -38,8 +38,8 @@ async function deliver(c: SocialCtx, f: Pick<FriendRow, "server">, msg: Record<s
   try {
     const r = await signedFetch(c.env.DB, c.self, `${f.server}/social/v1/inbox`, "POST", { id: crypto.randomUUID(), ...msg });
     if (r.status === 202) return { status: 202 };
-    const e = (await r.json().catch(() => ({}))) as { error?: string };
-    return { status: r.status, error: e.error ?? `HTTP ${r.status}` };
+    const e = await peerJson<{ error?: unknown }>(r, MAX_SMALL);
+    return { status: r.status, error: typeof e?.error === "string" ? e.error.slice(0, 200) : `HTTP ${r.status}` };
   } catch (e) {
     return { status: 0, error: (e as Error).message };
   }
@@ -56,8 +56,8 @@ export async function fetchFriend<T>(c: SocialCtx, f: FriendRow, what: string, f
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return { data: cached.data, stale: false };
   let r: Response | null = null;
   try { r = await signedFetch(db, c.self, `${f.server}/social/v1/${what}`); } catch { r = null; }
-  if (r?.ok) {
-    const data = (await r.json()) as T;
+  const data = r?.ok ? await peerJson<T>(r) : null;
+  if (r?.ok && data && typeof data === "object") {
     await putCache(db, f.id, what, data);
     const share = (data as { share?: unknown }).share;
     await patchFriend(db, f.id, { last_seen: new Date().toISOString(), ...(isShare(share) ? { their_share: share } : {}) });
@@ -136,7 +136,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
       try { r = await signedFetch(db, c.self, `${directory}/v1/register`, "POST", { handle, name, server: c.self, publicKey: id.publicKey, listed: !!b.listed }); } catch { r = null; }
       if (!r || !r.ok) {
         await putConfig(db, prev);
-        const e = r ? ((await r.json().catch(() => ({}))) as { error?: string }).error : null;
+        const e = r ? (await peerJson<{ error?: string }>(r, MAX_SMALL))?.error : null;
         return err(r ? (r.status === 409 ? 409 : r.status === 429 ? 429 : 502) : 502, `Directory: ${e ?? "unreachable"}`);
       }
       await putConfig(db, { ...next, registered: true });
@@ -148,7 +148,7 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
     const cfg = await getConfig(db);
     if (cfg?.registered && cfg.directory && cfg.handle) {
       const r = await signedFetch(db, c.self, `${cfg.directory}/v1/users/${encodeURIComponent(cfg.handle)}`, "DELETE").catch(() => null);
-      if (r && !r.ok && r.status !== 404) return err(502, `Directory: ${((await r.json().catch(() => ({}))) as { error?: string }).error ?? r.status}`);
+      if (r && !r.ok && r.status !== 404) return err(502, `Directory: ${(await peerJson<{ error?: string }>(r, MAX_SMALL))?.error ?? r.status}`);
       if (!r) return err(502, "Directory: unreachable");
     }
     if (cfg) await putConfig(db, { ...cfg, registered: false, listed: false, directory: null });
@@ -163,8 +163,8 @@ export async function handleOwner(req: Request, c: SocialCtx, path: string): Pro
     let r: Response;
     try { r = await timedFetch(`${dir}/v1/search?q=${encodeURIComponent(term)}`); } catch { return err(502, "Directory unreachable"); }
     if (!r.ok) return err(502, `Directory error (${r.status})`);
-    const d = (await r.json()) as { users: { handle: string; name: string | null; server: string }[] };
-    return json({ users: (d.users ?? []).filter((u) => u.server !== c.self).map((u) => ({ handle: u.handle, name: u.name, server: u.server })) });
+    const d = await peerJson<{ users?: { handle: string; name: string | null; server: string }[] }>(r);
+    return json({ users: (Array.isArray(d?.users) ? d.users : []).filter((u) => u.server !== c.self).map((u) => ({ handle: u.handle, name: u.name, server: u.server })) });
   }
 
   if (sub === "/friends" && method === "GET") {
