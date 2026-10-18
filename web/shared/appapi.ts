@@ -511,7 +511,7 @@ export interface ProgramDetail extends ProgramSummary {
   };
 }
 
-const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
+const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "comeback"];
 
 function programSummary(t: ProgramTemplate): ProgramSummary {
   return { id: t.id, name: t.name, author: t.author, category: t.category, level: t.level, daysPerWeek: [...t.daysPerWeek], weekCount: t.weeks ?? null, summary: t.summary };
