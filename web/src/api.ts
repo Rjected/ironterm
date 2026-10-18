@@ -6,6 +6,7 @@ import type { LiveSession } from "../shared/live";
 import type { WhoopData } from "../shared/whoop";
 import type { Trip } from "../shared/travel";
 import type { PlannedSession } from "../shared/program";
+import type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author } from "../worker/social/types";
 
 export type { Settings };
 
@@ -78,4 +79,37 @@ export const api = {
   setMode: (mode: "local" | "demo") => call<{ mode: Bootstrap["mode"] }>("/api/mode", { method: "PUT", body: JSON.stringify({ mode }) }),
   importStrong: (body: { csv: string; unit?: "kg" | "lb"; preview?: boolean }) => call<StrongImportResult>("/api/import/strong", { method: "POST", body: JSON.stringify(body) }),
   templates: () => call<{ id: string; title: string; equipment?: string }[]>("/api/templates"),
+};
+
+// ── social (docs/social/PROTOCOL.md §6) ──
+export type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author };
+export type AuthoredItem = FeedItem & { author: Author & { unit: "kg" | "lb" | null }; unit: "kg" | "lb" | null };
+export interface SocialFeed { items: AuthoredItem[]; next: string | null; stale: string[]; unreachable?: string[] }
+
+const qs = (o: Record<string, string | number | boolean | null | undefined>) => {
+  const p = Object.entries(o).filter(([, v]) => v != null && v !== false && v !== "").map(([k, v]) => `${k}=${encodeURIComponent(String(v === true ? 1 : v))}`);
+  return p.length ? `?${p.join("&")}` : "";
+};
+const J = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) });
+
+export const social = {
+  me: () => call<SocialMe>("/api/social/me"),
+  setup: (b: { handle: string; name: string; listed: boolean }) => call<{ ok: true; handle: string }>("/api/social/setup", J("POST", b)),
+  unregister: () => call("/api/social/setup", J("DELETE")),
+  search: (q: string) => call<{ users: { handle: string; name: string | null; server: string }[] }>(`/api/social/search${qs({ q })}`),
+  friends: () => call<{ friends: Friend[] }>("/api/social/friends"),
+  add: (b: { handle?: string; server?: string; note?: string; share: Share }) => call<{ friend: Friend }>("/api/social/friends", J("POST", b)),
+  accept: (id: string, share: Share) => call<{ friend: Friend }>(`/api/social/friends/${id}/accept`, J("POST", { share })),
+  reject: (id: string) => call(`/api/social/friends/${id}/reject`, J("POST")),
+  setShare: (id: string, share: Share) => call<{ friend: Friend }>(`/api/social/friends/${id}`, J("PUT", { share })),
+  remove: (id: string) => call<{ ok: true; notified: boolean }>(`/api/social/friends/${id}`, J("DELETE")),
+  feed: (o: { before?: string | null; fresh?: boolean } = {}) => call<SocialFeed>(`/api/social/feed${qs(o)}`),
+  profile: (id: string, fresh?: boolean) => call<{ profile: SocialProfile; stale: boolean }>(`/api/social/friends/${id}/profile${qs({ fresh })}`),
+  friendFeed: (id: string, o: { before?: string | null; fresh?: boolean } = {}) => call<SocialFeed>(`/api/social/friends/${id}/feed${qs(o)}`),
+  compare: (id: string, fresh?: boolean) => call<Compare & { stale: boolean }>(`/api/social/compare/${id}${qs({ fresh })}`),
+  mine: (before?: string | null) => call<{ items: FeedItem[]; next: string | null; unit: "kg" | "lb" | null }>(`/api/social/mine${qs({ before, limit: 50 })}`),
+  react: (friend: string, item: string, emoji: string | null) => call("/api/social/react", J("POST", { friend, item, emoji })),
+  comment: (friend: string, item: string, text: string) => call("/api/social/comment", J("POST", { friend, item, text })),
+  notifications: () => call<{ items: Notification[]; unread: number }>("/api/social/notifications"),
+  readAll: () => call("/api/social/notifications/read", J("POST")),
 };

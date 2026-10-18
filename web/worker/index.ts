@@ -17,6 +17,7 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 
 export interface Env {
   DB: D1Database;
@@ -37,6 +38,12 @@ export interface Env {
   /** Google OAuth client for the app's own sign-in (used when the app is on your own domain) */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  /** social: directory base URL (no default; friends by server URL work without one) */
+  SOCIAL_DIRECTORY?: string;
+  /** social: "1" allows http:// peers (local testing only) */
+  SOCIAL_ALLOW_HTTP?: string;
+  /** social: this server's public origin, when the request URL isn't it */
+  SOCIAL_ORIGIN?: string;
 }
 
 export interface Settings {
@@ -127,6 +134,9 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ ok: true });
   }
 
+  // Social, server to server: no login, but every /social/v1/* request must be signed (social/peer.ts).
+  if (isPeerPath(path)) return handlePeer(req, socialCtx(req, env, ctx, "none"), path);
+
   // ── who's allowed in ─────────────────────────────────────────────
   // Any one of: the app's own Google sign-in session (your own domain), a Cloudflare Access
   // token (workers.dev), or the optional password session. Off localhost, no login configured
@@ -184,6 +194,8 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   if (!ok && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) ok = true;
   if (!ok && (await checkToken(env.DB, bearer(req)))) ok = true;
   if (!ok) return json({ error: "login required", auth: authMode }, { status: 401 });
+
+  if (path.startsWith("/api/social/")) return handleOwner(req, socialCtx(req, env, ctx, authMode), path);
 
   const m = await mode(env);
   if (path === "/api/bootstrap" && method === "GET") return json(await bootstrap(env, authMode, m));
@@ -425,6 +437,14 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   return json({ error: "not found" }, { status: 404 });
 }
 
+function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: string): SocialCtx {
+  return {
+    env, self: socialOrigin(env, new URL(req.url)),
+    boot: async () => bootstrap(env, authMode, await mode(env)),
+    waitUntil: (p) => ctx.waitUntil(p),
+  };
+}
+
 async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap> {
   const s = await settings(env, m);
   if (m === "demo") {
@@ -445,9 +465,10 @@ async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
-    if (!url.pathname.startsWith("/api/") && !url.pathname.startsWith("/auth/")) return env.ASSETS ? env.ASSETS.fetch(req) : new Response("Not found", { status: 404 });
+    if (!url.pathname.startsWith("/api/") && !url.pathname.startsWith("/auth/") && !isPeerPath(url.pathname)) return env.ASSETS ? env.ASSETS.fetch(req) : new Response("Not found", { status: 404 });
     await ensureSchema(env.DB);
     await ensureWhoopSchema(env.DB);
+    await ensureSocialSchema(env.DB);
     try {
       return await api(req, env, ctx, url.pathname);
     } catch (e) {

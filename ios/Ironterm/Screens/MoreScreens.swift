@@ -26,6 +26,7 @@ struct MoreRoot: View {
             NeedsServer(title: m.title, what: m.what)
         } else {
             switch m {
+            case .lifts: LiftsScreen()
             case .calendar: CalendarScreen()
             case .program: ProgramScreen()
             case .body: BodyScreen()
@@ -41,12 +42,13 @@ struct MoreRoot: View {
 extension AppModel.More {
     var key: String {
         switch self {
-        case .calendar: return "F6"
-        case .program: return "F7"
-        case .body: return "F8"
-        case .insights: return "F9"
-        case .stats: return "F10"
-        case .setup: return "F11"
+        case .lifts: return "F6"
+        case .calendar: return "F7"
+        case .program: return "F8"
+        case .body: return "F9"
+        case .insights: return "F10"
+        case .stats: return "F11"
+        case .setup: return "F12"
         case .gallery: return ""
         }
     }
@@ -57,11 +59,12 @@ extension AppModel.More {
         case .body: return "The per-muscle recovery and load model"
         case .insights: return "Projections, strength balance and achievements"
         case .stats: return "Weekly totals and cardio"
-        case .setup, .gallery: return ""
+        case .lifts, .setup, .gallery: return ""
         }
     }
     var blurb: String {
         switch self {
+        case .lifts: return "Every lift · e1RM charts · PRs · projections"
         case .calendar: return "Month grid · done / planned / missed"
         case .program: return "Slots · upcoming · decision log · push to Hevy"
         case .body: return "Muscle map · readiness · weekly load"
@@ -73,6 +76,7 @@ extension AppModel.More {
     }
     var icon: String {
         switch self {
+        case .lifts: return "chart.line.uptrend.xyaxis"
         case .calendar: return "calendar"
         case .program: return "list.number"
         case .body: return "figure.arms.open"

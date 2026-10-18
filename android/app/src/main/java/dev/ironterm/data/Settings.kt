@@ -26,6 +26,7 @@ class Settings(private val prefs: SharedPreferences) {
         private const val K_REST_SOUND = "gym_rest_sound"
         private const val K_REST_VIBRATE = "gym_rest_vibrate"
         private const val K_DEFAULT_REST = "gym_default_rest"
+        private const val K_SOCIAL_SEEN = "social_notified_at"
 
         @Volatile private var instance: Settings? = null
 
@@ -107,6 +108,11 @@ class Settings(private val prefs: SharedPreferences) {
     var defaultRest: Int
         get() = prefs.getInt(K_DEFAULT_REST, 90)
         set(v) = prefs.edit().putInt(K_DEFAULT_REST, v.coerceIn(0, 600)).apply()
+
+    /** FRIENDS: newest notification time already shown as a system notification (ISO). */
+    var socialNotifiedAt: String?
+        get() = prefs.getString(K_SOCIAL_SEEN, null)
+        set(v) = prefs.edit().putString(K_SOCIAL_SEEN, v).apply()
 
     val isConfigured: Boolean
         get() = when (mode) {

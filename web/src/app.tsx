@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { BIG_FOUR, LIFTS } from "../shared/lifts";
 import type { GraphMetric } from "../shared/stats";
 import { fmt } from "../shared/units";
-import { api, ApiError, type Bootstrap } from "./api";
+import { api, ApiError, social, type Bootstrap } from "./api";
 import { Tip } from "./charts";
 import { derive } from "./derive";
 import { ago } from "./ui";
@@ -16,9 +16,10 @@ import { Stats } from "./views/stats";
 import { Calendar } from "./views/calendar";
 import { Insights } from "./views/insights";
 import { Body } from "./views/body";
+import { Friends } from "./views/friends";
 
-export type View = "dash" | "gym" | "cal" | "prog" | "lifts" | "stats" | "ins" | "body" | "hist" | "set";
-export interface Route { view: View; lift?: string; date?: string; workout?: string }
+export type View = "dash" | "gym" | "cal" | "prog" | "lifts" | "stats" | "ins" | "body" | "hist" | "set" | "friends";
+export interface Route { view: View; lift?: string; date?: string; workout?: string; tab?: string; id?: string }
 export type Nav = (r: Route) => void;
 
 const VIEWS: { v: View; key: string; label: string; short: string }[] = [
@@ -32,18 +33,20 @@ const VIEWS: { v: View; key: string; label: string; short: string }[] = [
   { v: "body", key: "F8", label: "BODY", short: "BODY" },
   { v: "hist", key: "F9", label: "HISTORY", short: "HIST" },
   { v: "set", key: "F10", label: "SETUP", short: "SETUP" },
+  { v: "friends", key: "F11", label: "FRIENDS", short: "FRND" },
 ];
 // Phone tab bar: the four most used, the rest behind MORE.
 const TABS: View[] = ["dash", "gym", "prog", "lifts"];
 
 function parseHash(): Route {
-  const [v, a] = location.hash.replace(/^#\/?/, "").split("/");
+  const [v, a, b] = location.hash.replace(/^#\/?/, "").split("/");
   const view = (VIEWS.find((x) => x.v === v)?.v ?? "dash") as View;
   if (view === "lifts") return { view, lift: a };
+  if (view === "friends") return { view, tab: a || undefined, id: b || undefined };
   if (view === "hist") return a?.match(/^\d{4}-\d\d-\d\d$/) ? { view, date: a } : { view, workout: a };
   return { view };
 }
-const toHash = (r: Route) => `#${r.view}${r.lift ? "/" + r.lift : r.date ? "/" + r.date : r.workout ? "/" + r.workout : ""}`;
+const toHash = (r: Route) => `#${r.view}${r.lift ? "/" + r.lift : r.date ? "/" + r.date : r.workout ? "/" + r.workout : r.tab ? "/" + r.tab + (r.id ? "/" + r.id : "") : ""}`;
 
 interface Cmd { key: string; label: string; run: () => void }
 
@@ -57,6 +60,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [clock, setClock] = useState(new Date());
   const [more, setMore] = useState(false);
+  const [unread, setUnread] = useState(0);
 
   const load = () =>
     api.bootstrap().then((x) => { setB(x); setMetric(x.settings.graphMetric ?? "volume"); }).catch((e) => {
@@ -67,6 +71,14 @@ export function App() {
     });
 
   useEffect(() => { load(); }, []);
+  // Social notifications badge: a cheap poll of our own server (friends are never contacted for it).
+  useEffect(() => {
+    if (!b) return;
+    const poll = () => social.me().then((m) => setUnread(m.enabled ? m.unread : 0)).catch(() => {});
+    poll();
+    const t = setInterval(poll, 60_000);
+    return () => clearInterval(t);
+  }, [!!b]);
   useEffect(() => {
     const f = () => setRoute(parseHash());
     window.addEventListener("hashchange", f);
@@ -191,6 +203,7 @@ export function App() {
         <div class="meta">
           <span class={`badge ${b.mode}`} title={local ? "No Hevy: workouts are stored and logged here" : undefined}><i class="dot" />{b.mode.toUpperCase()}</span>
           {b.auth === "none" && b.mode !== "demo" && <span class="badge warn" title="No Access or password configured">OPEN</span>}
+          {unread > 0 && <button class="badge social" title={`${unread} new from friends`} onClick={() => nav({ view: "friends", tab: "alerts" })}>FRIENDS · {unread}</button>}
           {!local && <button class="btn" style={{ border: 0, height: "100%" }} disabled={busy} onClick={doSync} title="Sync now">{busy ? "…" : "SYNC"} <span class="faint">{live ? ago(b.sync.at) : ""}</span></button>}
           <span class="unit faint">{d.unit.toUpperCase()}</span>
           <span class="clock dim">{clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: d.tz })}</span>
@@ -241,10 +254,11 @@ export function App() {
         {route.view === "lifts" && <Lifts d={d} lift={route.lift} nav={nav} />}
         {route.view === "hist" && <History d={d} mode={b.mode} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m); load(); }} />}
         {route.view === "set" && <Setup b={b} onSaved={(m) => { say(m); load(); }} />}
+        {route.view === "friends" && <Friends key={`${route.tab ?? ""}/${route.id ?? ""}`} tab={route.tab} id={route.id} nav={nav} say={say} onUnread={setUnread} />}
       </main>
 
       <footer class="status">
-        <span><b>F1–F10</b> views</span>
+        <span><b>F1–F11</b> views</span>
         <span><b>/</b> command</span>
         <span><b>SQ BENCH DL OHP</b> lifts</span>
         {!local && <span><b>SYNC PUSH</b> hevy</span>}

@@ -1,0 +1,1276 @@
+{
+  "items": [
+    {
+      "id": "pr:b-demo-2026-10-15:ohp:rep:2",
+      "at": "2026-10-15T12:33:00.000Z",
+      "reactions": [
+        {
+          "emoji": "🔥",
+          "from": [
+            {
+              "server": "https://a.test",
+              "name": "Alice"
+            }
+          ]
+        }
+      ],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "rep",
+      "reps": 2,
+      "weight": 134.6,
+      "prev": 132.1
+    },
+    {
+      "id": "w:b-demo-2026-10-15",
+      "at": "2026-10-15T11:27:00.000Z",
+      "reactions": [
+        {
+          "emoji": "💪",
+          "from": [
+            {
+              "server": "https://a.test",
+              "name": "Alice"
+            }
+          ]
+        }
+      ],
+      "comments": [
+        {
+          "id": "02abebdd-d8dc-41cc-9069-df21475673f6",
+          "from": {
+            "server": "https://a.test",
+            "name": "Alice"
+          },
+          "text": "Big week, nice work.",
+          "at": "2026-10-18T05:13:44.113Z"
+        }
+      ],
+      "kind": "session",
+      "title": "Strength · B1",
+      "durationMin": 66,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Overhead Press (Barbell)",
+          "lift": "ohp",
+          "top": {
+            "weight": 134.6,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 68.6,
+              "reps": 3
+            },
+            {
+              "weight": 101.6,
+              "reps": 3
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 2
+            }
+          ]
+        },
+        {
+          "name": "Deadlift (Barbell)",
+          "lift": "deadlift",
+          "top": {
+            "weight": 94,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 94,
+              "reps": 8
+            },
+            {
+              "weight": 94,
+              "reps": 8
+            },
+            {
+              "weight": 94,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Row",
+          "lift": "dbRow",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 20
+            }
+          ]
+        }
+      ],
+      "volume": 5768,
+      "note": "Felt strong, belt on the top set."
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:bicepCurl:rep:20",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bicepCurl",
+      "liftName": "Bicep Curl",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 116.9,
+      "prev": 111.8
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:squat:e1rm:5",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "e1rm",
+      "reps": 5,
+      "weight": 299.3,
+      "prev": 295.7
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:squat:rep:5",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "rep",
+      "reps": 5,
+      "weight": 256.6,
+      "prev": 246.4
+    },
+    {
+      "id": "w:b-demo-2026-10-13",
+      "at": "2026-10-13T10:18:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · A1",
+      "durationMin": 76,
+      "sets": 20,
+      "exercises": [
+        {
+          "name": "Squat (Barbell)",
+          "lift": "squat",
+          "top": {
+            "weight": 256.6,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 129.6,
+              "reps": 3
+            },
+            {
+              "weight": 193.1,
+              "reps": 3
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 1
+            },
+            {
+              "weight": 256.6,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "name": "Bench Press (Barbell)",
+          "lift": "bench",
+          "top": {
+            "weight": 83.8,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 83.8,
+              "reps": 8
+            },
+            {
+              "weight": 83.8,
+              "reps": 8
+            },
+            {
+              "weight": 83.8,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Lat Pulldown (Cable)",
+          "lift": "latPulldown",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 18
+            }
+          ]
+        },
+        {
+          "name": "Bicep Curl (Dumbbell)",
+          "lift": "bicepCurl",
+          "top": {
+            "weight": 116.9,
+            "reps": 12
+          },
+          "sets": [
+            {
+              "weight": 116.9,
+              "reps": 12
+            },
+            {
+              "weight": 116.9,
+              "reps": 12
+            },
+            {
+              "weight": 116.9,
+              "reps": 12
+            },
+            {
+              "weight": 116.9,
+              "reps": 23
+            }
+          ]
+        }
+      ],
+      "volume": 14448
+    },
+    {
+      "id": "pr:b-demo-2026-10-08:bench:e1rm:5",
+      "at": "2026-10-08T11:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bench",
+      "liftName": "Bench Press",
+      "prKind": "e1rm",
+      "reps": 5,
+      "weight": 189.7,
+      "prev": 176
+    },
+    {
+      "id": "pr:b-demo-2026-10-08:bench:rep:5",
+      "at": "2026-10-08T11:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bench",
+      "liftName": "Bench Press",
+      "prKind": "rep",
+      "reps": 5,
+      "weight": 162.6,
+      "prev": 147.3
+    },
+    {
+      "id": "pr:b-demo-2026-10-08:latPulldown:rep:20",
+      "at": "2026-10-08T11:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "latPulldown",
+      "liftName": "Lat Pulldown",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 45.7,
+      "prev": 43.2
+    },
+    {
+      "id": "pr:b-demo-2026-10-08:squat:rep:10",
+      "at": "2026-10-08T11:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "rep",
+      "reps": 10,
+      "weight": 96.5,
+      "prev": 94
+    },
+    {
+      "id": "w:b-demo-2026-10-08",
+      "at": "2026-10-08T10:19:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · A2",
+      "durationMin": 71,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Bench Press (Barbell)",
+          "lift": "bench",
+          "top": {
+            "weight": 162.6,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 81.3,
+              "reps": 3
+            },
+            {
+              "weight": 121.9,
+              "reps": 3
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 1
+            },
+            {
+              "weight": 162.6,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "name": "Squat (Barbell)",
+          "lift": "squat",
+          "top": {
+            "weight": 96.5,
+            "reps": 10
+          },
+          "sets": [
+            {
+              "weight": 96.5,
+              "reps": 10
+            },
+            {
+              "weight": 96.5,
+              "reps": 8
+            },
+            {
+              "weight": 96.5,
+              "reps": 9
+            }
+          ]
+        },
+        {
+          "name": "Lat Pulldown (Cable)",
+          "lift": "latPulldown",
+          "top": {
+            "weight": 45.7,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 45.7,
+              "reps": 15
+            },
+            {
+              "weight": 45.7,
+              "reps": 15
+            },
+            {
+              "weight": 45.7,
+              "reps": 26
+            }
+          ]
+        }
+      ],
+      "volume": 7442
+    },
+    {
+      "id": "pr:b-demo-2026-10-06:ohp:e1rm:5",
+      "at": "2026-10-06T11:33:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "e1rm",
+      "reps": 5,
+      "weight": 154.1,
+      "prev": 135.5
+    },
+    {
+      "id": "pr:b-demo-2026-10-06:ohp:rep:5",
+      "at": "2026-10-06T11:33:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "rep",
+      "reps": 5,
+      "weight": 132.1,
+      "prev": 109.2
+    },
+    {
+      "id": "w:b-demo-2026-10-06",
+      "at": "2026-10-06T10:21:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · B1",
+      "durationMin": 72,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Overhead Press (Barbell)",
+          "lift": "ohp",
+          "top": {
+            "weight": 132.1,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 66.1,
+              "reps": 3
+            },
+            {
+              "weight": 99.1,
+              "reps": 3
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 1
+            },
+            {
+              "weight": 132.1,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "name": "Deadlift (Barbell)",
+          "lift": "deadlift",
+          "top": {
+            "weight": 88.9,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 88.9,
+              "reps": 8
+            },
+            {
+              "weight": 88.9,
+              "reps": 8
+            },
+            {
+              "weight": 88.9,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Row",
+          "lift": "dbRow",
+          "top": {
+            "weight": 38.1,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 38.1,
+              "reps": 15
+            },
+            {
+              "weight": 38.1,
+              "reps": 15
+            },
+            {
+              "weight": 38.1,
+              "reps": 27
+            }
+          ]
+        }
+      ],
+      "volume": 6155
+    },
+    {
+      "id": "a:club-1500-actual",
+      "at": "2026-10-02T12:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "achievement",
+      "title": "1,500 lb Club (Actual)",
+      "tier": "gold",
+      "description": "Heaviest squat, bench and deadlift sets actually lifted add up to 1,500 lb (680 kg)."
+    },
+    {
+      "id": "pr:b-demo-2026-10-02:deadlift:rep:3",
+      "at": "2026-10-02T12:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "deadlift",
+      "liftName": "Deadlift",
+      "prKind": "rep",
+      "reps": 3,
+      "weight": 269.3,
+      "prev": 259.1
+    },
+    {
+      "id": "pr:b-demo-2026-10-02:ohp:rep:8",
+      "at": "2026-10-02T12:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "rep",
+      "reps": 8,
+      "weight": 43.2,
+      "prev": 40.6
+    },
+    {
+      "id": "w:b-demo-2026-10-02",
+      "at": "2026-10-02T11:36:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · B2",
+      "durationMin": 58,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Deadlift (Barbell)",
+          "lift": "deadlift",
+          "top": {
+            "weight": 269.3,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 134.6,
+              "reps": 3
+            },
+            {
+              "weight": 203.2,
+              "reps": 3
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 1
+            },
+            {
+              "weight": 269.3,
+              "reps": 3
+            }
+          ]
+        },
+        {
+          "name": "Overhead Press (Barbell)",
+          "lift": "ohp",
+          "top": {
+            "weight": 43.2,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 43.2,
+              "reps": 8
+            },
+            {
+              "weight": 43.2,
+              "reps": 8
+            },
+            {
+              "weight": 43.2,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Row",
+          "lift": "dbRow",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 19
+            }
+          ]
+        }
+      ],
+      "volume": 6259
+    },
+    {
+      "id": "pr:b-demo-2026-10-01:bench:e1rm:3",
+      "at": "2026-10-01T12:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bench",
+      "liftName": "Bench Press",
+      "prKind": "e1rm",
+      "reps": 3,
+      "weight": 176,
+      "prev": 171.9
+    },
+    {
+      "id": "pr:b-demo-2026-10-01:bench:rep:3",
+      "at": "2026-10-01T12:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bench",
+      "liftName": "Bench Press",
+      "prKind": "rep",
+      "reps": 3,
+      "weight": 160,
+      "prev": 147.3
+    },
+    {
+      "id": "pr:b-demo-2026-10-01:latPulldown:rep:20",
+      "at": "2026-10-01T12:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "latPulldown",
+      "liftName": "Lat Pulldown",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 43.2,
+      "prev": 40.6
+    },
+    {
+      "id": "pr:b-demo-2026-10-01:squat:rep:10",
+      "at": "2026-10-01T12:30:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "rep",
+      "reps": 10,
+      "weight": 94,
+      "prev": 88.9
+    },
+    {
+      "id": "w:b-demo-2026-10-01",
+      "at": "2026-10-01T11:14:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · A2",
+      "durationMin": 76,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Bench Press (Barbell)",
+          "lift": "bench",
+          "top": {
+            "weight": 160,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 81.3,
+              "reps": 3
+            },
+            {
+              "weight": 119.4,
+              "reps": 3
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 1
+            },
+            {
+              "weight": 160,
+              "reps": 3
+            }
+          ]
+        },
+        {
+          "name": "Squat (Barbell)",
+          "lift": "squat",
+          "top": {
+            "weight": 94,
+            "reps": 10
+          },
+          "sets": [
+            {
+              "weight": 94,
+              "reps": 10
+            },
+            {
+              "weight": 94,
+              "reps": 10
+            },
+            {
+              "weight": 94,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "name": "Lat Pulldown (Cable)",
+          "lift": "latPulldown",
+          "top": {
+            "weight": 43.2,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 43.2,
+              "reps": 15
+            },
+            {
+              "weight": 43.2,
+              "reps": 15
+            },
+            {
+              "weight": 43.2,
+              "reps": 25
+            }
+          ]
+        }
+      ],
+      "volume": 7115
+    },
+    {
+      "id": "pr:b-demo-2026-09-28:bicepCurl:rep:20",
+      "at": "2026-09-28T12:46:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bicepCurl",
+      "liftName": "Bicep Curl",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 111.8,
+      "prev": 109.2
+    },
+    {
+      "id": "pr:b-demo-2026-09-28:squat:rep:2",
+      "at": "2026-09-28T12:46:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "rep",
+      "reps": 2,
+      "weight": 251.5,
+      "prev": 246.4
+    },
+    {
+      "id": "w:b-demo-2026-09-28",
+      "at": "2026-09-28T11:39:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · A1",
+      "durationMin": 67,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Squat (Barbell)",
+          "lift": "squat",
+          "top": {
+            "weight": 251.5,
+            "reps": 2
+          },
+          "sets": [
+            {
+              "weight": 127,
+              "reps": 3
+            },
+            {
+              "weight": 188,
+              "reps": 3
+            },
+            {
+              "weight": 251.5,
+              "reps": 2
+            },
+            {
+              "weight": 251.5,
+              "reps": 2
+            },
+            {
+              "weight": 251.5,
+              "reps": 2
+            },
+            {
+              "weight": 251.5,
+              "reps": 2
+            },
+            {
+              "weight": 251.5,
+              "reps": 1
+            },
+            {
+              "weight": 251.5,
+              "reps": 1
+            }
+          ]
+        },
+        {
+          "name": "Bench Press (Barbell)",
+          "lift": "bench",
+          "top": {
+            "weight": 78.8,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 78.8,
+              "reps": 8
+            },
+            {
+              "weight": 78.8,
+              "reps": 8
+            },
+            {
+              "weight": 78.8,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Lat Pulldown (Cable)",
+          "lift": "latPulldown",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 23
+            }
+          ]
+        },
+        {
+          "name": "Bicep Curl (Dumbbell)",
+          "lift": "bicepCurl",
+          "top": {
+            "weight": 111.8,
+            "reps": 12
+          },
+          "sets": [
+            {
+              "weight": 111.8,
+              "reps": 12
+            },
+            {
+              "weight": 111.8,
+              "reps": 12
+            },
+            {
+              "weight": 111.8,
+              "reps": 12
+            },
+            {
+              "weight": 111.8,
+              "reps": 21
+            }
+          ]
+        }
+      ],
+      "volume": 12929
+    },
+    {
+      "id": "pr:b-demo-2026-09-24:dbRow:rep:20",
+      "at": "2026-09-24T12:08:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "dbRow",
+      "liftName": "Dumbbell Row",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 40.6,
+      "prev": 38.1
+    },
+    {
+      "id": "pr:b-demo-2026-09-24:deadlift:rep:1",
+      "at": "2026-09-24T12:08:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "deadlift",
+      "liftName": "Deadlift",
+      "prKind": "rep",
+      "reps": 1,
+      "weight": 264.2,
+      "prev": 259.1
+    },
+    {
+      "id": "pr:b-demo-2026-09-24:ohp:rep:8",
+      "at": "2026-09-24T12:08:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "rep",
+      "reps": 8,
+      "weight": 40.6,
+      "prev": 35.6
+    },
+    {
+      "id": "w:b-demo-2026-09-24",
+      "at": "2026-09-24T11:04:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "session",
+      "title": "Strength · B2",
+      "durationMin": 64,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Deadlift (Barbell)",
+          "lift": "deadlift",
+          "top": {
+            "weight": 264.2,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 132.1,
+              "reps": 3
+            },
+            {
+              "weight": 198.1,
+              "reps": 3
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            },
+            {
+              "weight": 264.2,
+              "reps": 1
+            }
+          ]
+        },
+        {
+          "name": "Overhead Press (Barbell)",
+          "lift": "ohp",
+          "top": {
+            "weight": 40.6,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 8
+            },
+            {
+              "weight": 40.6,
+              "reps": 8
+            },
+            {
+              "weight": 40.6,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Row",
+          "lift": "dbRow",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 24
+            }
+          ]
+        }
+      ],
+      "volume": 5812
+    }
+  ],
+  "next": "w:b-demo-2026-09-24",
+  "unit": "kg"
+}

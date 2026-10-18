@@ -28,6 +28,12 @@ sealed interface Route {
     data object Stats : Route
     data object Setup : Route
     data object Gallery : Route
+    /** LIFTS / FRIENDS when they aren't in the bottom bar (see [Tabs.bar]) */
+    data object Lifts : Route
+    data object Friends : Route
+    data class Friend(val id: String) : Route
+    data object AddFriend : Route
+    data object Notifications : Route
 }
 
 /** HISTORY list: paged, searchable, filterable by a day picked on the year graph. */
@@ -66,7 +72,55 @@ data class DataUi(
     val starting: Boolean = false,
     /** one-shot message (snackbar) */
     val toast: String? = null,
+    val social: SocialUi = SocialUi(),
 )
+
+/** A paged feed (merged friends feed, one friend's feed, or my own items). */
+data class FeedUi(
+    val items: List<dev.ironterm.data.social.FeedItem> = emptyList(),
+    val next: String? = null,
+    /** friend ids the server served from its cache */
+    val stale: List<String> = emptyList(),
+    /** friend ids that couldn't be reached at all */
+    val unreachable: List<String> = emptyList(),
+    val loading: Boolean = false,
+    val loadingMore: Boolean = false,
+    val error: String? = null,
+    val loaded: Boolean = false,
+    val savedAt: Long = 0,
+)
+
+data class SearchUi(val query: String = "", val users: List<dev.ironterm.data.social.DirectoryUser> = emptyList(), val loading: Boolean = false, val error: String? = null)
+
+/** FRIENDS: everything social, from /api/social. */
+data class SocialUi(
+    val me: Load<dev.ironterm.data.social.SocialMe> = Load(),
+    val friends: Load<dev.ironterm.data.social.FriendList> = Load(),
+    val feed: FeedUi = FeedUi(),
+    val mine: FeedUi = FeedUi(),
+    val profile: Map<String, Load<dev.ironterm.data.social.ProfileDoc>> = emptyMap(),
+    val compare: Map<String, Load<dev.ironterm.data.social.Compare>> = emptyMap(),
+    val friendFeed: Map<String, FeedUi> = emptyMap(),
+    val notifications: Load<dev.ironterm.data.social.NotificationList> = Load(),
+    val search: SearchUi = SearchUi(),
+    /** actions in flight: "setup", "add", "accept:<id>", "share:<id>", "comment:<item>", … */
+    val busy: Set<String> = emptySet(),
+    val setupError: String? = null,
+    val addError: String? = null,
+    /** bumped when ADD FRIEND succeeded (the screen pops back) */
+    val added: Int = 0,
+    /** FRIENDS screen section: feed | friends | mine */
+    val section: String = SocialUi.FEED,
+) {
+    companion object {
+        const val FEED = "feed"
+        const val LIST = "friends"
+        const val MINE = "mine"
+    }
+
+    val unread: Int get() = notifications.data?.unread ?: me.data?.unread ?: 0
+    val incoming: Int get() = friends.data?.incoming?.size ?: 0
+}
 
 data class GymPrefs(val keepScreenOn: Boolean = true, val restSound: Boolean = true, val restVibrate: Boolean = true, val defaultRest: Int = 90)
 
@@ -112,6 +166,30 @@ interface AppActions {
     fun gymRestoreFailed() {}
     fun gymDropFailed() {}
     fun setGymPrefs(p: GymPrefs) {}
+
+    // social (FRIENDS)
+    /** /me, then friends, feed and notifications when social is set up */
+    fun socialLoad(force: Boolean = false) {}
+    fun socialSection(section: String) {}
+    fun socialSetup(handle: String, name: String, listed: Boolean) {}
+    /** pull to refresh: ?fresh=1 */
+    fun feedRefresh() {}
+    fun feedMore() {}
+    fun react(item: dev.ironterm.data.social.FeedItem, emoji: String) {}
+    fun comment(item: dev.ironterm.data.social.FeedItem, text: String) {}
+    fun directorySearch(q: String) {}
+    /** [target]: a handle or a server URL */
+    fun addFriend(target: String, note: String, share: String) {}
+    fun acceptFriend(id: String, share: String) {}
+    fun rejectFriend(id: String) {}
+    fun setShare(id: String, share: String) {}
+    fun unfriend(id: String) {}
+    fun loadFriend(id: String, force: Boolean = false) {}
+    fun friendFeedMore(id: String) {}
+    fun loadMine(force: Boolean = false) {}
+    fun mineMore() {}
+    fun loadNotifications(force: Boolean = false) {}
+    fun markNotificationsRead() {}
 
     companion object { val None = object : AppActions {} }
 }

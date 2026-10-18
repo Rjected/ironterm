@@ -31,6 +31,7 @@
   - **Gym mode** for logging at the bar: big steppers, a plate loader, and a rest timer that keeps running on the lock screen (an Android notification, an iOS Live Activity).
   - **Works offline.** A session survives a basement gym and a killed app, and syncs when you're back online.
   - **Every other screen too:** lifts, history, calendar, program, body map, insights and stats.
+- **Friends, without a central database.** Each person's server is their identity: add friends by handle or server URL, choose per friend what they see (no weights by default), react and comment, and compare lifts. Servers sign every request to each other; an optional directory only maps handles to servers. See [docs/social](docs/social/README.md).
 - **Widgets.** Activity graph, next workout, this week, lifts, recovery and the current set, each in several sizes. Lock-screen widgets on iOS.
 
 ## Screens

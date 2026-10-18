@@ -1,0 +1,234 @@
+{
+  "items": [
+    {
+      "id": "pr:b-demo-2026-10-15:ohp:rep:2",
+      "at": "2026-10-15T12:33:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "ohp",
+      "liftName": "Overhead Press",
+      "prKind": "rep",
+      "reps": 2,
+      "weight": 134.6,
+      "prev": 132.1,
+      "author": {
+        "id": "650b12a8f954",
+        "server": "https://b.test",
+        "handle": "bob",
+        "name": "Bob",
+        "unit": "kg"
+      },
+      "unit": "kg"
+    },
+    {
+      "id": "w:b-demo-2026-10-15",
+      "at": "2026-10-15T11:27:00.000Z",
+      "reactions": [
+        {
+          "emoji": "💪",
+          "from": [
+            {
+              "server": "https://a.test",
+              "name": "Alice"
+            }
+          ]
+        }
+      ],
+      "comments": [
+        {
+          "id": "02abebdd-d8dc-41cc-9069-df21475673f6",
+          "from": {
+            "server": "https://a.test",
+            "name": "Alice"
+          },
+          "text": "Big week, nice work.",
+          "at": "2026-10-18T05:13:44.113Z"
+        }
+      ],
+      "kind": "session",
+      "title": "Strength · B1",
+      "durationMin": 66,
+      "sets": 16,
+      "exercises": [
+        {
+          "name": "Overhead Press (Barbell)",
+          "lift": "ohp",
+          "top": {
+            "weight": 134.6,
+            "reps": 1
+          },
+          "sets": [
+            {
+              "weight": 68.6,
+              "reps": 3
+            },
+            {
+              "weight": 101.6,
+              "reps": 3
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 1
+            },
+            {
+              "weight": 134.6,
+              "reps": 2
+            }
+          ]
+        },
+        {
+          "name": "Deadlift (Barbell)",
+          "lift": "deadlift",
+          "top": {
+            "weight": 94,
+            "reps": 8
+          },
+          "sets": [
+            {
+              "weight": 94,
+              "reps": 8
+            },
+            {
+              "weight": 94,
+              "reps": 8
+            },
+            {
+              "weight": 94,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Row",
+          "lift": "dbRow",
+          "top": {
+            "weight": 40.6,
+            "reps": 15
+          },
+          "sets": [
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 15
+            },
+            {
+              "weight": 40.6,
+              "reps": 20
+            }
+          ]
+        }
+      ],
+      "volume": 5768,
+      "note": "Felt strong, belt on the top set.",
+      "author": {
+        "id": "650b12a8f954",
+        "server": "https://b.test",
+        "handle": "bob",
+        "name": "Bob",
+        "unit": "kg"
+      },
+      "unit": "kg"
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:bicepCurl:rep:20",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "bicepCurl",
+      "liftName": "Bicep Curl",
+      "prKind": "rep",
+      "reps": 20,
+      "weight": 116.9,
+      "prev": 111.8,
+      "author": {
+        "id": "650b12a8f954",
+        "server": "https://b.test",
+        "handle": "bob",
+        "name": "Bob",
+        "unit": "kg"
+      },
+      "unit": "kg"
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:squat:e1rm:5",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "e1rm",
+      "reps": 5,
+      "weight": 299.3,
+      "prev": 295.7,
+      "author": {
+        "id": "650b12a8f954",
+        "server": "https://b.test",
+        "handle": "bob",
+        "name": "Bob",
+        "unit": "kg"
+      },
+      "unit": "kg"
+    },
+    {
+      "id": "pr:b-demo-2026-10-13:squat:rep:5",
+      "at": "2026-10-13T11:34:00.000Z",
+      "reactions": [],
+      "comments": [],
+      "kind": "pr",
+      "lift": "squat",
+      "liftName": "Back Squat",
+      "prKind": "rep",
+      "reps": 5,
+      "weight": 256.6,
+      "prev": 246.4,
+      "author": {
+        "id": "650b12a8f954",
+        "server": "https://b.test",
+        "handle": "bob",
+        "name": "Bob",
+        "unit": "kg"
+      },
+      "unit": "kg"
+    }
+  ],
+  "next": "pr:b-demo-2026-10-13:squat:rep:5",
+  "stale": []
+}

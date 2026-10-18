@@ -1,0 +1,9 @@
+{
+  "users": [
+    {
+      "handle": "bob",
+      "name": "Bob",
+      "server": "https://b.test"
+    }
+  ]
+}

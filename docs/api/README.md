@@ -42,6 +42,13 @@ The native apps render each screen from one document. The server builds them fro
 | `GET /api/app/body?mode=ready\|load` | coloured front and back figures as standalone SVG, plus the per-muscle list |
 | `GET /api/app/insights` · `/api/app/stats` | projections, strength balance, achievements · weekly totals, cardio |
 
+## Social
+
+`/api/social/*` (friends, feed, profile, compare, reactions, notifications) is specified in
+[`../social/PROTOCOL.md`](../social/PROTOCOL.md) §6; types in `web/worker/social/types.ts`. Samples
+from the end-to-end test (three servers on demo-derived data) are in [`social/`](social/); regenerate
+them with `WRITE_FIXTURES=1 pnpm test`.
+
 ## Snapshot (v1)
 
 Type: `web/shared/snapshot.ts`. Sample: [`snapshot.sample.json`](snapshot.sample.json) (demo data).

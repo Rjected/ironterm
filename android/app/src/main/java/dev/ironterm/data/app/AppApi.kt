@@ -34,9 +34,10 @@ class AppApi(
     private val base = normalizeServerUrl(serverUrl) ?: throw IOException("Invalid server URL")
     private val jsonType = "application/json".toMediaType()
 
-    private fun enc(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+    internal fun enc(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
-    private suspend fun <T> call(method: String, path: String, body: String?, de: DeserializationStrategy<T>?, json: Json = AppJson.json): T? =
+    /** [authOn403] false: only 401 means "token revoked" (social answers 403 for other reasons). */
+    internal suspend fun <T> call(method: String, path: String, body: String?, de: DeserializationStrategy<T>?, json: Json = AppJson.json, authOn403: Boolean = true): T? =
         withContext(Dispatchers.IO) {
             val req = Request.Builder().url(base + path)
                 .header("Authorization", "Bearer $token")
@@ -46,7 +47,7 @@ class AppApi(
             client.newCall(req).execute().use { res ->
                 val text = res.body?.string().orEmpty()
                 when {
-                    res.code == 401 || res.code == 403 -> throw AuthException()
+                    res.code == 401 || (res.code == 403 && authOn403) -> throw AuthException()
                     !res.isSuccessful -> throw ApiException(res.code, errorText(text) ?: "Server error ${res.code}")
                     de == null -> null
                     else -> try {

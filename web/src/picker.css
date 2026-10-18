@@ -43,3 +43,5 @@
   .pick-opt { padding: 11px 12px 11px 8px; }
   .pick .pick-q { font-size: 16px; } /* no iOS zoom-on-focus */
 }
+/* panels fade in with opacity (own stacking context): lift the one with an open picker above its neighbours */
+.pn:has(.pick.open) { position: relative; z-index: 61; }

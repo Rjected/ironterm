@@ -52,6 +52,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val refresher = Refresher(Settings.get(ctx), SnapshotStore.get(ctx), ctx.filesDir)
         val r = refresher.refresh()
         Widgets.updateAll(ctx) // also redraws error/auth state
+        if (r is RefreshResult.Ok) runCatching { SocialNotifier.check(ctx) }
         return when (r) {
             is RefreshResult.Ok, RefreshResult.NotConfigured -> Result.success()
             is RefreshResult.Failed -> if (r.auth || runAttemptCount >= 3) Result.failure() else Result.retry()

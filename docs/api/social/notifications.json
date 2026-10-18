@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "id": "23b86ea0-0b3e-409a-94c3-a1625c32e0b5",
+      "kind": "comment",
+      "from": {
+        "id": "93fb074e7b13",
+        "server": "https://a.test",
+        "handle": "alice",
+        "name": "Alice"
+      },
+      "item": "w:b-demo-2026-10-15",
+      "text": "Big week, nice work.",
+      "at": "2026-10-18T05:13:44.113Z",
+      "read": false
+    },
+    {
+      "id": "5170b997-b5ca-4ef2-a960-c1806c8e56aa",
+      "kind": "reaction",
+      "from": {
+        "id": "93fb074e7b13",
+        "server": "https://a.test",
+        "handle": "alice",
+        "name": "Alice"
+      },
+      "item": "pr:b-demo-2026-10-15:ohp:rep:2",
+      "emoji": "🔥",
+      "at": "2026-10-18T05:13:44.026Z",
+      "read": false
+    },
+    {
+      "id": "a668cda0-55ba-4e78-92ac-1e15992e4cdb",
+      "kind": "reaction",
+      "from": {
+        "id": "93fb074e7b13",
+        "server": "https://a.test",
+        "handle": "alice",
+        "name": "Alice"
+      },
+      "item": "w:b-demo-2026-10-15",
+      "emoji": "💪",
+      "at": "2026-10-18T05:13:43.941Z",
+      "read": false
+    },
+    {
+      "id": "d27c29a5-a117-481c-a988-e8e54e7c9c24",
+      "kind": "request",
+      "from": {
+        "id": "93fb074e7b13",
+        "server": "https://a.test",
+        "handle": "alice",
+        "name": "Alice"
+      },
+      "text": "Gym buddy from Tuesdays",
+      "at": "2026-10-18T05:13:43.636Z",
+      "read": false
+    }
+  ],
+  "unread": 4
+}

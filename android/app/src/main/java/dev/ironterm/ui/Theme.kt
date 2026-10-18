@@ -55,7 +55,17 @@ object Tabs {
     const val LIFTS = "lifts"
     const val HISTORY = "history"
     const val MORE = "more"
-    val bar = listOf(TODAY, GYM, LIFTS, HISTORY, MORE)
+    const val FRIENDS = "friends"
+    /**
+     * The bottom bar. With a server, FRIENDS is a daily destination (the feed, reactions, requests)
+     * and takes LIFTS' slot; LIFTS moves into MORE (TODAY already shows e1RMs and links to each
+     * lift). Direct mode has no server, so social can't work there: LIFTS keeps its tab.
+     */
+    val bar = listOf(TODAY, GYM, FRIENDS, HISTORY, MORE)
+    val barLocal = listOf(TODAY, GYM, LIFTS, HISTORY, MORE)
+    fun bar(mode: dev.ironterm.data.SourceMode) = if (mode == dev.ironterm.data.SourceMode.DIRECT) barLocal else bar
+    /** every tab id, in or out of the current bar */
+    val tabs = listOf(TODAY, GYM, LIFTS, FRIENDS, HISTORY, MORE)
 
     // deep-link targets that open a screen under MORE (or a tab with something selected)
     const val SETUP = "setup"
@@ -65,7 +75,8 @@ object Tabs {
     const val PROGRAM = "program"
     const val INSIGHTS = "insights"
     const val STATS = "stats"
-    val all = bar + listOf(SETUP, BODY, GRAPH, CALENDAR, PROGRAM, INSIGHTS, STATS)
+    const val NOTIFICATIONS = "notifications"
+    val all = tabs + listOf(SETUP, BODY, GRAPH, CALENDAR, PROGRAM, INSIGHTS, STATS, NOTIFICATIONS)
 }
 
 @Composable
