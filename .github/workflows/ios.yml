@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: jobs read the repo and nothing else unless they say so.
+permissions:
+  contents: read
+
+# One run per branch or PR: a new push to a PR cancels its stale run. Pushes to main never
+# cancel each other (the Android release job publishes over-the-air updates).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ios:
     # The project uses folder-synchronised groups (objectVersion 77): Xcode 16+.
@@ -15,7 +25,9 @@ jobs:
         working-directory: ios
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       # newest stable Xcode on the runner image, not the image default
       - name: Select newest Xcode
