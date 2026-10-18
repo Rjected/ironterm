@@ -1,6 +1,6 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, csrfBlock, OWNER, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, OWNER, passwordMatches, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
@@ -17,6 +17,7 @@ import type { Trip } from "../shared/travel";
 import { toStoredWorkout, type LiveSession } from "../shared/live";
 import { localTemplateId } from "../shared/lifts";
 import type { HevyWorkout } from "../shared/hevy";
+import { clientIp, loginBlocked, loginFailed, loginSucceeded } from "./ratelimit";
 import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 import { BadRequest, liveSession, notesEdit, programConfig, readJson, readObject, settingsPatch, trips as tripsBody, validTz, weighIn } from "./validate";
@@ -196,8 +197,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     return json({ error: "No login configured for this deployment." }, { status: 403 });
   }
   if (path === "/api/login" && method === "POST") {
-    const { password } = await readObject(req, true);
-    if (!env.APP_PASSWORD || typeof password !== "string" || !safeEqual(password, env.APP_PASSWORD)) return json({ error: "Wrong password" }, { status: 401 });
+    if (!env.APP_PASSWORD) return json({ error: "Password sign-in isn't configured." }, { status: 404 });
+    const ip = clientIp(req);
+    const wait = await loginBlocked(env.DB, ip);
+    if (wait) return json({ error: `Too many wrong passwords. Try again in ${Math.ceil(wait / 60)} min.` }, { status: 429, headers: { "retry-after": String(wait) } });
+    const { password: pw } = await readObject(req, true);
+    const password = typeof pw === "string" ? pw : "";
+    if (!(await passwordMatches(password, env.APP_PASSWORD))) {
+      await loginFailed(env.DB, ip);
+      return json({ error: "Wrong password" }, { status: 401 });
+    }
+    await loginSucceeded(env.DB, ip);
     return json({ ok: true }, { headers: { "set-cookie": await sessionCookie(sessionSecret!) } });
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
