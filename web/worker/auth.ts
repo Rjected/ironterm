@@ -18,18 +18,50 @@ export function safeEqual(a: string, b: string): boolean {
   return d === 0;
 }
 
-export async function sessionCookie(secret: string): Promise<string> {
+/**
+ * Who a session belongs to: OWNER for a real sign-in (Google, password), or `t<id>` when an app
+ * token was traded for it (/auth/app), so revoking the token also ends the sessions it made.
+ */
+export const OWNER = "o";
+const SUB_RE = /^(o|t[\w-]{1,40})$/;
+
+export async function sessionCookie(secret: string, sub: string = OWNER): Promise<string> {
+  if (!SUB_RE.test(sub)) throw new Error("bad session subject");
   const exp = Math.floor(Date.now() / 1000) + TTL;
-  return `${COOKIE}=${exp}.${await hmac(secret, String(exp))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${TTL}`;
+  return `${COOKIE}=${exp}.${sub}.${await hmac(secret, `${exp}.${sub}`)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${TTL}`;
 }
 
 export const clearCookie = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 
-export async function isAuthed(req: Request, secret: string): Promise<boolean> {
-  const m = (req.headers.get("cookie") ?? "").match(new RegExp(`${COOKIE}=(\\d+)\\.([\\w-]+)`));
-  if (!m) return false;
-  if (Number(m[1]) < Date.now() / 1000) return false;
-  return safeEqual(m[2], await hmac(secret, m[1]));
+/**
+ * The session's subject (OWNER or `t<token id>`) when the cookie is valid and unexpired, else null.
+ * Cookies from before subjects existed (`exp.sig`) no longer verify: one fresh sign-in.
+ */
+export async function sessionSubject(req: Request, secret: string): Promise<string | null> {
+  const m = (req.headers.get("cookie") ?? "").match(new RegExp(`(?:^|;\\s*)${COOKIE}=(\\d{1,12})\\.(o|t[\\w-]{1,40})\\.([\\w-]{20,100})(?:;|$)`));
+  if (!m) return null;
+  if (Number(m[1]) < Date.now() / 1000) return null;
+  return safeEqual(m[3], await hmac(secret, `${m[1]}.${m[2]}`)) ? m[2] : null;
+}
+
+// ───────── CSRF ─────────
+// Cookies (our session, Cloudflare Access's CF_Authorization) ride along on same-site requests,
+// and with no login on localhost there's no cookie at all to stop any page from POSTing
+// text/plain JSON at us. So a state-changing request must come from our own pages: judged by
+// Sec-Fetch-Site (every current browser) or, failing that, Origin. A request with neither isn't
+// from a browser page (curl, the apps). Bearer-token requests carry no ambient credential.
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/** null when the request may proceed, else why not. `origins`: this app's own origins. */
+export function csrfBlock(req: Request, origins: string[]): string | null {
+  if (SAFE_METHODS.has(req.method)) return null;
+  if (/^Bearer\s+\S+$/i.test(req.headers.get("authorization") ?? "")) return null;
+  const site = req.headers.get("sec-fetch-site");
+  if (site) return site === "same-origin" || site === "none" ? null : `cross-site request (${site})`;
+  const origin = req.headers.get("origin");
+  if (origin) return origins.includes(origin) ? null : "cross-origin request";
+  return null;
 }
 
 // ───────── Cloudflare Access (Google login in front of the app) ─────────
