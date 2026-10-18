@@ -216,6 +216,23 @@ final class GymStoreTests: XCTestCase {
         XCTAssertEqual(f.prs, [FinishPR(lift: "bench", short: "BENCH", kind: "rep", reps: 1, weight: 325, prev: 320)])
     }
 
+    func testFinishOnlineDropsAQueuedSaveSoTheWorkoutDoesNotComeBack() async throws {
+        let g = store()
+        await g.start(dayIndex: nil, empty: false)
+        let s = try XCTUnwrap(g.session)
+        // a save that failed while offline is still queued
+        online = false
+        g.complete(exId: s.exercises[0].id, set: 0)
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(g.queue.ops.count, 1)
+        online = true
+        await g.finish()
+        XCTAssertEqual(finishes.count, 1)
+        await g.queue.flush()
+        XCTAssertTrue(puts.isEmpty, "the stale save must not re-create the finished session on the server")
+        XCTAssertTrue(g.queue.ops.isEmpty)
+    }
+
     func testFinishOnALocalModeServerSaysSo() async throws {
         finishBody = #"{"workout":{"id":"local-1"},"local":true,"prs":[]}"#
         let g = store()
