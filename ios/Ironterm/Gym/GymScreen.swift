@@ -68,6 +68,9 @@ struct OutboxStrip: View {
                         .font(T.mono(10, .heavy)).foregroundStyle(T.bg).disabled(queue.flushing)
                 }
                 .foregroundStyle(T.bg)
+                if let e = queue.authError {
+                    Text("\(e) Kept on this phone until then.").font(T.mono(10, .bold)).foregroundStyle(T.bg).fixedSize(horizontal: false, vertical: true)
+                }
             }
             ForEach(Array(queue.failures.enumerated()), id: \.offset) { _, f in
                 HStack(alignment: .top) {
