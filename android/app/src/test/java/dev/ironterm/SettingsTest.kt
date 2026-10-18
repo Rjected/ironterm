@@ -2,8 +2,13 @@ package dev.ironterm
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import androidx.test.core.app.ApplicationProvider
+import dev.ironterm.data.KeystoreBox
 import dev.ironterm.data.SecretBox
+import dev.ironterm.testing.FakeAndroidKeyStore
+import org.junit.Assert.assertNotEquals
 import dev.ironterm.data.Settings
 import dev.ironterm.data.SourceMode
 import org.junit.Assert.assertEquals
@@ -47,6 +52,78 @@ class SettingsTest {
         val s = Settings(p, FakeBox)
         assertNull(s.appToken)
         assertFalse(s.isConfigured)
+    }
+
+    @Test fun keystoreBoxRoundTripsWithAFreshIvEachTime() {
+        FakeAndroidKeyStore.install()
+        FakeAndroidKeyStore.reset()
+        val box = KeystoreBox("test_box")
+        val a = box.seal("ht_secret")
+        val b = box.seal("ht_secret")
+        assertTrue(a.startsWith("v1:"))
+        assertNotEquals("random IV per seal", a, b)
+        assertFalse(a.contains("ht_secret"))
+        assertEquals("ht_secret", box.open(a))
+        assertEquals("ht_secret", KeystoreBox("test_box").open(b)) // same Keystore key, new instance
+        assertNull("tampered", box.open(a.dropLast(4) + "AAAA"))
+        assertNull("not ours", box.open("ht_secret"))
+        FakeAndroidKeyStore.reset() // key lost (e.g. data restored to another device)
+        assertNull(KeystoreBox("test_box").open(a))
+    }
+
+    /**
+     * The upgrade path: credentials written by the previous version (EncryptedSharedPreferences,
+     * androidx.security-crypto) are still there after the first launch of this one, sealed with the
+     * Keystore key, and the old files and master key are gone.
+     */
+    @Test fun upgradeFromEncryptedSharedPreferencesKeepsYouSignedIn() {
+        FakeAndroidKeyStore.install()
+        FakeAndroidKeyStore.reset()
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val masterKey = MasterKey.Builder(ctx).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
+        val old = EncryptedSharedPreferences.create(
+            ctx, "ironterm_prefs", masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+        old.edit().putString("mode", "SERVER").putString("server_url", "https://gym.example.com")
+            .putString("app_token", "ht_from_old_version").putString("api_key", "hevy-old").putInt("gym_default_rest", 150).commit()
+        val rawOld = ctx.getSharedPreferences("ironterm_prefs", Context.MODE_PRIVATE).all
+        assertFalse("the old file really is encrypted", rawOld.values.any { it.toString().contains("ht_from_old_version") })
+
+        Settings.override(null)
+        val s = Settings.get(ctx)
+        assertEquals(SourceMode.SERVER, s.mode)
+        assertTrue(s.isConfigured)
+        assertEquals("https://gym.example.com", s.serverUrl)
+        assertEquals("ht_from_old_version", s.appToken)
+        assertEquals("hevy-old", s.apiKey)
+        assertEquals(150, s.defaultRest)
+
+        val raw = ctx.getSharedPreferences("ironterm_settings", Context.MODE_PRIVATE).all
+        assertTrue((raw["app_token"] as String).startsWith("v1:"))
+        assertFalse(raw.values.any { it.toString().contains("ht_from_old_version") || it.toString().contains("hevy-old") })
+        assertTrue("old prefs gone", ctx.getSharedPreferences("ironterm_prefs", Context.MODE_PRIVATE).all.isEmpty())
+        assertTrue("old keysets gone", ctx.getSharedPreferences("__androidx_security_crypto_encrypted_prefs__", Context.MODE_PRIVATE).all.isEmpty())
+        assertFalse("old master key gone", MasterKey.DEFAULT_MASTER_KEY_ALIAS in FakeAndroidKeyStore.keys)
+
+        // a second launch reads the new file; nothing to migrate
+        Settings.override(null)
+        assertEquals("ht_from_old_version", Settings.get(ctx).appToken)
+        Settings.override(null)
+    }
+
+    @Test fun unreadableLegacyPrefsAreDroppedNotFatal() {
+        FakeAndroidKeyStore.install()
+        FakeAndroidKeyStore.reset()
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        // garbage where the encrypted prefs were, and no master key (e.g. restored from a backup)
+        ctx.getSharedPreferences("ironterm_prefs", Context.MODE_PRIVATE).edit().putString("AXyz", "garbage").commit()
+        Settings.override(null)
+        val s = Settings.get(ctx)
+        assertFalse(s.isConfigured)
+        assertTrue(ctx.getSharedPreferences("ironterm_prefs", Context.MODE_PRIVATE).all.isEmpty())
+        Settings.override(null)
     }
 
     @Test fun importsEverythingFromTheLegacyPrefs() {
