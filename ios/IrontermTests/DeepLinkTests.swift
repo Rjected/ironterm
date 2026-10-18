@@ -81,4 +81,18 @@ final class DeepLinkTests: XCTestCase {
         XCTAssertTrue(ConnectLink.mayUseToken("ht_new", for: other, savedToken: nil, savedServer: nil))
         XCTAssertFalse(ConnectLink.mayUseToken("ht_saved", for: other, savedToken: "ht_saved", savedServer: nil))
     }
+
+    func testConfirmationShowsHostAndFlagsCleartext() {
+        let tls = ConnectLink(server: URL(string: "https://gym.example.com")!, token: "ht_1")
+        XCTAssertEqual(tls.displayHost, "gym.example.com")
+        XCTAssertFalse(tls.isCleartext)
+        let lan = ConnectLink(server: URL(string: "http://192.168.1.20:8787")!, token: "ht_1")
+        XCTAssertEqual(lan.displayHost, "192.168.1.20:8787")
+        XCTAssertTrue(lan.isCleartext)
+        guard case .success(let parsed) = ConnectLink.parse(URL(string: "ironterm://connect?server=HTTP%3A%2F%2Fbox.local&token=ht_2")!) else {
+            return XCTFail("parses")
+        }
+        XCTAssertTrue(parsed.isCleartext)
+        XCTAssertEqual(parsed.displayHost, "box.local")
+    }
 }

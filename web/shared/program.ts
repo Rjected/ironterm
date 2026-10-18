@@ -164,6 +164,8 @@ export interface ProgramDef {
   microplates?: boolean;
   /** Short instructions shown on the program page. */
   notes?: string[];
+  /** The program is itself a ramp back from a break (comeback blocks): no re-entry ramp on top. */
+  builtInRamp?: boolean;
 }
 
 export interface OptionDef {
@@ -206,7 +208,7 @@ export interface Adjustment {
   note?: string;
 }
 
-export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking";
+export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "comeback";
 
 export interface ProgramTemplate {
   id: string;
@@ -1049,7 +1051,7 @@ export function replay(def: ProgramDef, cfg: ProgramConfig, workouts: HevyWorkou
   let state = initialState(def, cfg);
   const adj = [...(cfg.adjustments ?? [])].sort((a, b) => a.date.localeCompare(b.date));
   let ai = 0;
-  const minGap = opts.reentry === false ? Infinity : opts.reentry?.minGapDays ?? 9;
+  const minGap = opts.reentry === false || def.builtInRamp ? Infinity : opts.reentry?.minGapDays ?? 9;
   let lastSession: string | null = null;
   const sorted = workouts.filter((w) => w.start_time >= cfg.startDate).sort((a, b) => a.start_time.localeCompare(b.start_time));
   for (const w of sorted) {

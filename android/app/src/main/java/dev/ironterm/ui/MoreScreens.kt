@@ -191,7 +191,7 @@ private fun DaySheet(d: CalDay, onGo: (Route) -> Unit) {
 // ═════════════════════════════ PROGRAM ═════════════════════════════
 
 @Composable
-fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}) {
+fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}, onOpenProgram: (String) -> Unit = {}) {
     LaunchedEffect(state.mode) { actions.load(Screens.PROGRAM) }
     Pushed("Program", onBack) {
         Loaded(data.program, "Program", onRetry = { actions.load(Screens.PROGRAM, true) }, onSetup = onSetup,
@@ -215,16 +215,30 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Mono("WEEK ${p.week}" + (p.weekName?.let { " · ${it.uppercase()}" } ?: ""), size = 11.sp, color = T.amber, bold = true)
                         if (p.complete) { Spacer(Modifier.width(8.dp)); Badge("COMPLETE", T.up) }
-                        p.reentry?.let { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY ${it.done}/${it.total}") }
+                        p.reentry?.let { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY ${it.done + 1}/${it.total}") }
+                    }
+                    p.reentry?.let { r ->
+                        r.summary?.let {
+                            Spacer(Modifier.height(8.dp))
+                            Mono(it, size = 11.sp, color = T.amber)
+                        }
+                        r.suggest.forEach { s ->
+                            Spacer(Modifier.height(6.dp))
+                            TButton("${s.name} ›", modifier = Modifier.fillMaxWidth(), onClick = { onOpenProgram(s.templateId) })
+                        }
                     }
                     Spacer(Modifier.height(12.dp))
-                    BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
-                    Spacer(Modifier.height(6.dp))
-                    Mono(
-                        if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
-                        else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
-                        size = 10.sp, color = T.faint,
-                    )
+                    if (state.snapshot?.isLocal == true) {
+                        Mono("No Hevy connected, so there are no routines to push: log each session in GYM and it's saved on your server.", size = 10.sp, color = T.faint)
+                    } else {
+                        BigButton(if (data.pushing) "PUSHING…" else "PUSH TO HEVY", enabled = !data.pushing && state.snapshot?.demo != true, onClick = actions::pushRoutines)
+                        Spacer(Modifier.height(6.dp))
+                        Mono(
+                            if (state.snapshot?.demo == true) "Demo server: pushing routines needs a Hevy API key on the server."
+                            else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
+                            size = 10.sp, color = T.faint,
+                        )
+                    }
                     Spacer(Modifier.height(12.dp))
                     TButton("Browse programs ›", modifier = Modifier.fillMaxWidth(), onClick = onBrowse)
                 }

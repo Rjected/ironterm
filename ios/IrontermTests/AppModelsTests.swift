@@ -110,6 +110,13 @@ final class AppModelsTests: XCTestCase {
         XCTAssertTrue(p.slots.contains { $0.ifSuccess != nil && $0.ifFail != nil }, "slots say what happens next")
         // no program at all
         XCTAssertNil(try AppAPI.decode(AppProgram.self, Data(#"{"program":null}"#.utf8)).program)
+        // coming back from a break: the ramp explains itself
+        let json: String = #"{"done":1,"total":6,"gapDays":21,"headline":"Session 2 of 6 back after 21 days off","summary":"Squat ramps slower.","lifts":[],"suggest":[]}"#
+        let r: AppProgram.Reentry = try AppAPI.decode(AppProgram.Reentry.self, Data(json.utf8))
+        XCTAssertEqual(r.gapDays, 21)
+        XCTAssertEqual(r.summary, "Squat ramps slower.")
+        let old: AppProgram.Reentry = try AppAPI.decode(AppProgram.Reentry.self, Data(#"{"done":0,"total":3}"#.utf8))
+        XCTAssertNil(old.summary)
     }
 
     func testBody() throws {

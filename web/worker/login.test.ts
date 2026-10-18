@@ -18,8 +18,8 @@ describe("password sign-in", () => {
     expect(await passwordMatches("", "abc")).toBe(false);
   });
 
-  it("answers malformed bodies with 401, not a 500", async () => {
-    expect((await login(undefined, "198.51.100.9", "not json")).status).toBe(401);
+  it("answers a non-JSON body with 400 and a non-string password with 401, never a 500", async () => {
+    expect((await login(undefined, "198.51.100.9", "not json")).status).toBe(400);
     expect((await login(12345, "198.51.100.9")).status).toBe(401);
   });
 
