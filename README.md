@@ -26,7 +26,11 @@
 - **Nerd stuff.** e1RM formula shootout, INOL / Prilepin, lift ratios, strength projections, landmarks, sleep and recovery vs. performance (WHOOP), and program what-ifs.
 - **Life happens.** A calendar, trips that pause your program instead of failing it, hotel-gym sessions, and a re-entry ramp after a break.
 - **Notes** on workouts and exercises, synced back to Hevy.
-- **Phone apps and widgets.** Activity graph, next workout, this week, lifts and recovery, each in several sizes. Lock-screen widgets on iOS.
+- **Native Android and iOS apps.** Full apps rather than web wrappers:
+  - **Gym mode** for logging at the bar: big steppers, a plate loader, and a rest timer that keeps running on the lock screen (an Android notification, an iOS Live Activity).
+  - **Works offline.** A session survives a basement gym and a killed app, and syncs when you're back online.
+  - **Every other screen too:** lifts, history, calendar, program, body map, insights and stats.
+- **Widgets.** Activity graph, next workout, this week, lifts, recovery and the current set, each in several sizes. Lock-screen widgets on iOS.
 
 ## Screens
 
@@ -41,9 +45,9 @@
   </tr>
 </table>
 
-| Android app | Android widgets | iOS app | iOS widget |
+| Android · gym mode | Android · rest on the home screen | iOS · gym mode | iOS · Live Activity |
 |---|---|---|---|
-| <img src="docs/screens/android/app_today.png" width="200" alt="Android TODAY tab"> | <img src="docs/screens/android/emulator_home_widgets_4x2.png" width="200" alt="Android home-screen widgets"> | <img src="docs/screens/ios/today.png" width="200" alt="iOS TODAY tab"> | <img src="docs/screens/ios/system-home-widget.png" width="200" alt="iOS home-screen widget"> |
+| <img src="docs/screens/android/gym_live_rest.png" width="200" alt="Android gym mode with the rest timer"> | <img src="docs/screens/android/emulator_home_widgets_rest.png" width="200" alt="Android widgets during rest"> | <img src="docs/screens/ios/gym-session.png" width="200" alt="iOS gym mode"> | <img src="docs/screens/ios/live-activity-lock.png" width="200" alt="iOS rest timer on the lock screen"> |
 
 More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget at every size) · [iOS](docs/screens/ios).
 

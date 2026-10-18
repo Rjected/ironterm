@@ -12,4 +12,6 @@
     <string name="widget_lifts_desc">Estimated 1RMs with 28-day change. One lift, the big four, or up to eight with trends.</string>
     <string name="widget_recovery_name">Ironterm · Recovery</string>
     <string name="widget_recovery_desc">Muscle readiness from your training log (needs the server).</string>
+    <string name="widget_gym_name">Ironterm · Gym</string>
+    <string name="widget_gym_desc">The set you are on and the rest countdown while you train. Tap to open GYM.</string>
 </resources>

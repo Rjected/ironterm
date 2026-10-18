@@ -20,6 +20,8 @@
     <string>1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
     <key>NSCameraUsageDescription</key>
     <string>Scan the $(APP_DISPLAY_NAME) connect code from your server's setup page</string>
     <key>CFBundleURLTypes</key>

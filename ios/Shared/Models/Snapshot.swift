@@ -164,8 +164,9 @@ extension Snapshot {
 /// Small formatting helpers shared by the app and the widgets.
 enum Fmt {
     static func weight(_ w: Double) -> String {
-        if w == w.rounded() { return String(Int(w)) }
-        return String(format: "%.1f", w)
+        let r = (w * 10).rounded() / 10 // float noise (149.99999 → 150)
+        if r == r.rounded() { return String(Int(r)) }
+        return String(format: "%.1f", r)
     }
 
     static func signed(_ d: Double) -> String {

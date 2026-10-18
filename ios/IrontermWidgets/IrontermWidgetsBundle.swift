@@ -10,6 +10,7 @@ struct IrontermWidgets: WidgetBundle {
         LiftsWidget()
         RecoveryWidget()
         LockScreenWidget()
+        GymLiveActivity()
     }
 }
 

@@ -19,6 +19,9 @@ data class WidgetData(
     val lastSyncAt: Long = 0,
     val error: String? = null,
     val authError: Boolean = false,
+    /** GYM widget: the session in progress (null = none) and the clock to render it at (0 = now). */
+    val gymSession: dev.ironterm.gym.LiveSession? = null,
+    val now: Long = 0,
 ) {
     val isDirect: Boolean get() = mode == SourceMode.DIRECT || snapshot?.isDirect == true
 

@@ -22,6 +22,10 @@ class Settings(private val prefs: SharedPreferences) {
         private const val K_THEME = "color_theme"
         private const val K_UNIT = "direct_unit"
         private const val K_TARGET = "direct_weekly_target"
+        private const val K_KEEP_ON = "gym_keep_screen_on"
+        private const val K_REST_SOUND = "gym_rest_sound"
+        private const val K_REST_VIBRATE = "gym_rest_vibrate"
+        private const val K_DEFAULT_REST = "gym_default_rest"
 
         @Volatile private var instance: Settings? = null
 
@@ -83,6 +87,26 @@ class Settings(private val prefs: SharedPreferences) {
     var weeklyTarget: Int
         get() = prefs.getInt(K_TARGET, 3)
         set(v) = prefs.edit().putInt(K_TARGET, v.coerceIn(1, 7)).apply()
+
+    /** GYM: keep the screen on while a session is open. */
+    var keepScreenOn: Boolean
+        get() = prefs.getBoolean(K_KEEP_ON, true)
+        set(v) = prefs.edit().putBoolean(K_KEEP_ON, v).apply()
+
+    /** GYM: beep when rest ends (never in silent / vibrate mode). */
+    var restSound: Boolean
+        get() = prefs.getBoolean(K_REST_SOUND, true)
+        set(v) = prefs.edit().putBoolean(K_REST_SOUND, v).apply()
+
+    /** GYM: vibrate when rest ends (not in silent mode). */
+    var restVibrate: Boolean
+        get() = prefs.getBoolean(K_REST_VIBRATE, true)
+        set(v) = prefs.edit().putBoolean(K_REST_VIBRATE, v).apply()
+
+    /** GYM: rest for exercises you add yourself (program exercises use the program's rest). */
+    var defaultRest: Int
+        get() = prefs.getInt(K_DEFAULT_REST, 90)
+        set(v) = prefs.edit().putInt(K_DEFAULT_REST, v.coerceIn(0, 600)).apply()
 
     val isConfigured: Boolean
         get() = when (mode) {

@@ -19,6 +19,7 @@ data class Workout(
     @SerialName("start_time") val startTime: String,
     @SerialName("end_time") val endTime: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
+    val description: String? = null,
     val exercises: List<Exercise> = emptyList(),
 )
 
@@ -26,6 +27,7 @@ data class Workout(
 data class Exercise(
     val title: String = "",
     @SerialName("exercise_template_id") val exerciseTemplateId: String? = null,
+    val notes: String? = null,
     val sets: List<ExerciseSet> = emptyList(),
 )
 

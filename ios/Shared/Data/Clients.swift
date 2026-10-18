@@ -61,21 +61,6 @@ struct ServerClient {
         guard (200..<300).contains(code) else { throw ApiError.http(code, String(data: data, encoding: .utf8) ?? "") }
         return data
     }
-
-    /// The POST that signs the WebView in: form body token=…&next=/ → 302 with a session cookie.
-    func webLoginRequest(next: String = "/") -> URLRequest {
-        var r = URLRequest(url: Self.endpoint(base, "/auth/app"))
-        r.httpMethod = "POST"
-        r.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        r.httpBody = "token=\(Self.formEncode(token))&next=\(Self.formEncode(next))".data(using: .utf8)
-        return r
-    }
-
-    static func formEncode(_ s: String) -> String {
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-._*")
-        return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s
-    }
 }
 
 /// Direct mode: the Hevy public API with the user's own key (header `api-key`, pageSize ≤ 10).

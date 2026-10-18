@@ -45,25 +45,20 @@ final class DeepLinkTests: XCTestCase {
         XCTAssertFalse(ConnectLink.sameOrigin(URL(string: "http://gym.example.com/")!, base))
         XCTAssertFalse(ConnectLink.sameOrigin(URL(string: "https://gym.example.com.evil.com/")!, base))
         XCTAssertFalse(ConnectLink.sameOrigin(URL(string: "https://gym.example.com:8443/")!, base))
-        XCTAssertTrue(WebView.Coordinator.allowed(URL(string: "about:blank")!, base: base))
-        XCTAssertFalse(WebView.Coordinator.allowed(URL(string: "https://accounts.google.com/")!, base: base))
     }
 
     @MainActor func testAppModelHandlesTabAndConnectLinks() {
         let m = AppModel(arguments: ["app", "-demoFixture"])
         m.handle(URL(string: "ironterm://tab/lifts")!)
         XCTAssertEqual(m.tab, .lifts)
+        m.handle(URL(string: "ironterm://tab/body")!)
+        XCTAssertEqual(m.tab, .more)
+        XCTAssertEqual(m.morePath, [.body])
+        m.handle(URL(string: "ironterm://tab/graph")!)
+        XCTAssertEqual(m.tab, .today, "the old GRAPH tab lives on TODAY now")
         m.handle(URL(string: "ironterm://connect?server=https%3A%2F%2Fa.b&token=ht_1")!)
         XCTAssertEqual(m.pendingLink?.server.absoluteString, "https://a.b", "a link is only staged until the user confirms")
         m.handle(URL(string: "ironterm://connect?server=https%3A%2F%2Fa.b")!)
         XCTAssertNotNil(m.linkError)
-    }
-
-    func testWebLoginRequest() throws {
-        let r = ServerClient(base: URL(string: "https://gym.example.com/")!, token: "ht_a+b/c=").webLoginRequest()
-        XCTAssertEqual(r.httpMethod, "POST")
-        XCTAssertEqual(r.url?.absoluteString, "https://gym.example.com/auth/app")
-        XCTAssertEqual(r.value(forHTTPHeaderField: "Content-Type"), "application/x-www-form-urlencoded")
-        XCTAssertEqual(String(data: try XCTUnwrap(r.httpBody), encoding: .utf8), "token=ht_a%2Bb%2Fc%3D&next=%2F")
     }
 }

@@ -12,10 +12,15 @@ struct IrontermApp: App {
                 .preferredColorScheme(.dark)
                 .onOpenURL { model.handle($0) }
                 .task { await model.refresh() }
+                .task { await model.gym.load() }
                 .onChange(of: phase) { _, p in
+                    if p == .background { Task { await model.gym.flushNow() } }
+                    guard p == .active else { return }
+                    // anything queued while offline goes out now
+                    Task { await model.gym.queue.flush() }
                     // refresh when coming back to the app if the data is older than 5 minutes
-                    if p == .active, (model.lastSync.map { Date().timeIntervalSince($0) > 300 } ?? true) {
-                        Task { await model.refresh() }
+                    if model.lastSync.map({ Date().timeIntervalSince($0) > 300 }) ?? true {
+                        Task { await model.refresh(); await model.gym.load() }
                     }
                 }
         }
@@ -25,10 +30,11 @@ struct IrontermApp: App {
 struct RootView: View {
     @EnvironmentObject var model: AppModel
 
+    @State private var keyboard = false
+
     var body: some View {
         VStack(spacing: 0) {
-            TopBar()
-            Divider1()
+            TopChrome(gym: model.gym)
             if let e = model.error { ErrorBanner(text: e, auth: model.authFailed) }
             ZStack {
                 ForEach(AppModel.Tab.allCases) { t in
@@ -39,27 +45,43 @@ struct RootView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            Divider1()
-            TabBar()
+            if !keyboard {
+                Divider1()
+                TabBar(gym: model.gym)
+            }
         }
         .background(T.bg.ignoresSafeArea())
         .tint(T.amber)
+        // the bottom bar makes way for the keyboard
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboard = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboard = false }
         .alert("Link", isPresented: Binding(get: { model.linkError != nil }, set: { if !$0 { model.linkError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(model.linkError ?? "") }
         .sheet(isPresented: Binding(get: { model.pendingLink != nil }, set: { if !$0 { model.pendingLink = nil } })) {
-            if let link = model.pendingLink { ConnectConfirm(link: link).presentationDetents([.height(320)]) }
+            if let link = model.pendingLink { ConnectConfirm(link: link).presentationDetents([.height(320)]).termSheet() }
         }
     }
 
     @ViewBuilder func tabView(_ t: AppModel.Tab) -> some View {
         switch t {
-        case .today: TodayView()
-        case .graph: GraphTab()
-        case .lifts: LiftsTab()
-        case .body: BodyTab()
-        case .web: WebTab()
-        case .setup: SetupView()
+        case .today: NavigationStack { TodayScreen().withRoutes() }
+        case .gym: GymScreen()
+        case .lifts: NavigationStack { LiftsScreen().withRoutes() }
+        case .history: NavigationStack { HistoryScreen().withRoutes() }
+        case .more: MoreRoot()
+        }
+    }
+}
+
+/// The brand bar, hidden while a GYM session is on screen (the session header takes its place).
+struct TopChrome: View {
+    @EnvironmentObject var model: AppModel
+    @ObservedObject var gym: GymStore
+    var body: some View {
+        if !(model.tab == .gym && (gym.session != nil || gym.finished != nil)) {
+            TopBar()
+            Divider1()
         }
     }
 }
@@ -116,7 +138,7 @@ struct ErrorBanner: View {
             Text(text).font(T.mono(11)).foregroundStyle(T.text).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
             Button(auth ? "RECONNECT" : "RETRY") {
-                if auth { model.tab = .setup } else { Task { await model.refresh() } }
+                if auth { model.showSetup() } else { Task { await model.refresh() } }
             }
             .font(T.mono(10, .bold))
             .foregroundStyle(T.amber)
@@ -129,27 +151,38 @@ struct ErrorBanner: View {
 
 struct TabBar: View {
     @EnvironmentObject var model: AppModel
+    @ObservedObject var gym: GymStore
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(AppModel.Tab.allCases) { t in
-                Button { model.tab = t } label: {
-                    VStack(spacing: 2) {
-                        Text(t.key).font(T.mono(8)).foregroundStyle(model.tab == t ? T.amber : T.faint)
-                        Text(t.title).font(T.mono(10, .bold)).foregroundStyle(model.tab == t ? T.bg : T.dim)
-                            .padding(.horizontal, 4).padding(.vertical, 2)
-                            .background(model.tab == t ? T.amber : Color.clear)
+                let on = model.tab == t
+                Button {
+                    if on, t == .more { model.morePath = [] } // tap again: back to the MORE menu
+                    model.tab = t
+                } label: {
+                    VStack(spacing: 3) {
+                        HStack(spacing: 3) {
+                            Text(t.key).font(T.mono(8)).foregroundStyle(on ? T.amber : T.faint)
+                            if t == .gym, gym.session != nil {
+                                Circle().fill(gym.session?.restEnd.map { $0 > Date() } == true ? T.amber : T.up).frame(width: 5, height: 5)
+                            }
+                        }
+                        Text(t.title).font(T.mono(11, .bold)).foregroundStyle(on ? T.bg : T.dim)
+                            .padding(.horizontal, 5).padding(.vertical, 3)
+                            .background(on ? T.amber : Color.clear)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                    .padding(.top, 7).padding(.bottom, 5)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(t.title)
-                .accessibilityAddTraits(model.tab == t ? .isSelected : [])
+                .accessibilityLabel(t.title + (t == .gym && gym.session != nil ? ", session running" : ""))
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
         .padding(.horizontal, 4)
-        .background(T.panel)
+        .background(T.panel.ignoresSafeArea(edges: .bottom))
     }
 }
 
@@ -250,7 +283,7 @@ struct DataGate<Content: View>: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if model.source == .none || !model.store.isConfigured && !model.demo {
-            EmptyState(title: "NOT CONNECTED", message: "Pick a data source: your \(Brand.name) server, or Direct with just a Hevy API key.", button: "OPEN SETUP") { model.tab = .setup }
+            EmptyState(title: "NOT CONNECTED", message: "Pick a data source: your \(Brand.name) server, or Direct with just a Hevy API key.", button: "OPEN SETUP") { model.showSetup() }
         } else {
             EmptyState(title: "NO DATA YET", message: model.error ?? "Pull to refresh, or sync from SETUP.", button: "SYNC NOW") { Task { await model.refresh() } }
         }
@@ -274,4 +307,9 @@ struct EmptyState: View {
         .padding(.top, 72)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+}
+
+extension View {
+    /// Sheets in the terminal style (no light system background around the content).
+    func termSheet() -> some View { presentationBackground(T.panel) }
 }

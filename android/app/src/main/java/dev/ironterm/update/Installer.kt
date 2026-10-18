@@ -20,6 +20,22 @@ object Installer {
 
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
 
+    /**
+     * Android 16's Advanced Protection blocks installs from anything but an app store, including
+     * this in-app updater, and the "install unknown apps" switch can't be turned on. Then the only
+     * way to update is over USB (adb) or a store. Read via reflection: compileSdk predates the API.
+     */
+    fun blockedByAdvancedProtection(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < 36) return false
+        return try {
+            val mgr = context.getSystemService("advanced_protection") ?: return false
+            mgr.javaClass.getMethod("isAdvancedProtectionEnabled").invoke(mgr) as? Boolean ?: false
+        } catch (e: Exception) {
+            Log.i("Installer", "advanced protection state unavailable: ${e.message}")
+            false
+        }
+    }
+
     /** Settings page where the user allows this app to install updates. */
     fun permissionIntent(context: Context): Intent =
         Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))

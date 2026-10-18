@@ -5,7 +5,11 @@ style as the web app: black background, monospace type, amber accent, blue graph
 
 Uses the Hevy public API; not affiliated with Hevy.
 
-![Today](../docs/screens/ios/today.png)
+| Today | Gym | Lock screen | Finish |
+|---|---|---|---|
+| ![Today](../docs/screens/ios/today.png) | ![Gym](../docs/screens/ios/gym-session.png) | ![Live Activity](../docs/screens/ios/live-activity-lock.png) | ![Finish](../docs/screens/ios/gym-finish-summary.png) |
+
+More in [docs/screens/ios](../docs/screens/ios).
 
 ## Two data sources
 
@@ -14,12 +18,12 @@ You pick one in **SETUP** and can switch at any time.
 | | **Server** | **Direct** |
 |---|---|---|
 | Needs | Your Ironterm server URL + an app token (`ht_…`) | A Hevy API key (hevy.com → Settings → Developer) |
-| Reads | `GET /api/snapshot` (see [docs/api](../docs/api/README.md)) | `api.hevyapp.com/v1/workouts`, 10 per page |
-| Graph, streak, this week, totals, last workout | ✓ | ✓ computed on the phone |
-| Lift e1RMs, 12-week trend, 28-day Δ | ✓ | ✓ (Epley, w·(1+r/30), lifts recognised by Hevy exercise name) |
-| Next session with exact weights | ✓ | — (programs live on the server) |
-| Recovery / readiness | ✓ | — (shows "needs server") |
-| WEB tab (the full web app, signed in) | ✓ | — |
+| Reads | `/api/snapshot` and the app screens `/api/app/*` (see [docs/api](../docs/api/README.md#app-screens)) | `api.hevyapp.com/v1/workouts`, 10 per page |
+| TODAY, graph, streak, this week, e1RM table | ✓ | ✓ computed on the phone |
+| LIFTS list + detail, HISTORY + workout detail | ✓ | ✓ from the cached workouts (no stall / projection / RPE chart) |
+| GYM (log a workout, rest timer, Live Activity) | ✓ | — needs a server (it writes to Hevy through the program) |
+| CALENDAR, PROGRAM, BODY, INSIGHTS, STATS, readiness, watch list, PRs | ✓ | — shows "needs a server" |
+| EDIT NOTES, PUSH TO HEVY | ✓ | — |
 
 Direct mode settings: unit (kg/lb) and the sessions per week the streak counts. The first Direct
 sync reads every workout; after that the app and widgets fetch only new pages. **FULL RESYNC**
@@ -46,11 +50,49 @@ public servers need https.
 
 ## The app
 
-`F1 TODAY` next session (when, re-entry badge, every exercise with its sets and top weight), this
-week, streak, readiness, last workout · `F2 GRAPH` 53-week contribution graph, totals, sessions per
-week · `F3 LIFTS` e1RM cards with Swift Charts trends · `F4 BODY` per-muscle recovery ·
-`F5 WEB` the web app in a WKWebView, signed in by POSTing the token to `/auth/app`; links to other
-sites open in Safari · `F6 SETUP` source, credentials, test, sync, graph theme, **widget gallery**.
+The server computes, the app renders: every screen is one JSON document from `GET /api/app/…`
+(types in `web/shared/appapi.ts`, mirrored in `Ironterm/API/AppModels.swift`). The last good copy of
+each is cached, so screens open instantly and work offline (an amber OFFLINE strip says how old it is).
+Only the live gym session logic runs on the phone.
+
+Bottom bar: **TODAY · GYM · LIFTS · HISTORY · MORE**.
+
+- `F1 TODAY` session in progress, next session (tap → GYM), this week, 26-week graph, readiness,
+  e1RM table (now, 4 and 12 week change, best), watch list (stalls and progress), recent PRs,
+  26 weeks of volume, last workout.
+- `F2 GYM` the logger.
+  - Start the next program day, pick another day, start an empty workout, or resume one started
+    on the web (the session touched last wins).
+  - One card per exercise; the set to do next is highlighted with big steppers (load step by lift
+    kind) and a tap-to-type number pad. Set types (normal / warmup / failure / drop) and RPE from the
+    set number's menu, + SET, remove set / exercise, warmups before T1 lifts, back-offs filled in from
+    the top set, a plate loader (bar weight in SETUP), program notes (▲ if you hit it, ▼ if you
+    miss), your exercise note and the workout note, and a searchable exercise catalog with cardio.
+  - Header: rename, elapsed clock, progress. The rest timer (−15 / +30 / SKIP) also runs as a
+    **Live Activity** on the lock screen and in the Dynamic Island, with a local notification and
+    haptics when it ends. The screen stays awake while a session runs.
+  - **Offline first**: every change is written to a file on the phone at once and sent to the
+    server (`PUT /api/live`) debounced. FINISH (`POST /api/live/finish`, idempotent per session) and
+    DISCARD are queued while offline and sent in order when back; a strip shows workouts waiting to
+    upload. Starting offline builds the day from the cached plan exactly like the server would.
+    DISCARD asks first. After FINISH: a summary with time, sets, volume, best set and e1RM per
+    exercise, and the records set.
+- `F3 LIFTS` every tracked lift with a sparkline; detail: Swift Charts e1RM (each session and the
+  28-day best) with the 12-week projection band and drag-to-scrub, trend / stall, projection, rep
+  PRs, PR wall (how long each record has stood), your RPE chart, recent sessions.
+- `F4 HISTORY` infinite list with search; workout detail (sets, e1RM, how the program counted it);
+  **EDIT NOTES** (`PUT /api/workouts/{id}/notes`).
+- `F5 MORE`
+  - **CALENDAR** month grid (done / planned / missed / travel) with a day sheet.
+  - **PROGRAM** slots with what happens next, upcoming sessions, decision log, **PUSH TO HEVY**.
+  - **BODY** front and back muscle maps (readiness or weekly load) drawn natively from the server's
+    SVG with a small SVG path renderer (`Ironterm/Body/SVG.swift`, no WebView), plus the muscle list.
+  - **INSIGHTS** projections, strength balance, achievements.
+  - **STATS** totals, 53-week graph, weekly volume / sessions / sets.
+  - **SETUP** source, credentials, QR, test, sync, **gym preferences** (rest alert, Live Activity,
+    haptics, keep screen on, auto-advance, bar weights), graph theme, widget gallery, and
+    **Advanced setup (web)**: program choice and lift mapping open the web app in Safari
+    (SFSafariViewController), the only web surface.
 
 Credentials are stored in the Keychain (access group = the App Group, so the widgets can read
 them, `AfterFirstUnlockThisDeviceOnly`). The last snapshot is cached in the App Group container so
@@ -69,6 +111,9 @@ app reloads them after every sync. Tapping a widget opens the matching tab.
 | **Lifts** | small (one lift + sparkline + Δ), medium (big four), large (up to 8) | which lift (small) |
 | **Recovery** | small (overall gauge), medium (least-ready bars) | Direct mode shows "needs server" |
 | **Lock screen** | circular (week ring or streak), rectangular (next workout), inline ("Next: Bench 325 · TOMORROW") | circle shows week / streak |
+
+The **GYM Live Activity** (`IrontermWidgets/GymLiveActivity.swift`) shows the rest countdown (or the
+session clock), the set to do next and progress, on the lock screen and in the Dynamic Island.
 
 Every widget is previewed in **SETUP → WIDGET GALLERY** (your data, the server demo, or the
 Direct demo). Renders of each size are in [docs/screens/ios/widgets](../docs/screens/ios/widgets).
@@ -107,14 +152,26 @@ TEST_RUNNER_MOCK_SERVER=http://127.0.0.1:8787 \
 xcodebuild … test
 ```
 
-- `Tools/mock_server.py` is a local stand-in for a server: `/api/snapshot` and `/api/sync` require
-  `Bearer ht_test_good` (anything else is 401), `/auth/app` sets a session cookie, `/` is a tiny page.
+- Unit tests: the live-session port replays golden cases generated from `web/shared/live.ts`
+  (`IrontermTests/Fixtures/live_golden.json`), every app document decodes from the server samples
+  (copies of `docs/api/app/*.json`), the offline queue and GymStore against an in-process stub server,
+  the SVG path parser and body figures, and Direct-mode LIFTS / HISTORY.
+- Against a real server: `cd web && PORT=8791 HOST=127.0.0.1 DATA_DIR=$(mktemp -d) SYNC_MINUTES=0 node dist/server/main.mjs`,
+  `POST /api/tokens {"name":"sim"}`, then `xcrun simctl openurl booted "ironterm://connect?server=http%3A%2F%2F127.0.0.1%3A8791&token=…"`.
+  The no-login demo server only answers requests to 127.0.0.1 / localhost.
+- `Tools/mock_server.py` is a minimal stand-in for the snapshot endpoint: `/api/snapshot` and `/api/sync` require
+  `Bearer ht_test_good` (anything else is 401).
   Connect to it with `ironterm://connect?server=http%3A%2F%2F127.0.0.1%3A8787&token=ht_test_good`.
 - Launch arguments for screenshots (no network, no stored data touched): `-demoFixture`,
   `-demoDirect`, `-demoEmpty`, `-demoError 401`, `-demoLink`, `-demoServer <origin>`,
-  `-startTab today|graph|lifts|body|web|setup|gallery`.
+  `-startTab today|gym|lifts|history|more|calendar|program|body|insights|stats|setup|gallery`.
+  The same names work as `ironterm://tab/<name>` links (widgets use them).
 - The app icon is generated by `../docs/brand/make_icons.py` (one script for iOS, Android and the web). `Shared/Data/LiftLibrary.swift` is generated from
   `web/shared/lifts.ts`.
-- Layout: `Shared/` (models, Direct aggregation, networking, widget views; built into the app and
-  the extension), `Ironterm/` (app), `IrontermWidgets/` (widget extension), `IrontermTests/`.
+- Layout: `Shared/` (models, Direct aggregation, networking, widget views, the live-session port
+  `Shared/Gym/Live.swift` and the Live Activity attributes; built into the app and the extension),
+  `Ironterm/` (app: `API/`, `Gym/`, `Screens/`, `Body/`, `Direct/`, `UI/`), `IrontermWidgets/`
+  (widget extension + Live Activity), `IrontermTests/`.
+- CI builds with Xcode 16 / Swift 6.1: keep Double / CGFloat arithmetic explicitly typed and guard
+  anything newer than iOS 17 with `#available`.
 - The product name lives in `Shared/Brand.swift` and the `APP_DISPLAY_NAME` build setting.

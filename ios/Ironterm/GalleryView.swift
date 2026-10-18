@@ -140,11 +140,6 @@ struct GalleryView: View {
             .padding(14)
         }
         .background(T.bg)
-        .navigationTitle("")
-        .toolbar(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .principal) { Cap("WIDGET GALLERY", T.text, size: 12, weight: .bold) }
-        }
     }
 }
 

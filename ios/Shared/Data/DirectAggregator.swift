@@ -23,9 +23,15 @@ enum DirectAggregator {
     static func r1(_ x: Double) -> Double { (x * 10).rounded() / 10 }
 
     static func volumeKg(_ w: Workout) -> Double {
-        w.exercises.reduce(0) { a, e in
-            a + e.sets.filter { !$0.isWarmup }.reduce(0) { $0 + ($1.weightKg ?? 0) * Double($1.reps ?? 0) }
+        var total: Double = 0
+        for e in w.exercises {
+            for set in e.sets where !set.isWarmup {
+                let kg: Double = set.weightKg ?? 0
+                let reps: Double = Double(set.reps ?? 0)
+                total += kg * reps
+            }
         }
+        return total
     }
 
     static func workingSets(_ w: Workout) -> Int {
