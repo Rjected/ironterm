@@ -59,8 +59,13 @@ export type TmRule =
   /** SBS / Juggernaut: reps beyond (or short of) the set's target → TM change. The last row
    *  with diff ≤ (reps − target) applies. pct = fraction of TM; increments = × tmIncrement. */
   | { type: "amrapVsTarget"; setIndex: number; table: { diff: number; pct?: number; increments?: number }[]; allSets?: boolean; applyAt?: "now" | "weekEnd";
-      /** SBS: each planned set not done at the target weight counts as one rep short (or worse) */
+      /** SBS: a planned set at the target weight that was skipped, or done for fewer than its planned
+       *  reps, counts as "failed to complete the sets": diff becomes at most −1 − (sets short). */
       penalizeMissingSets?: boolean;
+      /** SBS Last Set RIR: the target set's `rpe` is the RIR target (10 − RIR). Effective RIR = reps past
+       *  the planned number + (10 − logged RPE of that set, if any); diff = effective − target RIR, and
+       *  any shortfall counts as −1 ("completed the sets, RIR below target"). */
+      rir?: boolean;
       /** read the last set done at the target weight (the AMRAP itself) instead of the best one */
       useLast?: boolean }
   /** RTS-style: new TM = e1RM of that set × pct */
@@ -88,6 +93,10 @@ export type Progression =
       failsBeforeAction?: number;
       /** GreySkull: AMRAP of at least `reps` on the last set earns `increments` jumps instead of one. */
       amrapBonus?: { reps: number; increments: number };
+      /** SBS Novice Hypertrophy (sets → reps → load): success moves to the NEXT stage at the same
+       *  weight; success on the last stage adds `loadPct` and goes back to stage 0. A miss repeats
+       *  the same stage (failure options are ignored). loadPct 0 or 0 load (bodyweight): the last stage holds. */
+      climb?: { loadPct: number };
     }
   | {
       kind: "percent";
@@ -155,6 +164,8 @@ export interface ProgramDef {
   microplates?: boolean;
   /** Short instructions shown on the program page. */
   notes?: string[];
+  /** The program is itself a ramp back from a break (comeback blocks): no re-entry ramp on top. */
+  builtInRamp?: boolean;
 }
 
 export interface OptionDef {
@@ -197,7 +208,7 @@ export interface Adjustment {
   note?: string;
 }
 
-export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking";
+export type ProgramCategory = "gzcl" | "novice" | "strength" | "powerlifting" | "hypertrophy" | "peaking" | "comeback";
 
 export interface ProgramTemplate {
   id: string;
@@ -439,7 +450,12 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
       const fails = s.fails ?? 0;
       const allowed = p.failsBeforeAction ?? 1;
       let ifSuccess: string, ifFail: string;
-      if (p.advance.type === "amrapAtLeast") {
+      if (p.climb) {
+        const nx = p.stages[s.stage + 1];
+        const up = roundTo(s.weight * (1 + p.climb.loadPct), step(def, cfg, slot.lift));
+        ifSuccess = nx ? `all ${st.sets * st.reps} reps → ${schemeLabel(nx)} @ ${fmt(s.weight)}` : s.weight > 0 && p.climb.loadPct > 0 ? `all ${st.sets * st.reps} reps → ${schemeLabel(p.stages[0])} @ ${fmt(up)}` : `all reps → stay at ${schemeLabel(st)}`;
+        ifFail = `miss → repeat ${schemeLabel(st)} @ ${fmt(s.weight)}`;
+      } else if (p.advance.type === "amrapAtLeast") {
         ifSuccess = `${p.advance.reps}+ on last set → ${fmt(s.weight + i)}`;
         ifFail = `fewer → stay at ${fmt(s.weight)}`;
       } else {
@@ -502,6 +518,7 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
 interface Performed {
   weight: number;
   reps: number;
+  rpe?: number;
 }
 
 function performedFor(w: HevyWorkout, lift: string, cfg: ProgramConfig): Performed[][] {
@@ -511,7 +528,7 @@ function performedFor(w: HevyWorkout, lift: string, cfg: ProgramConfig): Perform
     .map((e) =>
       e.sets
         .filter((s) => s.type !== "warmup" && (s.reps ?? 0) > 0)
-        .map((s) => ({ weight: fromKg(s.weight_kg ?? 0, cfg.unit), reps: s.reps ?? 0 })),
+        .map((s) => ({ weight: fromKg(s.weight_kg ?? 0, cfg.unit), reps: s.reps ?? 0, ...(s.rpe != null ? { rpe: s.rpe } : {}) })),
     );
 }
 
@@ -619,6 +636,19 @@ function evalStages(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, s: SlotS
     return ok
       ? { next: { ...cur, weight: w + i, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${amrapReps} on last set${off} → ${fmt(w + i)}` } }
       : { next: cur, res: { ...base, outcome: "hold", amrapReps, note: `${amrapReps ?? 0} on last set, need ${p.advance.reps}${off}` } };
+  }
+
+  if (p.climb && how !== "none") {
+    const vol = work.slice(0, st.sets).reduce((a, x) => a + Math.min(x.reps, st.reps), 0);
+    const need = st.sets * st.reps;
+    if (vol < need) return { next: { ...cur, fails: 0 }, res: { ...base, outcome: "hold", amrapReps, note: `${vol}/${need}${off} → repeat ${schemeLabel(st)}` } };
+    if (k < p.stages.length - 1) {
+      const nx = p.stages[k + 1];
+      return { next: { ...cur, stage: k + 1, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${vol}/${need}${off} → ${schemeLabel(nx)} @ ${fmt(w)}` } };
+    }
+    if (w <= 0 || p.climb.loadPct <= 0) return { next: { ...cur, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${vol}/${need} → stay at ${schemeLabel(st)}` } };
+    const nw = roundTo(w * (1 + p.climb.loadPct), step(def, cfg, slot.lift));
+    return { next: { weight: nw, stage: 0, stage0Weight: nw, retest: false, fails: 0 }, res: { ...base, outcome: "success", amrapReps, note: `${vol}/${need}${off} → ${schemeLabel(p.stages[0])} @ ${fmt(nw)}` } };
   }
 
   if (how === "none") {
@@ -737,9 +767,22 @@ function evalPercent(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, state: 
     const want = p.weeks[weekIndex(def, state.rotations) % p.weeks.length]?.[rule.setIndex]?.target ?? target.reps;
     label = `target ${want}`;
     let diff = a - want;
+    const tol = Math.max(1, target.weight * 0.03);
+    const atWeight = sets.filter((x) => x.weight >= target.weight - tol);
+    if (rule.rir) {
+      // Reps past the planned number count as RIR already banked; a logged RPE adds the rest.
+      const last = atWeight[atWeight.length - 1];
+      const rirTarget = 10 - (target.rpe ?? 10);
+      const effective = last ? last.reps - target.reps + (last.rpe != null ? 10 - last.rpe : rirTarget) : -1;
+      diff = effective - rirTarget;
+      if (diff < 0) diff = -1;
+      label = `RIR target ${fmt(rirTarget)}`;
+    }
     if (rule.penalizeMissingSets) {
-      const done = sets.filter((x) => x.weight >= target.weight - Math.max(1, target.weight * 0.03)).length;
-      const missing = Math.max(0, planned.sets.filter((x) => Math.abs(x.weight - target.weight) <= Math.max(1, target.weight * 0.03)).length - done);
+      const plannedAt = planned.sets.filter((x) => Math.abs(x.weight - target.weight) <= tol);
+      const floor = Math.min(...plannedAt.map((x) => x.reps));
+      const done = atWeight.filter((x) => x.reps >= floor).length;
+      const missing = Math.max(0, plannedAt.length - done);
       if (missing) diff = Math.min(diff, -1 - missing);
     }
     const rows = [...rule.table].sort((x, y) => x.diff - y.diff);
@@ -1008,7 +1051,7 @@ export function replay(def: ProgramDef, cfg: ProgramConfig, workouts: HevyWorkou
   let state = initialState(def, cfg);
   const adj = [...(cfg.adjustments ?? [])].sort((a, b) => a.date.localeCompare(b.date));
   let ai = 0;
-  const minGap = opts.reentry === false ? Infinity : opts.reentry?.minGapDays ?? 9;
+  const minGap = opts.reentry === false || def.builtInRamp ? Infinity : opts.reentry?.minGapDays ?? 9;
   let lastSession: string | null = null;
   const sorted = workouts.filter((w) => w.start_time >= cfg.startDate).sort((a, b) => a.start_time.localeCompare(b.start_time));
   for (const w of sorted) {

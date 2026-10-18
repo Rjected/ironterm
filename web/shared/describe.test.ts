@@ -78,7 +78,7 @@ describe("describeProgram", () => {
   it("SBS RTF: long block summarised, rep-target table", () => {
     const r = rules("sbsRtf", "kg");
     expect(r.overview[1]).toBe("A 21-week block that ends after week 21.");
-    expect(r.tiers[0].text).toBe("Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%.");
+    expect(r.tiers[0].text).toBe("Changes every week over 21 weeks: sets of 1–10 reps at 70–95%, with AMRAP sets. The WORKOUTS tab lists each week. The last (AMRAP) set has a rep target, and beating or missing it moves your max: 2+ short: −5% · 1 short: −2% · on target: no change · 1 over: +0.5% · 2 over: +1% · 3 over: +1.5% · 4 over: +2% · 5+ over: +3%. Skipping a planned set at that weight, or coming up short on one, counts as 2+ short.");
     expect(r.tiers[1]).toMatchObject({ text: "Weeks 7, 14 and 21: 5×5 @ 60%." });
   });
 

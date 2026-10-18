@@ -141,7 +141,7 @@ describe("app API", () => {
       const c = appPrograms(boot);
       expect(c.active).toBe("gzclp");
       expect(c.programs).toHaveLength(TEMPLATES.length);
-      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
+      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "comeback"];
       const ranks = c.programs.map((p) => order.indexOf(p.category));
       expect(ranks.every((r, i) => r >= 0 && (i === 0 || r >= ranks[i - 1]))).toBe(true);
       expect(c.programs.find((p) => p.id === "531")).toMatchObject({ weekCount: null, daysPerWeek: [4] });
