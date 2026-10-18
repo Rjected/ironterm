@@ -21,7 +21,15 @@ export function weekStart(date: string): string {
   return addDays(date, -((d.getUTCDay() + 6) % 7));
 }
 
+/** Years with workouts, newest first, by the lifter's local date (not the UTC timestamp). */
+export function workoutYears(workouts: HevyWorkout[], tz: string): { year: string; n: number }[] {
+  const m = new Map<string, number>();
+  for (const w of workouts) { const y = localDate(w.start_time, tz).slice(0, 4); m.set(y, (m.get(y) ?? 0) + 1); }
+  return [...m.entries()].sort((a, z) => z[0].localeCompare(a[0])).map(([year, n]) => ({ year, n }));
+}
+
 export function workoutVolumeKg(w: HevyWorkout): number {
+
   let v = 0;
   for (const e of w.exercises) for (const s of e.sets) if (s.type !== "warmup") v += (s.weight_kg ?? 0) * (s.reps ?? 0);
   return v;

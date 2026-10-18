@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import { BIG_FOUR, LIFTS } from "../../shared/lifts";
-import { addDays, type GraphMetric } from "../../shared/stats";
+import { addDays, localDate, type GraphMetric } from "../../shared/stats";
 import { fmt, fmtInt } from "../../shared/units";
 import { Bars, Heatmap, Legend, LineChart, Spark } from "../charts";
 import { e1rmAt, rollingBest, type Derived } from "../derive";
@@ -136,7 +136,7 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         <div class="wl">
           {d.workouts.slice(0, 6).map((w) => (
             <button onClick={() => nav({ view: "hist", workout: w.id })}>
-              <span class="dim">{shortDate(w.start_time.slice(0, 10))}</span>
+              <span class="dim">{shortDate(localDate(w.start_time, d.tz))}</span>
               <span style={{ minWidth: 0 }}>
                 <div class="t1">{w.title}</div>
                 <div class="ex-l">{w.exercises.map((e) => e.title.replace(/ \(.*\)/, "")).join(" · ")}</div>
