@@ -73,6 +73,16 @@ final class ProgramsTests: XCTestCase {
         XCTAssertEqual(ProgramText.category("powerlifting"), "POWERLIFTING")
     }
 
+    func testLengthKinds() throws {
+        XCTAssertEqual(ProgramText.length(12, kind: "block", cycleWeeks: 12), "12-week block")
+        XCTAssertEqual(ProgramText.length(nil, kind: "cycles", cycleWeeks: 11), "cycles forever")
+        XCTAssertEqual(ProgramText.length(nil, kind: "ongoing"), "ongoing")
+        XCTAssertEqual(ProgramText.length(nil, kind: nil), "open-ended", "older servers")
+        let json: String = #"{"id":"531","name":"5/3/1","author":"","category":"strength","level":"intermediate","daysPerWeek":[4],"weekCount":null,"length":"cycles","cycleWeeks":4,"next":null,"summary":""}"#
+        let p: ProgramSummary = try JSONDecoder().decode(ProgramSummary.self, from: Data(json.utf8))
+        XCTAssertEqual(ProgramText.tags(p), "4 days · cycles forever · intermediate")
+    }
+
     func testOptionPath() {
         XCTAssertEqual(AppAPI.programPath("gzclp", options: [:]), "/api/app/programs/gzclp")
         XCTAssertEqual(AppAPI.programPath("531", options: ["t1": "modified", "days": "3"]), "/api/app/programs/531?opt.days=3&opt.t1=modified")

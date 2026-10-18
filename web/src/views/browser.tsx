@@ -16,7 +16,7 @@ import { ProgramBodyTab } from "./program-body";
 import "../programs.css";
 
 const CATS: [ProgramCategory | "all", string][] = [
-  ["all", "ALL"], ["gzcl", "GZCL"], ["novice", "NOVICE"], ["strength", "STRENGTH"], ["powerlifting", "PL"], ["hypertrophy", "HYPERTROPHY"], ["peaking", "PEAKING"], ["comeback", "COMEBACK"],
+  ["all", "ALL"], ["gzcl", "GZCL"], ["novice", "NOVICE"], ["strength", "STRENGTH"], ["powerlifting", "PL"], ["hypertrophy", "HYPERTROPHY"], ["peaking", "PEAKING"], ["bodyweight", "BODYWEIGHT"], ["comeback", "COMEBACK"],
 ];
 
 // computed once: programLength builds each template
