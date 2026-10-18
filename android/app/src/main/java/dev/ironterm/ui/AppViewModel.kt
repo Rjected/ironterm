@@ -88,10 +88,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
     private val refresher get() = Refresher(settings, store, getApplication<Application>().filesDir)
 
     private val updates = UpdateStore(app)
+
+    /** GitHub releases are signed with the release key; a debug build (installed over USB from a dev
+     *  machine) can never update from them, and its version number says nothing about how new it is. */
+    private val otaEnabled = !BuildConfig.DEBUG
     private var downloaded: File? = null
 
     private val _state = MutableStateFlow(load().copy(update = UpdateUi(
-        available = updates.available?.takeIf { ReleaseParser.isNewer(it, BuildConfig.VERSION_CODE) },
+        available = updates.available?.takeIf { otaEnabled && ReleaseParser.isNewer(it, BuildConfig.VERSION_CODE) },
         lastCheckAt = updates.lastCheckAt,
     )))
 
@@ -103,12 +107,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     /** On app open: at most every 6 hours. */
     fun checkUpdatesIfDue() {
+        if (!otaEnabled) return
         if (System.currentTimeMillis() - updates.lastCheckAt > UpdateStore.CHECK_EVERY_MS) check(manual = false)
     }
 
     override fun checkUpdates() = check(manual = true)
 
     private fun check(manual: Boolean) {
+        if (!otaEnabled) {
+            if (manual) setUpdate { copy(available = null, message = "Development build (installed over USB): updates arrive the same way, not from GitHub releases.") }
+            return
+        }
         if (_state.value.update.checking) return
         setUpdate { copy(checking = true, message = null) }
         viewModelScope.launch {
