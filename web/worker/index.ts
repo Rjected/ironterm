@@ -2,7 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, csrfBlock, OWNER, safeEqual, sessionCookie, sessionSubject, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, parseDays, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken, tokenExists } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
@@ -196,14 +196,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
 
-  let ok = authMode === "none";
-  if (!ok && sessionSecret) {
-    const sub = await sessionSubject(req, sessionSecret);
-    if (sub === OWNER || (sub && (await tokenExists(env.DB, sub.slice(1))))) ok = true;
+  // "owner": a real sign-in (Google, password, Access) or this machine with no login configured.
+  // "app": an app token, or a web session traded for one. Apps get the whole API except managing
+  // app tokens, so a stolen phone can't mint itself a token that outlives revoking its own.
+  let principal: "owner" | "app" | null = authMode === "none" ? "owner" : null;
+  const sub = !principal && sessionSecret ? await sessionSubject(req, sessionSecret) : null;
+  if (sub === OWNER) principal = "owner";
+  if (!principal && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) principal = "owner";
+  if (!principal && sub && (await tokenExists(env.DB, sub.slice(1)))) principal = "app";
+  if (!principal && (await checkToken(env.DB, bearer(req)))) principal = "app";
+  if (!principal) return json({ error: "login required", auth: authMode }, { status: 401 });
+  if (path === "/api/tokens" || path.startsWith("/api/tokens/")) {
+    if (principal !== "owner") return json({ error: "Manage app tokens from a signed-in browser, not from an app." }, { status: 403 });
   }
-  if (!ok && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) ok = true;
-  if (!ok && (await checkToken(env.DB, bearer(req)))) ok = true;
-  if (!ok) return json({ error: "login required", auth: authMode }, { status: 401 });
 
   if (path.startsWith("/api/social/")) return handleOwner(req, socialCtx(req, env, ctx, authMode), path);
 
@@ -312,6 +317,17 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
         const opt: Record<string, string> = {};
         for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
         const r = appProgramDetail(b, decodeURIComponent(sub.slice(9)), opt);
+        return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
+      }
+      const bodyM = sub.match(/^programs\/([^/]+)\/body$/);
+      if (bodyM) {
+        const opt: Record<string, string> = {};
+        for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
+        const mode = q.get("mode") ?? "load";
+        if (mode !== "load" && mode !== "gaps") return json({ error: "mode must be load or gaps" }, { status: 400 });
+        const days = parseDays(q.get("days"));
+        if (days && "error" in days) return json({ error: days.error }, { status: 400 });
+        const r = appProgramBody(b, decodeURIComponent(bodyM[1]), { opt, mode, days, svg: q.get("svg") !== "0" });
         return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
       }
     }

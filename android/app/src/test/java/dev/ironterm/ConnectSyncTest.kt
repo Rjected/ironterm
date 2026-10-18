@@ -106,7 +106,7 @@ class ConnectSyncTest {
         val st = store.status()
         assertTrue("synced", st.lastSuccessAt > 0)
         assertNull(st.lastError)
-        assertEquals(Snapshot.SOURCE_SERVER, store.read()!!.source)
+        assertEquals(Snapshot.SOURCE_SERVER, store.read()!!.origin)
 
         assertTrue("the old sync was cancelled", oldJob.isCancelled)
         releaseOld.countDown()

@@ -58,11 +58,15 @@ object ReleaseParser {
         val r = runCatching { SnapshotJson.json.decodeFromString(Release.serializer(), json) }.getOrNull() ?: return null
         if (r.draft) return null
         val code = versionCode(r.tag) ?: return null
-        val apk = r.assets.firstOrNull { APK.matches(it.name) && it.url.isNotBlank() } ?: return null
+        val apk = r.assets.firstOrNull { APK.matches(it.name) && isHttps(it.url) } ?: return null
         return UpdateInfo(code, r.tag, r.name?.ifBlank { null } ?: r.tag, apk.url, apk.name, apk.size, r.body.orEmpty().trim(), r.htmlUrl)
     }
 
     fun isNewer(info: UpdateInfo?, currentVersionCode: Int): Boolean = info != null && info.versionCode > currentVersionCode
+
+    /** An absolute https URL with a host. */
+    private fun isHttps(url: String): Boolean =
+        runCatching { java.net.URI(url) }.getOrNull()?.let { it.scheme.equals("https", true) && !it.host.isNullOrEmpty() } == true
 }
 
 class UpdateChecker(
@@ -104,13 +108,18 @@ class UpdateStore(context: Context) {
 }
 
 object ApkDownloader {
-    /** Streams [info]'s APK into the app cache, reporting 0..1 progress (or -1 if size unknown). */
-    suspend fun download(context: Context, info: UpdateInfo, onProgress: (Float) -> Unit): File =
+    /**
+     * Streams [info]'s APK into the app cache, reporting 0..1 progress (or -1 if size unknown).
+     * HTTPS only, redirects included (GitHub answers with a 302 to its download host).
+     * [requireHttps] is false only in tests, whose local server speaks plain http.
+     */
+    suspend fun download(context: Context, info: UpdateInfo, requireHttps: Boolean = true, onProgress: (Float) -> Unit): File =
         withContext(Dispatchers.IO) {
+            if (requireHttps && !info.apkUrl.startsWith("https://", ignoreCase = true)) throw IOException("Refusing a non-HTTPS download")
             val dir = File(context.cacheDir, "updates").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
             val out = File(dir, "ironterm-${info.versionCode}.apk")
-            Net.exchange(info.apkUrl) { code, body, length ->
+            Net.exchange(info.apkUrl, httpsOnly = requireHttps) { code, body, length ->
                 if (code !in 200..299) throw IOException("Download failed (HTTP $code)")
                 if (body == null) throw IOException("Empty download")
                 val total = length.takeIf { it > 0 } ?: info.apkSize

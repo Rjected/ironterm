@@ -435,6 +435,8 @@ data class CardioTotals(
 data class FinishResult(
     val workout: FinishedWorkout = FinishedWorkout(),
     val demo: Boolean = false,
+    /** local mode: stored on the server, no Hevy connected */
+    val local: Boolean = false,
     /** the server already had this session (idempotent retry) */
     val duplicate: Boolean = false,
     /** PRs this workout set, null on servers that don't send them */

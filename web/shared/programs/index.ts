@@ -1,5 +1,6 @@
 import type { ProgramConfig, ProgramDef, ProgramTemplate } from "../program";
 import { calgary8, juggernaut, rtsGeneralized } from "./advanced";
+import { COMEBACK_TEMPLATES } from "./comeback";
 import { candito6, clarence14, complete16 } from "./sheet-blocks";
 import { gzclp } from "./gzclp";
 import { LIFTVAULT_TEMPLATES } from "./liftvault";
@@ -14,7 +15,7 @@ import { SPECIALIZATION_TEMPLATES } from "./specialization";
 import { bbbChallenge, fivesPro, monolith, wendlerBeginners, wendlerShort } from "./wendler-variants";
 import { wendler531 } from "./wendler531";
 
-export const TEMPLATES: ProgramTemplate[] = [gzclp, ...gzclFamily, wendler531, wendlerBeginners, wendlerShort, fivesPro, monolith, bbbChallenge, nsuns, nsuns4, nsuns6Squat, nsuns6Deadlift, ...HYPERTROPHY_TEMPLATES, ...NOVICE_TEMPLATES, candito6, clarence14, complete16, calgary8, juggernaut, rtsGeneralized, sbsRtf, sbsRir, sbsHypertrophy, sbsNoviceHypertrophy, ...SHEIKO_TEMPLATES, ...SPECIALIZATION_TEMPLATES, ...LIFTVAULT_TEMPLATES];
+export const TEMPLATES: ProgramTemplate[] = [gzclp, ...gzclFamily, wendler531, wendlerBeginners, wendlerShort, fivesPro, monolith, bbbChallenge, nsuns, nsuns4, nsuns6Squat, nsuns6Deadlift, ...HYPERTROPHY_TEMPLATES, ...NOVICE_TEMPLATES, candito6, clarence14, complete16, calgary8, juggernaut, rtsGeneralized, sbsRtf, sbsRir, sbsHypertrophy, sbsNoviceHypertrophy, ...SHEIKO_TEMPLATES, ...SPECIALIZATION_TEMPLATES, ...LIFTVAULT_TEMPLATES, ...COMEBACK_TEMPLATES];
 
 export function getTemplate(id: string): ProgramTemplate | undefined {
   return TEMPLATES.find((t) => t.id === id);
