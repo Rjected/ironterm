@@ -109,7 +109,7 @@ fun AppScreen(
             val needsConnect = !state.configured && top != Route.Setup && nav.tab != Tabs.MORE
             when {
                 needsConnect -> EmptyState(state, onSetup = setup, onRetry = actions::refresh, onScan = actions::scanQr)
-                top != null -> RouteScreen(top, state, data, gym, actions, back, go, setup, now)
+                top != null -> RouteScreen(top, state, data, gym, actions, back, go, setup, now, replace = { onNav(Nav(nav.tab, it)) })
                 nav.tab == Tabs.TODAY -> TodayScreen(state, data, gym, actions, now, onGym = { onNav(Nav(Tabs.GYM)) }, onGo = go, onHistory = { onNav(Nav(Tabs.HISTORY)) })
                 nav.tab == Tabs.GYM -> GymScreen(state, data, gym, actions, now, onSetup = setup, ticking = ticking)
                 nav.tab == Tabs.LIFTS -> LiftsScreen(state, data, actions, onGo = go, onSetup = setup)
@@ -125,12 +125,14 @@ fun AppScreen(
 }
 
 @Composable
-private fun RouteScreen(r: Route, state: UiState, data: DataUi, gym: GymUi, actions: AppActions, back: () -> Unit, go: (Route) -> Unit, setup: () -> Unit, now: Long) {
+private fun RouteScreen(r: Route, state: UiState, data: DataUi, gym: GymUi, actions: AppActions, back: () -> Unit, go: (Route) -> Unit, setup: () -> Unit, now: Long, replace: (List<Route>) -> Unit) {
     when (r) {
         is Route.Lift -> LiftDetailScreen(r.key, state, data, actions, back, go)
         is Route.Workout -> WorkoutScreen(r.id, state, data, actions, back)
         Route.Calendar -> CalendarScreen(state, data, actions, back, go, setup)
-        Route.Program -> ProgramScreen(state, data, actions, back, setup)
+        Route.Program -> ProgramScreen(state, data, actions, back, setup, onBrowse = { go(Route.Programs) })
+        Route.Programs -> ProgramListScreen(state, data, actions, back, setup, onOpen = { go(Route.ProgramPage(it)) })
+        is Route.ProgramPage -> ProgramPageScreen(r.id, state, data, actions, back, setup, onStarted = { replace(listOf(Route.Program)) })
         Route.Body -> BodyScreen(state, data, actions, back, setup)
         Route.Insights -> InsightsScreen(state, data, actions, back, setup)
         Route.Stats -> StatsScreen(state, data, actions, back, setup)

@@ -1,0 +1,1110 @@
+{
+  "id": "531",
+  "name": "5/3/1",
+  "author": "Jim Wendler",
+  "category": "strength",
+  "level": "intermediate",
+  "daysPerWeek": [
+    4
+  ],
+  "weekCount": null,
+  "summary": "Three-week waves off a training max, AMRAP top sets, slow and steady TM increases each cycle.",
+  "source": "5/3/1 Forever (book) · Wendler 5-3-1 v1.3 sheet",
+  "notes": [],
+  "options": [
+    {
+      "key": "supp",
+      "label": "Supplemental",
+      "choices": [
+        {
+          "value": "bbb",
+          "label": "Boring But Big 5×10 @ 50%"
+        },
+        {
+          "value": "bbb60",
+          "label": "BBB 5×10 @ 60%"
+        },
+        {
+          "value": "fsl",
+          "label": "First Set Last 5×5"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "bbb",
+      "selected": "bbb"
+    },
+    {
+      "key": "deload",
+      "label": "Deload week",
+      "choices": [
+        {
+          "value": "on",
+          "label": "Every 4th week"
+        },
+        {
+          "value": "off",
+          "label": "Skip (3-week cycles)"
+        }
+      ],
+      "default": "on",
+      "selected": "on"
+    }
+  ],
+  "unit": "lb",
+  "basis": "e1rm",
+  "rules": {
+    "overview": [
+      "4 sessions a week · four different days",
+      "Repeats in 4-week cycles: 5s week, 3s week, 5/3/1 week and Deload.",
+      "After each cycle, raise your training max: +5 lb on Overhead Press and Bench Press and +10 lb on Back Squat and Deadlift.",
+      "Percentages are of your training max for each lift."
+    ],
+    "rotation": [
+      {
+        "day": "Day 1 · Press",
+        "lifts": [
+          "MAIN OHP",
+          "SUPP OHP"
+        ]
+      },
+      {
+        "day": "Day 2 · Deadlift",
+        "lifts": [
+          "MAIN DEADLIFT",
+          "SUPP DEADLIFT"
+        ]
+      },
+      {
+        "day": "Day 3 · Bench",
+        "lifts": [
+          "MAIN BENCH",
+          "SUPP BENCH"
+        ]
+      },
+      {
+        "day": "Day 4 · Squat",
+        "lifts": [
+          "MAIN SQUAT",
+          "SUPP SQUAT"
+        ]
+      }
+    ],
+    "tiers": [
+      {
+        "title": "Main · % of training max",
+        "lifts": [
+          "Overhead Press",
+          "Deadlift",
+          "Bench Press",
+          "Back Squat"
+        ],
+        "text": "5s week: 5 @ 65%, 5 @ 75%, 5+ @ 85%. 3s week: 3 @ 70%, 3 @ 80%, 3+ @ 90%. 5/3/1 week: 5 @ 75%, 3 @ 85%, 1+ @ 95%. Deload: 5 @ 40%, 5 @ 50%, 5 @ 60%."
+      },
+      {
+        "title": "Supplemental · % of training max",
+        "lifts": [
+          "Overhead Press",
+          "Deadlift",
+          "Bench Press",
+          "Back Squat"
+        ],
+        "text": "Every week: 5×10 @ 50%. Skipped on deload weeks."
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "name": "5s week",
+      "days": [
+        {
+          "dayId": "1",
+          "name": "Day 1 · Press",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 5+",
+              "top": 235,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 180,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 235,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 275"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 140,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 275"
+            }
+          ]
+        },
+        {
+          "dayId": "2",
+          "name": "Day 2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "MAIN",
+              "scheme": "3 sets · 5+",
+              "top": 455,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 350,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 400,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 535"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 270,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 535"
+            }
+          ]
+        },
+        {
+          "dayId": "3",
+          "name": "Day 3 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 5+",
+              "top": 285,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 220,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 250,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 285,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 335"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 170,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 335"
+            }
+          ]
+        },
+        {
+          "dayId": "4",
+          "name": "Day 4 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "3 sets · 5+",
+              "top": 450,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 345,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 400,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 450,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 530"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 265,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 530"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "name": "3s week",
+      "days": [
+        {
+          "dayId": "1",
+          "name": "Day 1 · Press",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 3+",
+              "top": 250,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 195,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 220,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 250,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 275"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 140,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 275"
+            }
+          ]
+        },
+        {
+          "dayId": "2",
+          "name": "Day 2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "MAIN",
+              "scheme": "3 sets · 3+",
+              "top": 480,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 375,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 430,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 480,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 535"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 270,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 535"
+            }
+          ]
+        },
+        {
+          "dayId": "3",
+          "name": "Day 3 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 3+",
+              "top": 300,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 235,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 300,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 335"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 170,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 335"
+            }
+          ]
+        },
+        {
+          "dayId": "4",
+          "name": "Day 4 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "3 sets · 3+",
+              "top": 475,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 370,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 475,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 530"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 265,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 530"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "name": "5/3/1 week",
+      "days": [
+        {
+          "dayId": "1",
+          "name": "Day 1 · Press",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 1+",
+              "top": 260,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 235,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 260,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 275"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 140,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 140,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 275"
+            }
+          ]
+        },
+        {
+          "dayId": "2",
+          "name": "Day 2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "MAIN",
+              "scheme": "3 sets · 1+",
+              "top": 510,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 400,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 510,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 535"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 270,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 270,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 535"
+            }
+          ]
+        },
+        {
+          "dayId": "3",
+          "name": "Day 3 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "MAIN",
+              "scheme": "3 sets · 1+",
+              "top": 320,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 250,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 320,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 335"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 170,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 170,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 335"
+            }
+          ]
+        },
+        {
+          "dayId": "4",
+          "name": "Day 4 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "3 sets · 1+",
+              "top": 505,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 400,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 450,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 505,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 530"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "SUPP",
+              "scheme": "5×10",
+              "top": 265,
+              "sets": [
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 10,
+                  "weight": 265,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "note": "TM 530"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "name": "Deload",
+      "days": [
+        {
+          "dayId": "1",
+          "name": "Day 1 · Press",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "MAIN",
+              "scheme": "3 sets",
+              "top": 165,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 110,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 140,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 165,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 275"
+            }
+          ]
+        },
+        {
+          "dayId": "2",
+          "name": "Day 2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "MAIN",
+              "scheme": "3 sets",
+              "top": 320,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 215,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 320,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 535"
+            }
+          ]
+        },
+        {
+          "dayId": "3",
+          "name": "Day 3 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "MAIN",
+              "scheme": "3 sets",
+              "top": 200,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 135,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 200,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 335"
+            }
+          ]
+        },
+        {
+          "dayId": "4",
+          "name": "Day 4 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "3 sets",
+              "top": 320,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 210,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 265,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 320,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "TM 530"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "start": {
+    "trainingDays": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "startWeights": {},
+    "trainingMaxes": {
+      "ohp": 275,
+      "deadlift": 535,
+      "bench": 335,
+      "squat": 530
+    },
+    "maxLabel": "Training max",
+    "labels": {
+      "ohp": "Overhead Press",
+      "deadlift": "Deadlift",
+      "bench": "Bench Press",
+      "squat": "Back Squat"
+    }
+  }
+}

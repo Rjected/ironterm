@@ -13,6 +13,9 @@
 //   GET  /api/app/body?mode=ready|load AppBody
 //   GET  /api/app/insights             AppInsights
 //   GET  /api/app/stats                AppStats
+//   GET  /api/app/programs             AppProgramList       (docs/api/programs.md)
+//   GET  /api/app/programs/{id}        ProgramDetail        ?opt.<key>=<value>
+//   POST /api/app/programs/{id}/start  { ok, program }      body StartBody
 //
 // Weights are in `unit`; dates are local YYYY-MM-DD. Fields are only ever added (see snapshot.ts).
 
@@ -24,8 +27,11 @@ import type { HevyWorkout } from "./hevy";
 import { BIG_FOUR, LIFTS, liftName, matchLift } from "./lifts";
 import { emptySession, sessionFromPlan, type LiveSession } from "./live";
 import { MUSCLE, MUSCLES, type MuscleId } from "./muscles";
-import { schemeLabel, type Outcome, type PlannedSession } from "./program";
-import { getTemplate } from "./programs";
+import { allSlots, applyWorkout, firstScheduled, initialState, planDay, schemeLabel, usesStartWeight, type Outcome, type PlannedSession, type ProgramCategory, type ProgramConfig, type ProgramDef, type ProgramState, type ProgramTemplate } from "./program";
+import { defaultConfig, getTemplate, TEMPLATES } from "./programs";
+import { describeProgram, type ProgramRules } from "./describe";
+import { startingConfig } from "./simulate";
+import { standardPct } from "./rpe";
 import { projectLift } from "./projection";
 import { prWall, recentPRs } from "./prwall";
 import { strengthBalance } from "./ratios";
@@ -34,7 +40,7 @@ import { history as dayHistory, trainingDays, upcoming, weekStatus } from "./sch
 import { snapshot, type NextSession, type Snapshot } from "./snapshot";
 import { addDays, durationMin, localDate, repPRs, weekStart, workingSets, workoutVolumeKg } from "./stats";
 import { onTrip } from "./travel";
-import { fromKg, type Unit } from "./units";
+import { fromKg, loadStep, roundTo, toKg, type Unit } from "./units";
 import { renderBodySvg } from "./anatomy-svg";
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
@@ -464,4 +470,265 @@ export function finishPRs(b: Bootstrap, workoutId: string, d: Derived = derive(b
   return recentPRs([...d.workouts].reverse(), date, { unit: d.unit, tz: d.tz, map: d.liftMap })
     .filter((p) => p.workoutId === workoutId)
     .map((p) => ({ lift: p.lift, short: LIFTS[p.lift]?.short ?? p.lift, kind: p.kind, reps: p.reps, weight: r1(p.weight), prev: p.prev != null ? r1(p.prev) : null }));
+}
+
+// ───────────────────────── program browsing (docs/api/programs.md) ─────────────────────────
+
+export interface ProgramSummary {
+  id: string; name: string; author: string;
+  category: ProgramCategory;
+  level: "beginner" | "intermediate" | "advanced";
+  daysPerWeek: number[];
+  /** length of one run in weeks; null = open-ended */
+  weekCount: number | null;
+  summary: string;
+}
+export interface AppProgramList { active: string | null; programs: ProgramSummary[] }
+
+export interface ProgramWeekSet { reps: number; repsMax?: number; weight: number; amrap: boolean; rpe?: number }
+export interface ProgramWeekExercise {
+  lift: string; name: string; tier: string; scheme: string;
+  /** heaviest planned set (0 = bodyweight / RPE-only) */
+  top: number;
+  sets: ProgramWeekSet[];
+  restSeconds: number; note?: string; ifSuccess?: string; ifFail?: string;
+}
+export interface ProgramWeek { week: number; name: string | null; days: { dayId: string; name: string; exercises: ProgramWeekExercise[] }[] }
+
+export interface ProgramDetail extends ProgramSummary {
+  source: string;
+  notes: string[];
+  options: { key: string; label: string; choices: { value: string; label: string }[]; default: string; selected: string }[];
+  unit: Unit;
+  /** where the weights in `weeks` come from: the running program · your current e1RMs · template defaults */
+  basis: "active" | "e1rm" | "defaults";
+  rules: ProgramRules;
+  weeks: ProgramWeek[];
+  start: {
+    trainingDays: number[]; startWeights: Record<string, number>; trainingMaxes: Record<string, number>; maxLabel: string;
+    /** a label per startWeights key (slot id) and trainingMaxes key (lift): "A1 · T3 Bicep Curl", "Back Squat" */
+    labels: Record<string, string>;
+  };
+}
+
+const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
+
+function programSummary(t: ProgramTemplate): ProgramSummary {
+  return { id: t.id, name: t.name, author: t.author, category: t.category, level: t.level, daysPerWeek: [...t.daysPerWeek], weekCount: t.weeks ?? null, summary: t.summary };
+}
+
+/** Every template, grouped by category (catalog order inside each). */
+export function appPrograms(b: Bootstrap): AppProgramList {
+  const rank = (t: ProgramTemplate) => CATEGORY_ORDER.indexOf(t.category);
+  const programs = TEMPLATES.map((t, i) => ({ t, i })).sort((a, c) => rank(a.t) - rank(c.t) || a.i - c.i).map(({ t }) => programSummary(t));
+  return { active: b.program?.templateId ?? null, programs };
+}
+
+/** Options from `opt.<key>` params (or a start body), falling back to the running config, then defaults. Invalid → error. */
+function resolveOptions(t: ProgramTemplate, given: Record<string, string>, active: ProgramConfig | null): { options: Record<string, string> } | { error: string } {
+  const options: Record<string, string> = {};
+  for (const k of Object.keys(given)) if (!t.options.some((o) => o.key === k)) return { error: `unknown option "${k}" for ${t.id}` };
+  for (const o of t.options) {
+    const v = given[o.key];
+    if (v != null) {
+      if (!o.choices.some((c) => String(c.value) === String(v))) return { error: `option "${o.key}" must be one of ${o.choices.map((c) => c.value).join(", ")}` };
+      options[o.key] = String(v);
+    } else {
+      const a = active?.templateId === t.id ? active.options[o.key] : undefined;
+      options[o.key] = a != null && o.choices.some((c) => String(c.value) === String(a)) ? String(a) : String(o.default);
+    }
+  }
+  return { options };
+}
+
+/**
+ * The config a program would start from, and where its numbers come from: the running program's
+ * current weights (same template and options), your current e1RMs, or the template's defaults.
+ */
+function baseConfig(b: Bootstrap, d: Derived, t: ProgramTemplate, options: Record<string, string>): { cfg: ProgramConfig; basis: ProgramDetail["basis"]; state: ProgramState | null } {
+  const unit = d.unit;
+  const startDate = `${d.today}T00:00:00Z`;
+  const active = b.program;
+  const sameOptions = active?.templateId === t.id && t.options.every((o) => String(active.options[o.key] ?? o.default) === options[o.key]);
+  if (active && sameOptions && d.def && d.state) {
+    const s = d.state;
+    const cfg: ProgramConfig = {
+      ...active, startDate, adjustments: undefined, routineDays: active.routineDays,
+      startWeights: Object.fromEntries(Object.entries(s.slots).map(([k, v]) => [k, r1(v.weight)])),
+      startStages: Object.fromEntries(Object.entries(s.slots).map(([k, v]) => [k, v.stage])),
+      trainingMaxes: Object.fromEntries(Object.entries(s.tms).map(([k, v]) => [k, r1(v)])),
+    };
+    return { cfg, basis: "active", state: s };
+  }
+  const e1rms: Record<string, number> = {};
+  for (const k of d.liftKeys) { const e = d.e1rmNow(k); if (e && e > 0) e1rms[k] = e; }
+  if ((BIG_FOUR as readonly string[]).some((k) => e1rms[k] > 0)) {
+    return { cfg: { ...startingConfig(t.id, options, e1rms, unit, startDate), liftMap: active?.liftMap }, basis: "e1rm", state: null };
+  }
+  return { cfg: { ...defaultConfig(t.id, unit, startDate), options, liftMap: active?.liftMap }, basis: "defaults", state: null };
+}
+
+/**
+ * Weeks of planned sessions. Each planned session is "performed" as written (every rep, AMRAPs two
+ * past the target, RPE sets at the load the chart suggests) and replayed, so weights move exactly as
+ * the engine would move them if every session succeeds. Cycle programs: every week of the cycle;
+ * finite blocks: every week up to 16; open-ended: four weeks of `sessionsPerWeek` sessions.
+ */
+export function planWeeks(def: ProgramDef, cfg: ProgramConfig, from: ProgramState | null = null): ProgramWeek[] {
+  const unit = cfg.unit;
+  const cycled = !!def.cycle && (def.cycle.finite || def.cycle.weeks > 1);
+  const total = cycled ? Math.min(def.cycle!.weeks, 16) : 4;
+  const perWeek = Math.max(1, Math.round(def.sessionsPerWeek));
+  const liftMap: Record<string, string> = {};
+  for (const s of allSlots(def)) liftMap[s.lift] = `plan-${s.lift}`;
+  const run: ProgramConfig = { ...cfg, liftMap };
+  let state: ProgramState = from
+    ? { ...from, ...firstScheduled(def, 0, 0), log: [], complete: false, pendingTm: {}, reentry: undefined }
+    : initialState(def, run);
+  const weeks: ProgramWeek[] = [];
+  const t0 = Date.parse("2026-01-05T17:00:00Z");
+  for (let n = 0; n < 400; n++) {
+    const wk = cycled ? state.rotations : Math.floor(n / perWeek);
+    if (wk >= total || state.complete) break;
+    const plan = planDay(def, run, state);
+    const tmOf = (lift: string) => {
+      const slot = def.days[plan.dayIndex].slots.find((x) => x.lift === lift && x.progression.kind === "percent");
+      return slot?.progression.kind === "percent" ? state.tms[slot.progression.tmLift] ?? 0 : 0;
+    };
+    let week = weeks[wk];
+    if (!week) weeks[wk] = week = { week: wk + 1, name: cycled ? def.cycle?.weekNames?.[plan.week] ?? null : null, days: [] };
+    week.days.push({
+      dayId: plan.dayId, name: plan.dayName,
+      exercises: plan.exercises.map((e) => {
+        const sets = e.sets.map((s): ProgramWeekSet => ({ reps: s.reps, ...(s.repsMax ? { repsMax: s.repsMax } : {}), weight: r1(s.weight), amrap: s.amrap, ...(s.rpe ? { rpe: s.rpe } : {}) }));
+        return {
+          lift: e.lift, name: liftName(e.lift), tier: e.tier, scheme: e.scheme, top: r1(Math.max(0, ...e.sets.map((s) => s.weight))), sets, restSeconds: e.restSeconds,
+          ...(e.note ? { note: e.note } : {}), ...(e.ifSuccess ? { ifSuccess: e.ifSuccess } : {}), ...(e.ifFail ? { ifFail: e.ifFail } : {}),
+        };
+      }),
+    });
+    // perform it
+    const exercises: HevyWorkout["exercises"] = plan.exercises.map((e) => {
+      const slot = def.days[plan.dayIndex].slots.find((x) => x.id === e.slotId);
+      const p = slot?.progression;
+      const step = loadStep(LIFTS[e.lift]?.kind ?? "barbell", unit, def.microplates);
+      let top = 0;
+      const sets = e.sets.map((s) => {
+        let w = s.weight;
+        if (!w && s.ofTop && s.pct) w = roundTo(top * s.pct, step);
+        else if (!w && s.rpe) w = roundTo(tmOf(e.lift) * standardPct(s.reps, s.rpe), step);
+        let reps = s.repsMax ?? s.reps;
+        if (s.amrap) reps = p?.kind === "stages" && p.advance.type === "amrapAtLeast" ? Math.max(s.reps + 2, p.advance.reps) : (s.repsMax ?? s.reps) + 2;
+        if (w > 0) top = Math.max(top, reps <= 1 ? w : w * (1 + reps / 30));
+        return { type: "normal" as const, weight_kg: toKg(w, unit), reps };
+      });
+      return { title: liftMap[e.lift], exercise_template_id: liftMap[e.lift], sets };
+    });
+    const start = new Date(t0 + n * 864e5).toISOString();
+    state = applyWorkout(def, run, state, { id: `plan-${n}`, title: plan.dayName, start_time: start, end_time: start, exercises }, plan.dayIndex);
+    state = { ...state, log: [] };
+  }
+  return weeks.filter(Boolean);
+}
+
+export function appProgramDetail(b: Bootstrap, id: string, opt: Record<string, string> = {}, d: Derived = derive(b, "volume")): ProgramDetail | { error: string; status: number } {
+  const t = getTemplate(id);
+  if (!t) return { error: "unknown program", status: 404 };
+  const o = resolveOptions(t, opt, b.program);
+  if ("error" in o) return { error: o.error, status: 400 };
+  const { cfg, basis, state } = baseConfig(b, d, t, o.options);
+  const def = t.build(o.options);
+  const usual = b.settings.trainingDays;
+  return {
+    ...programSummary(t),
+    source: t.source,
+    notes: def.notes ?? [],
+    options: t.options.map((x) => ({ key: x.key, label: x.label, choices: x.choices.map((c) => ({ value: String(c.value), label: c.label })), default: String(x.default), selected: o.options[x.key] })),
+    unit: cfg.unit,
+    basis,
+    rules: describeProgram(def, { unit: cfg.unit, increments: cfg.increments }),
+    weeks: planWeeks(def, cfg, state),
+    start: {
+      trainingDays: usual?.length === Math.round(def.sessionsPerWeek) ? [...usual].sort() : defaultSchedule(def.sessionsPerWeek),
+      startWeights: Object.fromEntries(allSlots(def).filter(usesStartWeight).map((s) => [s.id, r1(cfg.startWeights[s.id] ?? 0)])),
+      trainingMaxes: Object.fromEntries(tmLifts(def).map((l) => [l, r1(cfg.trainingMaxes[l] ?? 0)])),
+      maxLabel: def.maxLabel ?? "Training max",
+      labels: {
+        ...Object.fromEntries(allSlots(def).filter(usesStartWeight).map((s) => [s.id, `${def.days.find((x) => x.slots.some((y) => y.id === s.id))?.id ?? ""} · ${s.tier} ${liftName(s.lift)}`.replace(/^ · /, "")])),
+        ...Object.fromEntries(tmLifts(def).map((l) => [l, liftName(l)])),
+      },
+    },
+  };
+}
+
+function tmLifts(def: ProgramDef): string[] {
+  const out = new Set<string>();
+  for (const s of allSlots(def)) {
+    const p = s.progression;
+    if (p.kind !== "percent") continue;
+    out.add(p.tmLift);
+    if (p.tmRule?.type === "amrapTable") for (const l of p.tmRule.alsoLifts ?? []) out.add(l);
+  }
+  return [...out];
+}
+
+export interface StartBody {
+  options?: Record<string, string>;
+  /** Mon = 0 */
+  trainingDays?: number[];
+  startWeights?: Record<string, number>;
+  trainingMaxes?: Record<string, number>;
+  /** YYYY-MM-DD (default today) */
+  startDate?: string;
+}
+
+/** Validate a start request and build the config to save. The caller persists it (and trainingDays). */
+export function startProgram(b: Bootstrap, id: string, body: unknown, d: Derived = derive(b, "volume")): { cfg: ProgramConfig; trainingDays: number[] | null } | { error: string; status: number } {
+  const t = getTemplate(id);
+  if (!t) return { error: "unknown program", status: 404 };
+  if (body != null && (typeof body !== "object" || Array.isArray(body))) return { error: "body must be an object", status: 400 };
+  const x = (body ?? {}) as Record<string, unknown>;
+  const rec = (v: unknown) => v != null && typeof v === "object" && !Array.isArray(v);
+  if (x.options != null && (!rec(x.options) || Object.values(x.options as object).some((v) => typeof v !== "string"))) return { error: "options must map option keys to string values", status: 400 };
+  const o = resolveOptions(t, (x.options as Record<string, string>) ?? {}, null);
+  if ("error" in o) return { error: o.error, status: 400 };
+  let days: number[] | null = null;
+  if (x.trainingDays != null) {
+    const td = x.trainingDays;
+    if (!Array.isArray(td) || !td.length || td.length > 7 || td.some((v) => !Number.isInteger(v) || v < 0 || v > 6) || new Set(td).size !== td.length) {
+      return { error: "trainingDays must be 1–7 distinct weekdays, 0 (Mon) to 6 (Sun)", status: 400 };
+    }
+    days = [...(td as number[])].sort((a, c) => a - c);
+  }
+  let date = d.today;
+  if (x.startDate != null) {
+    if (typeof x.startDate !== "string" || !/^\d{4}-\d\d-\d\d/.test(x.startDate) || Number.isNaN(Date.parse(x.startDate.slice(0, 10)))) return { error: "startDate must be YYYY-MM-DD", status: 400 };
+    date = x.startDate.slice(0, 10);
+  }
+  const def = t.build(o.options);
+  const slotIds = new Set(allSlots(def).filter(usesStartWeight).map((s) => s.id));
+  const tms = new Set(tmLifts(def));
+  const nums = (field: "startWeights" | "trainingMaxes", allowed: Set<string>): Record<string, number> | string => {
+    const v = x[field];
+    if (v == null) return {};
+    if (!rec(v)) return `${field} must be an object`;
+    for (const [k, n] of Object.entries(v as object)) {
+      if (!allowed.has(k)) return `${field}: "${k}" isn't part of ${t.name} with these options`;
+      if (typeof n !== "number" || !Number.isFinite(n) || n < 0 || n > 2000) return `${field}.${k} must be a number from 0 to 2000`;
+    }
+    return v as Record<string, number>;
+  };
+  const sw = nums("startWeights", slotIds), tm = nums("trainingMaxes", tms);
+  if (typeof sw === "string") return { error: sw, status: 400 };
+  if (typeof tm === "string") return { error: tm, status: 400 };
+  const { cfg } = baseConfig(b, d, t, o.options);
+  const out: ProgramConfig = {
+    templateId: t.id, options: o.options, unit: cfg.unit, startDate: `${date}T00:00:00Z`,
+    startWeights: { ...cfg.startWeights, ...sw },
+    trainingMaxes: { ...cfg.trainingMaxes, ...tm },
+    increments: cfg.increments ?? {},
+    ...(cfg.startStages && Object.keys(cfg.startStages).length ? { startStages: cfg.startStages } : {}),
+    ...(b.program?.liftMap ? { liftMap: b.program.liftMap } : {}),
+  };
+  return { cfg: out, trainingDays: days };
 }

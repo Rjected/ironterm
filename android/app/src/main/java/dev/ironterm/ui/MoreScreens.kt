@@ -65,6 +65,7 @@ fun MoreScreen(state: UiState, gym: GymUi, social: SocialUi = SocialUi(), onGo: 
         }
         NavRow("CALENDAR", "Month grid: done, planned, missed, travel$srv") { onGo(Route.Calendar) }; Line()
         NavRow("PROGRAM", "Slots, next steps, upcoming sessions, decision log$srv") { onGo(Route.Program) }; Line()
+        NavRow("PROGRAMS", "Browse every program: rules, workouts, start one$srv") { onGo(Route.Programs) }; Line()
         NavRow("BODY", "Muscle readiness and weekly load on the figure$srv") { onGo(Route.Body) }; Line()
         NavRow("INSIGHTS", "Projections, strength balance, achievements$srv") { onGo(Route.Insights) }; Line()
         NavRow("STATS", "Weekly volume, totals, streak, cardio$srv") { onGo(Route.Stats) }; Line()
@@ -190,7 +191,7 @@ private fun DaySheet(d: CalDay, onGo: (Route) -> Unit) {
 // ═════════════════════════════ PROGRAM ═════════════════════════════
 
 @Composable
-fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit) {
+fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () -> Unit, onSetup: () -> Unit, onBrowse: () -> Unit = {}) {
     LaunchedEffect(state.mode) { actions.load(Screens.PROGRAM) }
     Pushed("Program", onBack) {
         Loaded(data.program, "Program", onRetry = { actions.load(Screens.PROGRAM, true) }, onSetup = onSetup,
@@ -200,9 +201,9 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                 Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
                     Mono("NO ACTIVE PROGRAM", size = 14.sp, color = T.amber, bold = true)
                     Spacer(Modifier.height(10.dp))
-                    Mono("Choose one in SETUP → Advanced setup (web). The app picks it up on the next sync.", size = 12.sp, color = T.dim)
+                    Mono("Pick one from the catalog: GZCLP, 5/3/1, nSuns, Starting Strength and more. Read the rules, page through the workouts with your weights, then start it.", size = 12.sp, color = T.dim)
                     Spacer(Modifier.height(16.dp))
-                    TButton("Open setup", onClick = onSetup)
+                    TButton("Browse programs", primary = true, onClick = onBrowse)
                 }
                 return@Loaded
             }
@@ -224,6 +225,8 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                         else if (p.pushed) "Routines are in Hevy; pushing again updates them with the latest weights." else "Creates Hevy routines with today's weights, so you can log in the Hevy app too.",
                         size = 10.sp, color = T.faint,
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TButton("Browse programs ›", modifier = Modifier.fillMaxWidth(), onClick = onBrowse)
                 }
                 Line()
                 Section("Slots", right = "STAGE · WEIGHT · NEXT") {

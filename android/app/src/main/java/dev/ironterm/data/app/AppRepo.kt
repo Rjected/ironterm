@@ -91,9 +91,11 @@ class AppRepo(
         val c = cache.read(key, ser)
         if (!force && c != null && clock() - c.savedAt < maxAgeMs) return Load.of(c.value, c.savedAt)
         val api = api() ?: return c?.let { Load(it.value, savedAt = it.savedAt, error = "Not connected") } ?: Load.failed("Not connected. Open SETUP.")
+        val source = settings.sourceKey
         return try {
             val v = fetch(api)
-            cache.write(key, ser, v)
+            // connected elsewhere while this ran: don't cache the old source's document under the new one
+            if (settings.sourceKey == source) cache.write(key, ser, v)
             Load.of(v, clock())
         } catch (e: Exception) {
             Load(data = c?.value, savedAt = c?.savedAt ?: 0, error = friendly(e), auth = e is AuthException)

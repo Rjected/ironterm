@@ -15,6 +15,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 GOOD = "ht_test_good"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAMPLE = os.path.join(HERE, "..", "Shared", "Resources", "snapshot.sample.json")
+APP_DIR = os.environ.get("MOCK_APP_DIR") or os.path.join(HERE, "..", "..", "docs", "api", "app")
+
+
+def app_doc(path):
+    """/api/app/programs/gzclp -> <APP_DIR>/programs-gzclp.json, or None."""
+    name = path[len("/api/app/"):].strip("/").replace("/", "-")
+    f = os.path.join(APP_DIR, name + ".json")
+    if not name or ".." in name or not os.path.isfile(f):
+        return None
+    with open(f, "rb") as fh:
+        return fh.read()
 
 
 class H(BaseHTTPRequestHandler):
@@ -47,6 +58,11 @@ class H(BaseHTTPRequestHandler):
                 return self.unauthorized()
             with open(SAMPLE, "rb") as f:
                 return self.send(200, f.read())
+        if path.startswith("/api/app/"):
+            if not self.bearer_ok():
+                return self.unauthorized()
+            doc = app_doc(path)
+            return self.send(200, doc) if doc is not None else self.send(404, json.dumps({"error": "not found"}))
         if path in ("/", "/lifts"):
             signed = "ht_session=ok" in (self.headers.get("Cookie") or "")
             html = f"""<!doctype html><html><head><meta name=viewport content="width=device-width,initial-scale=1">
@@ -65,6 +81,12 @@ a{{color:#8cb4ff}}.ok{{color:#8cb4ff}}.no{{color:#ff6b5e}}</style></head><body>
         body = self.rfile.read(n).decode() if n else ""
         if path == "/api/sync":
             return self.send(200, '{"ok":true}') if self.bearer_ok() else self.unauthorized()
+        if path.startswith("/api/app/programs/") and path.endswith("/start"):
+            if not self.bearer_ok():
+                return self.unauthorized()
+            sys.stdout.write("  start body=%s\n" % body)
+            prog = app_doc("/api/app/program") or b'{"program":null}'
+            return self.send(200, b'{"ok":true,"program":' + prog + b"}")
         if path == "/auth/app":
             form = urllib.parse.parse_qs(body)
             sys.stdout.write("  /auth/app form keys=%s token_ok=%s\n" % (sorted(form), form.get("token") == [GOOD]))

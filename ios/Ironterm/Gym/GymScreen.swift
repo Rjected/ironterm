@@ -99,7 +99,7 @@ struct StartView: View {
                     HStack { Spacer(); ProgressView().tint(T.amber); Spacer() }.padding(30)
                 } else {
                     Panel(title: "NO PROGRAM") {
-                        Text("No active program. Pick one in SETUP → Advanced setup (web), or just start logging.")
+                        Text("No active program. Pick one in MORE → PROGRAMS, or just start logging.")
                             .font(T.mono(11)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                     }
                 }

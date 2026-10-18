@@ -121,6 +121,17 @@ class Settings(private val prefs: SharedPreferences) {
             SourceMode.NONE -> false
         }
 
+    /**
+     * Identity of the configured source (mode + server + token, or the API key). A sync started for
+     * one source must not write its result once the user has connected to another.
+     */
+    val sourceKey: String
+        get() = when (mode) {
+            SourceMode.SERVER -> "server|${serverUrl.orEmpty()}|${appToken.orEmpty().hashCode()}"
+            SourceMode.DIRECT -> "direct|${apiKey.orEmpty().hashCode()}"
+            SourceMode.NONE -> "none"
+        }
+
     fun connectServer(url: String, token: String) {
         prefs.edit().putString(K_MODE, SourceMode.SERVER.name).putString(K_SERVER, url).putString(K_TOKEN, token).apply()
     }

@@ -300,7 +300,7 @@ struct NextSessionPanel: View {
             Panel(title: "NEXT SESSION", detail: "NO PROGRAM") {
                 Text(source == .direct
                      ? "Programs live on the server. In Direct mode the app shows your log: graph, streak, lifts, history."
-                     : "No program is set. Pick one in SETUP → Advanced setup (web), or just start an empty workout in GYM.")
+                     : "No program is set. Pick one in MORE → PROGRAMS, or just start an empty workout in GYM.")
                     .font(T.mono(11)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -312,6 +312,7 @@ struct TierTag: View {
     var body: some View {
         Text(tier ?? "").font(T.mono(9, .bold))
             .foregroundStyle(tier == "T1" || tier == "MAIN" ? T.amber : tier == "T2" || tier == "SUPP" ? T.up : T.faint)
+            .lineLimit(1).minimumScaleFactor(0.6) // MAIN / SUPP / ACC
             .frame(width: 22, alignment: .leading)
     }
 }

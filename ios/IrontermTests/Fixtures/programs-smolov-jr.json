@@ -1,0 +1,822 @@
+{
+  "id": "smolov-jr",
+  "name": "Smolov Jr",
+  "author": "Sergey Smolov (base mesocycle, condensed)",
+  "category": "peaking",
+  "level": "intermediate",
+  "daysPerWeek": [
+    4
+  ],
+  "weekCount": 3,
+  "summary": "Three brutal weeks of one lift four days a week (6×6, 7×5, 8×4, 10×3 at 70–85%), adding weight each week.",
+  "source": "published program, LiftVault Smolov / Smolov Jr page",
+  "notes": [
+    "Enter a true (recent) 1RM. Typical schedule: Mon, Wed, Fri, Sat.",
+    "Week 2 adds 10 lb (5 kg) to every day's week-1 load; week 3 adds 20 lb (10 kg). Loads shown include it.",
+    "Rest a week, then test a new 1RM."
+  ],
+  "options": [
+    {
+      "key": "lift",
+      "label": "Lift",
+      "choices": [
+        {
+          "value": "squat",
+          "label": "Squat"
+        },
+        {
+          "value": "bench",
+          "label": "Bench press"
+        }
+      ],
+      "default": "squat",
+      "selected": "squat"
+    },
+    {
+      "key": "add",
+      "label": "Weekly increase",
+      "choices": [
+        {
+          "value": "low",
+          "label": "+5 / +10 lb (2.5 / 5 kg)"
+        },
+        {
+          "value": "high",
+          "label": "+10 / +20 lb (5 / 10 kg)"
+        }
+      ],
+      "default": "high",
+      "selected": "high"
+    }
+  ],
+  "unit": "lb",
+  "basis": "e1rm",
+  "rules": {
+    "overview": [
+      "4 sessions a week · four different days",
+      "A 3-week block that ends after week 3.",
+      "Percentages are of your 1RM for each lift."
+    ],
+    "rotation": [
+      {
+        "day": "Day 1 · 6×6 @ 70%",
+        "lifts": [
+          "MAIN SQUAT"
+        ]
+      },
+      {
+        "day": "Day 2 · 7×5 @ 75%",
+        "lifts": [
+          "MAIN SQUAT"
+        ]
+      },
+      {
+        "day": "Day 3 · 8×4 @ 80%",
+        "lifts": [
+          "MAIN SQUAT"
+        ]
+      },
+      {
+        "day": "Day 4 · 10×3 @ 85%",
+        "lifts": [
+          "MAIN SQUAT"
+        ]
+      }
+    ],
+    "tiers": [
+      {
+        "title": "Main · % of 1RM · Day 1 · 6×6 @ 70%",
+        "lifts": [
+          "Back Squat"
+        ],
+        "text": "Week 1: 6×6 @ 70%. Then every set gets heavier: +10 lb in week 2 and +20 lb in week 3. Your 1RM stays the same throughout."
+      },
+      {
+        "title": "Main · % of 1RM · Day 2 · 7×5 @ 75%",
+        "lifts": [
+          "Back Squat"
+        ],
+        "text": "Week 1: 7×5 @ 75%. Then every set gets heavier: +10 lb in week 2 and +20 lb in week 3. Your 1RM stays the same throughout."
+      },
+      {
+        "title": "Main · % of 1RM · Day 3 · 8×4 @ 80%",
+        "lifts": [
+          "Back Squat"
+        ],
+        "text": "Week 1: 8×4 @ 80%. Then every set gets heavier: +10 lb in week 2 and +20 lb in week 3. Your 1RM stays the same throughout."
+      },
+      {
+        "title": "Main · % of 1RM · Day 4 · 10×3 @ 85%",
+        "lifts": [
+          "Back Squat"
+        ],
+        "text": "Week 1: 10×3 @ 85%. Then every set gets heavier: +10 lb in week 2 and +20 lb in week 3. Your 1RM stays the same throughout."
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "name": "Week 1",
+      "days": [
+        {
+          "dayId": "D1",
+          "name": "Day 1 · 6×6 @ 70%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "6×6",
+              "top": 415,
+              "sets": [
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 415,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D2",
+          "name": "Day 2 · 7×5 @ 75%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "7×5",
+              "top": 445,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 445,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D3",
+          "name": "Day 3 · 8×4 @ 80%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "8×4",
+              "top": 470,
+              "sets": [
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 470,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D4",
+          "name": "Day 4 · 10×3 @ 85%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "10×3",
+              "top": 500,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 500,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 300,
+              "note": "1RM 590"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "name": "Week 2 (+10 lb / +5 kg)",
+      "days": [
+        {
+          "dayId": "D1",
+          "name": "Day 1 · 6×6 @ 70%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "6×6",
+              "top": 425,
+              "sets": [
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 425,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D2",
+          "name": "Day 2 · 7×5 @ 75%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "7×5",
+              "top": 455,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 455,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D3",
+          "name": "Day 3 · 8×4 @ 80%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "8×4",
+              "top": 480,
+              "sets": [
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 480,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D4",
+          "name": "Day 4 · 10×3 @ 85%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "10×3",
+              "top": 510,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 510,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 300,
+              "note": "1RM 590"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "name": "Week 3 (+20 lb / +10 kg)",
+      "days": [
+        {
+          "dayId": "D1",
+          "name": "Day 1 · 6×6 @ 70%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "6×6",
+              "top": 435,
+              "sets": [
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                },
+                {
+                  "reps": 6,
+                  "weight": 435,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D2",
+          "name": "Day 2 · 7×5 @ 75%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "7×5",
+              "top": 465,
+              "sets": [
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                },
+                {
+                  "reps": 5,
+                  "weight": 465,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D3",
+          "name": "Day 3 · 8×4 @ 80%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "8×4",
+              "top": 490,
+              "sets": [
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                },
+                {
+                  "reps": 4,
+                  "weight": 490,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 180,
+              "note": "1RM 590"
+            }
+          ]
+        },
+        {
+          "dayId": "D4",
+          "name": "Day 4 · 10×3 @ 85%",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "MAIN",
+              "scheme": "10×3",
+              "top": 520,
+              "sets": [
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                },
+                {
+                  "reps": 3,
+                  "weight": 520,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 300,
+              "note": "1RM 590"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "start": {
+    "trainingDays": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "startWeights": {},
+    "trainingMaxes": {
+      "squat": 590
+    },
+    "maxLabel": "1RM",
+    "labels": {
+      "squat": "Back Squat"
+    }
+  }
+}

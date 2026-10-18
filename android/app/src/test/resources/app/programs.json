@@ -1,0 +1,750 @@
+{
+  "active": "gzclp",
+  "programs": [
+    {
+      "id": "gzclp",
+      "name": "GZCLP",
+      "author": "Cody Lefever (GZCL) · sheet v4.5b5 by /u/Blacknoir",
+      "category": "gzcl",
+      "level": "beginner",
+      "daysPerWeek": [
+        3,
+        4
+      ],
+      "weekCount": null,
+      "summary": "Linear progression in three tiers. T1 heavy triples, T2 volume, T3 pump work. Rep schemes step down when you stall."
+    },
+    {
+      "id": "gzcl-jnt2",
+      "name": "Jacked & Tan 2.0",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 12,
+      "summary": "12-week powerbuilding block. Each T1 works up to a rep max and then does drop sets. Volume tapers into heavier work, with 1RM tests in weeks 6 and 12."
+    },
+    {
+      "id": "gzcl-rippler",
+      "name": "The Rippler",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 12,
+      "summary": "12-week upper/lower split. T1 intensity goes two weeks up and one week down. T2 runs three-week linear waves. Lower reps and higher intensity than Jacked & Tan."
+    },
+    {
+      "id": "gzcl-method",
+      "name": "The GZCL Method",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "The original 4-day tier template. Heavy T1 waves at 85–100% of an everyday 2–3RM, a T2 at 65–80%, and fixed T3 work. Week 4 retests and sets next cycle's goal weight."
+    },
+    {
+      "id": "gzcl-vdip",
+      "name": "VDIP",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "advanced",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "Every set is a max-rep set at one weight. Your total reps decide next week's weight: more volume earns more load. Expect 4–6 weeks of progress before a deload and retest."
+    },
+    {
+      "id": "gzcl-uhf-5wk",
+      "name": "GZCL UHF+ (5 Week)",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "advanced",
+      "daysPerWeek": [
+        5
+      ],
+      "weekCount": 5,
+      "summary": "Ultra high frequency GZCL: five days a week, a heavy T1 single plus rep-out back-offs, T2 volume and three T3 pump lifts a day."
+    },
+    {
+      "id": "gzcl-uhf-9wk",
+      "name": "GZCL UHF (9 Week)",
+      "author": "Cody Lefever (GZCL)",
+      "category": "gzcl",
+      "level": "advanced",
+      "daysPerWeek": [
+        5
+      ],
+      "weekCount": 9,
+      "summary": "Nine weeks of five-day-a-week GZCL: T1 waves of 3s, 2s and heavy singles over a 2RM training max, T2 variations and descending T3 volume, with an optional three-week taper."
+    },
+    {
+      "id": "gzcl-gg-wave",
+      "name": "GZCL General Gainz Wave LP",
+      "author": "/u/cyte85 (after Cody Lefever's General Gainz)",
+      "category": "gzcl",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 16,
+      "summary": "General Gainz made concrete: four 4-week waves, a T1 rep max plus singles and a T2 rep max plus half-sets, with loads climbing every week."
+    },
+    {
+      "id": "531-beginners",
+      "name": "5/3/1 for Beginners",
+      "author": "Jim Wendler",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Full-body 5/3/1 three days a week: two main lifts per day with 5/3/1 sets and 5×5 First Set Last, TM up every 3-week cycle, plus push/pull/core assistance."
+    },
+    {
+      "id": "ivysaur-448",
+      "name": "Ivysaur 4-4-8",
+      "author": "/u/ivysaur",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Three full-body days alternating 4×4 and 4×8 (at 90%) across two weekly templates. An AMRAP every other week decides each lift's next jump."
+    },
+    {
+      "id": "stronglifts",
+      "name": "StrongLifts 5×5",
+      "author": "Mehdi Hadim",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Two alternating full-body workouts, five sets of five. Add weight every session; three misses in a row at a weight means a 10% deload."
+    },
+    {
+      "id": "starting-strength",
+      "name": "Starting Strength",
+      "author": "Mark Rippetoe",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Squat every session, alternate press and bench, deadlift for one heavy set of five. Power cleans and chin-ups come in as the program matures."
+    },
+    {
+      "id": "greyskull",
+      "name": "GreySkull LP",
+      "author": "John Sheaffer",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Alternate bench and overhead press, 2×5 then an AMRAP set. Big AMRAPs earn double jumps; any miss resets that lift 10%."
+    },
+    {
+      "id": "phrak-gslp",
+      "name": "Phrak's GSLP",
+      "author": "/u/phrakture (after John Sheaffer)",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "The r/Fitness take on GreySkull: OHP, chins and squats on A, bench, rows and deadlifts on B, every lift 3×5+."
+    },
+    {
+      "id": "reddit-bbr",
+      "name": "Basic Beginner Routine",
+      "author": "r/Fitness",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "The r/Fitness starter program: row, bench, squat on A; chin-up, OHP, deadlift on B. Two sets of five and an AMRAP for everything."
+    },
+    {
+      "id": "icf-5x5",
+      "name": "Ice Cream Fitness 5×5",
+      "author": "Jason Blaha",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "StrongLifts-style 5×5 with rows every session and 3×8 bodybuilding accessories for arms, traps and abs."
+    },
+    {
+      "id": "fierce5",
+      "name": "Fierce 5",
+      "author": "Fierce 5 (bodybuilding.com forums)",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Short A/B full-body novice program: squat, bench and Pendlay rows on A; front squat, press and RDLs on B, with supersetted accessories."
+    },
+    {
+      "id": "allpro",
+      "name": "AllPro Simple Beginner",
+      "author": "AllPro (bodybuilding.com)",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Same seven lifts three days a week. Reps climb from 8 to 12 over five weeks at a fixed weight; finish 12s on heavy day and the weight goes up 10%."
+    },
+    {
+      "id": "bill-starr",
+      "name": "Bill Starr 5×5",
+      "author": "Bill Starr",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "The original heavy-light-medium Big Three: power clean, bench and squat, ramping five sets of five to a top set that goes up every week."
+    },
+    {
+      "id": "bromley-beginner",
+      "name": "Bromley's Simplest Beginner Program",
+      "author": "Alex Bromley (Empire Barbell)",
+      "category": "novice",
+      "level": "beginner",
+      "daysPerWeek": [
+        3,
+        4,
+        5
+      ],
+      "weekCount": null,
+      "summary": "The big five lifts for 4×6+ (add weight while the last set beats 6) plus arm work to failure; start A/B, then add a variation day."
+    },
+    {
+      "id": "531",
+      "name": "5/3/1",
+      "author": "Jim Wendler",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "Three-week waves off a training max, AMRAP top sets, slow and steady TM increases each cycle."
+    },
+    {
+      "id": "531-2-3day",
+      "name": "5/3/1 2-Day / 3-Day",
+      "author": "Jim Wendler",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        2,
+        3
+      ],
+      "weekCount": null,
+      "summary": "Classic 5/3/1 waves on fewer training days: two lifts per session twice a week, or the four lifts rotating through three sessions a week."
+    },
+    {
+      "id": "531-fives-pro",
+      "name": "5/3/1 5's PRO + FSL / BBS",
+      "author": "Jim Wendler",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "The Forever-era staple: 5 reps on every main set (no AMRAPs), then First Set Last 5×5, Boring But Strong 10×5 or Second Set Last 5×5, with push/pull/core assistance."
+    },
+    {
+      "id": "nsuns5",
+      "name": "nSuns LP 5-Day",
+      "author": "/u/nSuns",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        5
+      ],
+      "weekCount": null,
+      "summary": "High-volume 5/3/1 variant with weekly TM bumps driven by your 1+ sets. Nine T1 sets, eight T2 sets per day."
+    },
+    {
+      "id": "nsuns-4day",
+      "name": "nSuns LP 4-Day",
+      "author": "/u/nSuns",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "The 5-day nSuns LP minus the OHP day: two bench days, one squat day, one deadlift day, weekly TM bumps from the 1+ sets."
+    },
+    {
+      "id": "nsuns-6day-squat",
+      "name": "nSuns LP 6-Day (Squat focus)",
+      "author": "/u/nSuns",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        6
+      ],
+      "weekCount": null,
+      "summary": "The 5-day nSuns LP plus a sixth day of extra squat volume (8×3 at a moderate weight, plus 6×3 on a variation)."
+    },
+    {
+      "id": "nsuns-6day-deadlift",
+      "name": "nSuns LP 6-Day (Deadlift focus)",
+      "author": "/u/nSuns",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        6
+      ],
+      "weekCount": null,
+      "summary": "The 5-day nSuns LP plus a sixth day of extra deadlift volume (8×3 at a moderate weight, plus 6×3 on a variation)."
+    },
+    {
+      "id": "candito-linear",
+      "name": "Candito Linear Program",
+      "author": "Jonnie Candito",
+      "category": "strength",
+      "level": "beginner",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "Four-day upper/lower: heavy 3×6 days plus control (paused 6×4) or hypertrophy days. Add weight weekly; miss a lift and drop it about 15 lb."
+    },
+    {
+      "id": "madcow",
+      "name": "Madcow 5×5",
+      "author": "Madcow2 (after Bill Starr)",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 12,
+      "summary": "Heavy-light-medium 5×5 with ramping sets. Monday's top set of five and Friday's triple climb 2.5% a week; Wednesday is a light squat day."
+    },
+    {
+      "id": "texas-method",
+      "name": "Texas Method",
+      "author": "Mark Rippetoe & Glenn Pendlay",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": null,
+      "summary": "Volume Monday, light Wednesday, PR Friday. Each successful Friday 5RM raises the target and, with it, next week's volume and light days."
+    },
+    {
+      "id": "candito6",
+      "name": "Candito 6 Week Strength",
+      "author": "Jonnie Candito",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 6,
+      "summary": "Six-week upper/lower block off your 1RMs: conditioning, hypertrophy, linear max OT, heavy acclimation, then 1–4 rep max sets and a max test. 3–5 sessions a week."
+    },
+    {
+      "id": "sbsRtf",
+      "name": "SBS Strength (Reps to Failure)",
+      "author": "Greg Nuckols (Stronger By Science)",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "weekCount": 21,
+      "summary": "21 weeks in three 7-week blocks. Four sets at a weekly % and rep target, then one set to failure; beating or missing the target nudges that lift's max."
+    },
+    {
+      "id": "sbsRir",
+      "name": "SBS Strength (Last Set RIR)",
+      "author": "Greg Nuckols (Stronger By Science)",
+      "category": "strength",
+      "level": "intermediate",
+      "daysPerWeek": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "weekCount": 21,
+      "summary": "21 weeks in three 7-week blocks. Five sets at a weekly % and rep target, the last stopped at a reps-in-reserve target; how much you had left moves that lift's max."
+    },
+    {
+      "id": "clarence14",
+      "name": "Clarence0 14 Week Powerlifting",
+      "author": "Clarence0",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 14,
+      "summary": "RPE-based 4-day powerlifting block: high volume (weeks 1–6), strength (7–11), peaking with a 1RM test in week 14."
+    },
+    {
+      "id": "complete16",
+      "name": "Calgary Barbell 16 Week",
+      "author": "Bryce Krawczyk (Calgary Barbell)",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 16,
+      "summary": "16-week, 4-day powerlifting peak: % of max plus RPE work with lots of paused variations, finishing with a meet taper."
+    },
+    {
+      "id": "calgary-8",
+      "name": "Calgary Barbell 8 Week",
+      "author": "Bryce Krawczyk (Calgary Barbell)",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 9,
+      "summary": "The 16 week program's weeks 5–8 and 12–15: four weeks of percentage work, four of RPE top sets with e1RM back-offs, plus an optional taper week."
+    },
+    {
+      "id": "juggernaut",
+      "name": "Juggernaut Method 2.0",
+      "author": "Chad Wesley Smith",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 16,
+      "summary": "Four 4-week waves of 10s, 8s, 5s and 3s. Each wave climbs from volume to a realization AMRAP, and the reps you beat the standard by raise the training max."
+    },
+    {
+      "id": "rts-generalized",
+      "name": "RTS Generalized Intermediate",
+      "author": "Mike Tuchscherer (Reactive Training Systems)",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3,
+        4
+      ],
+      "weekCount": 9,
+      "summary": "Nine weeks of RPE top sets with fatigue-percent back-offs: four days a week for weeks 1–4, three for weeks 5–8, then a taper and 1RM test."
+    },
+    {
+      "id": "sheiko-29-32",
+      "name": "Sheiko #29–#32",
+      "author": "Boris Sheiko",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 16,
+      "summary": "Four 4-week blocks run back to back: #29 and #30 preparatory, #31 and #32 competition, peaking with a max test in #32. Bench three times a week, squat twice, deadlift once, all at fixed percentages of your 1RM."
+    },
+    {
+      "id": "sheiko-37",
+      "name": "Sheiko #37",
+      "author": "Boris Sheiko",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 4,
+      "summary": "A 4-week Sheiko preparatory block at medium volume: bench three times a week, squat twice, deadlift once, with block pulls and halting deadlifts."
+    },
+    {
+      "id": "sheiko-beginner",
+      "name": "Sheiko Beginner",
+      "author": "Boris Sheiko",
+      "category": "powerlifting",
+      "level": "beginner",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 8,
+      "summary": "Sheiko's 3-day beginner template: run the 4-week prep cycle one or more times, then the 4-week competition cycle with a max test in its first week."
+    },
+    {
+      "id": "sheiko-aml",
+      "name": "Sheiko Advanced Medium Load",
+      "author": "Boris Sheiko",
+      "category": "powerlifting",
+      "level": "advanced",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 20,
+      "summary": "Sheiko's 4-day plan for Class 1 and above: three preparatory cycles (4, 6 and 5 weeks) and a 5-week competition cycle, with board and chain presses, paused and block deadlifts, and max tests along the way."
+    },
+    {
+      "id": "nuckols-hf",
+      "name": "Greg Nuckols High Frequency",
+      "author": "Greg Nuckols",
+      "category": "powerlifting",
+      "level": "intermediate",
+      "daysPerWeek": [
+        5,
+        6
+      ],
+      "weekCount": null,
+      "summary": "Squat and bench (and deadlift) every training day at a different intensity, 3-week waves that add a set each week, then an AMAP at 85% sets the new max."
+    },
+    {
+      "id": "531-monolith",
+      "name": "5/3/1 Building the Monolith",
+      "author": "Jim Wendler",
+      "category": "hypertrophy",
+      "level": "advanced",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 6,
+      "summary": "Six-week, three-day size block: squat twice a week (ending in a 20-rep set), high-volume pressing, and 100-rep chin, dip and face-pull work."
+    },
+    {
+      "id": "531-bbb-challenge",
+      "name": "Boring But Big 3-Month Challenge",
+      "author": "Jim Wendler",
+      "category": "hypertrophy",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 12,
+      "summary": "Three months of 5/3/1 (prescribed reps only) plus 5×10 of the same lift, climbing from 50% to 60% to 70% of TM month by month."
+    },
+    {
+      "id": "reddit-ppl",
+      "name": "Reddit PPL",
+      "author": "/u/Metallicadpa",
+      "category": "hypertrophy",
+      "level": "beginner",
+      "daysPerWeek": [
+        6
+      ],
+      "weekCount": null,
+      "summary": "Six-day push/pull/legs. Main lifts add weight every session with an AMRAP last set; accessories use double progression in 8–12 and 15–20 rep ranges."
+    },
+    {
+      "id": "phul",
+      "name": "PHUL",
+      "author": "Brandon Campbell",
+      "category": "hypertrophy",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "Power Hypertrophy Upper Lower: two heavy 3–5 rep days and two 8–12 rep pump days a week, all on double progression."
+    },
+    {
+      "id": "phat",
+      "name": "PHAT",
+      "author": "Layne Norton",
+      "category": "hypertrophy",
+      "level": "advanced",
+      "daysPerWeek": [
+        5
+      ],
+      "weekCount": null,
+      "summary": "Power Hypertrophy Adaptive Training: two heavy upper/lower power days, then three body-part hypertrophy days that open with 6×3 speed work at 70% of the power-day weight."
+    },
+    {
+      "id": "lyle-gbr",
+      "name": "Lyle's Generic Bulking Routine",
+      "author": "Lyle McDonald",
+      "category": "hypertrophy",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": null,
+      "summary": "Four-day upper/lower: heavy 6–8 rep compounds then 10–12 rep work, each body part twice a week. Hit the top of the range, add weight."
+    },
+    {
+      "id": "sbsHypertrophy",
+      "name": "SBS Hypertrophy",
+      "author": "Greg Nuckols (Stronger By Science)",
+      "category": "hypertrophy",
+      "level": "intermediate",
+      "daysPerWeek": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "weekCount": 21,
+      "summary": "21-week hypertrophy version: three sets of 6–12ish reps at 70–82.5%, then a set to failure that adjusts the max."
+    },
+    {
+      "id": "sbsNoviceHypertrophy",
+      "name": "SBS Novice Hypertrophy",
+      "author": "Greg Nuckols (Stronger By Science)",
+      "category": "hypertrophy",
+      "level": "beginner",
+      "daysPerWeek": [
+        2,
+        3,
+        4
+      ],
+      "weekCount": null,
+      "summary": "Beginner full-body hypertrophy: compound lifts plus accessories for 3×8–12, adding weight once every set reaches 12."
+    },
+    {
+      "id": "gvt",
+      "name": "German Volume Training",
+      "author": "Charles Poliquin",
+      "category": "hypertrophy",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3,
+        4
+      ],
+      "weekCount": 7,
+      "summary": "Ten sets of ten on two supersetted main lifts per session at 60% of 1RM (phase 2: 10×6 at 70%), plus two lighter supplementary lifts."
+    },
+    {
+      "id": "arnold-split",
+      "name": "Arnold Split (Basic Training #1)",
+      "author": "Arnold Schwarzenegger",
+      "category": "hypertrophy",
+      "level": "advanced",
+      "daysPerWeek": [
+        6
+      ],
+      "weekCount": null,
+      "summary": "Six days a week: chest and back, shoulders and arms, legs, twice through. Four-set pyramids on almost everything, with a few heavy power movements."
+    },
+    {
+      "id": "smolov-jr",
+      "name": "Smolov Jr",
+      "author": "Sergey Smolov (base mesocycle, condensed)",
+      "category": "peaking",
+      "level": "intermediate",
+      "daysPerWeek": [
+        4
+      ],
+      "weekCount": 3,
+      "summary": "Three brutal weeks of one lift four days a week (6×6, 7×5, 8×4, 10×3 at 70–85%), adding weight each week."
+    },
+    {
+      "id": "russian-squat",
+      "name": "Russian Squat Routine",
+      "author": "Soviet sports science (popularized by Pavel Tsatsouline)",
+      "category": "peaking",
+      "level": "intermediate",
+      "daysPerWeek": [
+        3
+      ],
+      "weekCount": 6,
+      "summary": "Six weeks of squatting three times a week: steady 6×2 @ 80% days alternate with volume ramps to 6×6, then intensity ramps to a 105% single."
+    },
+    {
+      "id": "coan-phillipi",
+      "name": "Coan–Phillipi Deadlift",
+      "author": "Ed Coan & Mark Phillipi",
+      "category": "peaking",
+      "level": "intermediate",
+      "daysPerWeek": [
+        1
+      ],
+      "weekCount": 10,
+      "summary": "Ten weeks, one deadlift day a week: a heavy double or single climbing to your goal max, speed triples, and hard back assistance."
+    },
+    {
+      "id": "smolov",
+      "name": "Smolov",
+      "author": "Sergey Smolov",
+      "category": "peaking",
+      "level": "advanced",
+      "daysPerWeek": [
+        3,
+        4
+      ],
+      "weekCount": 14,
+      "summary": "The full 13–14 week Russian squat cycle: intro, a four-day-a-week base block, a switching block, then an intense peaking block ending in a max test."
+    },
+    {
+      "id": "magnusson-ortmayer",
+      "name": "Magnusson–Ortmayer Deadlift",
+      "author": "Magnusson / Ortmayer",
+      "category": "peaking",
+      "level": "intermediate",
+      "daysPerWeek": [
+        1
+      ],
+      "weekCount": 12,
+      "summary": "One heavy deadlift session a week: 4×4, heavy doubles and a 70% rep-out, with the load climbing about 10 lb a week over 11–12 weeks."
+    },
+    {
+      "id": "candito-adv-bench",
+      "name": "Candito 6 Week Advanced Bench",
+      "author": "Jonnie Candito",
+      "category": "peaking",
+      "level": "advanced",
+      "daysPerWeek": [
+        5,
+        2
+      ],
+      "weekCount": 6,
+      "summary": "Bench specialization: three weeks benching five days a week off your current max, then three weeks of high-volume, peak and max-out work off a goal max."
+    },
+    {
+      "id": "candito-adv-squat",
+      "name": "Candito 9 Week Advanced Squat",
+      "author": "Jonnie Candito",
+      "category": "peaking",
+      "level": "advanced",
+      "daysPerWeek": [
+        5,
+        2,
+        3
+      ],
+      "weekCount": 9,
+      "summary": "Squat specialization: three high-frequency weeks off your current max, then reduced-frequency volume, a 5RM transition, max-strength work and a max out off a goal max."
+    }
+  ]
+}

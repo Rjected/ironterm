@@ -1,6 +1,12 @@
 package dev.ironterm.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -49,7 +55,7 @@ class ServerClient(
             .header("Authorization", "Bearer $token")
             .header("accept", "application/json")
             .get().build()
-        client.newCall(req).execute().use { res ->
+        client.newCall(req).await().use { res ->
             val body = res.body?.string().orEmpty()
             when {
                 res.code == 401 || res.code == 403 -> throw AuthException()
@@ -62,4 +68,15 @@ class ServerClient(
             }
         }
     }
+}
+
+/** Runs the call so that cancelling the coroutine cancels the HTTP request (a hung server can't pin a sync). */
+suspend fun Call.await(): Response = suspendCancellableCoroutine { cont ->
+    cont.invokeOnCancellation { runCatching { cancel() } }
+    enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) { if (cont.isActive) cont.resumeWithException(e) }
+        override fun onResponse(call: Call, response: Response) {
+            if (cont.isActive) cont.resume(response) else response.close()
+        }
+    })
 }

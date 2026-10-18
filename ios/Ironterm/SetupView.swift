@@ -232,7 +232,7 @@ struct SetupView: View {
         } else if choice == .direct {
             await model.useDirect(apiKey: apiKey.trimmingCharacters(in: .whitespaces), unit: unit, weekTarget: weekTarget)
         }
-        if model.error == nil { model.tab = .today; model.morePath = [] }
+        if model.error == nil { model.tab = .today; model.setMore([]) }
     }
 
     // MARK: widgets
@@ -255,7 +255,7 @@ struct SetupView: View {
             }
             Text("Widgets read the same data source and fetch on their own every ~30 minutes; the app refreshes them after every sync. Long-press a widget → Edit to pick a theme or lift.")
                 .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
-            Button { model.morePath.append(.gallery) } label: {
+            Button { model.morePath.append(AppModel.More.gallery) } label: {
                 HStack {
                     Image(systemName: "square.grid.2x2")
                     Text("WIDGET GALLERY").font(T.mono(11, .bold))

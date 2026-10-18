@@ -1,0 +1,2323 @@
+{
+  "id": "gzclp",
+  "name": "GZCLP",
+  "author": "Cody Lefever (GZCL) · sheet v4.5b5 by /u/Blacknoir",
+  "category": "gzcl",
+  "level": "beginner",
+  "daysPerWeek": [
+    3,
+    4
+  ],
+  "weekCount": null,
+  "summary": "Linear progression in three tiers. T1 heavy triples, T2 volume, T3 pump work. Rep schemes step down when you stall.",
+  "source": "v4_5b5 GZCLP 3-4 Day 12-Week | LiftVault.com",
+  "notes": [],
+  "options": [
+    {
+      "key": "days",
+      "label": "Days per week",
+      "choices": [
+        {
+          "value": "3",
+          "label": "3 day"
+        },
+        {
+          "value": "4",
+          "label": "4 day"
+        }
+      ],
+      "default": "4",
+      "selected": "4"
+    },
+    {
+      "key": "t1",
+      "label": "T1 scheme",
+      "choices": [
+        {
+          "value": "default",
+          "label": "5×3+ › 6×2+ › 10×1+"
+        },
+        {
+          "value": "modified",
+          "label": "3×5+ › 4×3+ › 5×2+"
+        }
+      ],
+      "default": "default",
+      "selected": "default"
+    },
+    {
+      "key": "t2",
+      "label": "T2 scheme",
+      "choices": [
+        {
+          "value": "default",
+          "label": "3×10 › 3×8 › 3×6"
+        },
+        {
+          "value": "modified",
+          "label": "4×8 › 4×6 › 4×4"
+        }
+      ],
+      "default": "default",
+      "selected": "default"
+    },
+    {
+      "key": "t3",
+      "label": "T3 scheme",
+      "choices": [
+        {
+          "value": "default",
+          "label": "3×15+ (move up at 25)"
+        },
+        {
+          "value": "modified",
+          "label": "4×12+ (move up at 18)"
+        }
+      ],
+      "default": "default",
+      "selected": "default"
+    },
+    {
+      "key": "curls",
+      "label": "Extra T3 on A1",
+      "choices": [
+        {
+          "value": "on",
+          "label": "Bicep curls 4×12+"
+        },
+        {
+          "value": "off",
+          "label": "None"
+        }
+      ],
+      "default": "on",
+      "selected": "on"
+    }
+  ],
+  "unit": "lb",
+  "basis": "active",
+  "rules": {
+    "overview": [
+      "4 sessions a week · four different days",
+      "Open-ended: keep running it as long as you progress."
+    ],
+    "rotation": [
+      {
+        "day": "Day A1 · Squat",
+        "lifts": [
+          "T1 SQUAT",
+          "T2 BENCH",
+          "T3 LAT PD",
+          "T3 CURL"
+        ]
+      },
+      {
+        "day": "Day B1 · OHP",
+        "lifts": [
+          "T1 OHP",
+          "T2 DEADLIFT",
+          "T3 DB ROW"
+        ]
+      },
+      {
+        "day": "Day A2 · Bench",
+        "lifts": [
+          "T1 BENCH",
+          "T2 SQUAT",
+          "T3 LAT PD"
+        ]
+      },
+      {
+        "day": "Day B2 · Deadlift",
+        "lifts": [
+          "T1 DEADLIFT",
+          "T2 OHP",
+          "T3 DB ROW"
+        ]
+      }
+    ],
+    "tiers": [
+      {
+        "title": "T1 · 5×3+ → 6×2+ → 10×1+",
+        "lifts": [
+          "Back Squat",
+          "Overhead Press",
+          "Bench Press",
+          "Deadlift"
+        ],
+        "text": "5×3+ (last set as many reps as you can). Get every rep and add 10 lb on Back Squat and Deadlift and 5 lb on Overhead Press and Bench Press next time. If you miss a rep, move to 6×2+, then 10×1+ at the same weight. When 10×1+ stalls too, test a new 5-rep max and restart at 85% of it."
+      },
+      {
+        "title": "T2 · 3×10 → 3×8 → 3×6",
+        "lifts": [
+          "Bench Press",
+          "Deadlift",
+          "Back Squat",
+          "Overhead Press"
+        ],
+        "text": "3×10. Get every rep and add 5 lb (10 lb on Deadlift) next time. If you miss a rep, move to 3×8, then 3×6 at the same weight. When 3×6 stalls too, go back to 3×10 at the weight you last started it with, plus 10 lb (20 lb on Deadlift)."
+      },
+      {
+        "title": "T3 · 3×15+",
+        "lifts": [
+          "Lat Pulldown",
+          "Dumbbell Row"
+        ],
+        "text": "3×15+. When the last set reaches 25 reps, add 5 lb next time; until then, keep the weight and push the last set."
+      },
+      {
+        "title": "T3 · 4×12+",
+        "lifts": [
+          "Bicep Curl"
+        ],
+        "text": "4×12+. When the last set reaches 18 reps, add 5 lb next time; until then, keep the weight and push the last set."
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "name": null,
+      "days": [
+        {
+          "dayId": "A1",
+          "name": "Day A1 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 515,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 515,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 525",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 170,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 170,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 170,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 175",
+              "ifFail": "miss → 3×6 @ 170"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 80,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 85",
+              "ifFail": "fewer → stay at 80"
+            },
+            {
+              "lift": "bicepCurl",
+              "name": "Bicep Curl",
+              "tier": "T3",
+              "scheme": "4×12+",
+              "top": 235,
+              "sets": [
+                {
+                  "reps": 12,
+                  "weight": 235,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 235,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 235,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 235,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "18+ on last set → 240",
+              "ifFail": "fewer → stay at 235"
+            }
+          ]
+        },
+        {
+          "dayId": "B1",
+          "name": "Day B1 · OHP",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 270,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 270,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 275",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 195,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 205",
+              "ifFail": "miss → 3×6 @ 195"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 80,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 85",
+              "ifFail": "fewer → stay at 80"
+            }
+          ]
+        },
+        {
+          "dayId": "A2",
+          "name": "Day A2 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 325,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 325,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 330",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 190,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 190,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 190,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 190,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 195",
+              "ifFail": "miss → 3×6 @ 190"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 95,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 100",
+              "ifFail": "fewer → stay at 95"
+            }
+          ]
+        },
+        {
+          "dayId": "B2",
+          "name": "Day B2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 550,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 550,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 560",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 95,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 95,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 100",
+              "ifFail": "miss → 3×6 @ 95"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 80,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 80,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 85",
+              "ifFail": "fewer → stay at 80"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "name": null,
+      "days": [
+        {
+          "dayId": "A1",
+          "name": "Day A1 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 525,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 525,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 535",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 175,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 175,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 175,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 175,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 180",
+              "ifFail": "miss → 3×6 @ 175"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 85,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 90",
+              "ifFail": "fewer → stay at 85"
+            },
+            {
+              "lift": "bicepCurl",
+              "name": "Bicep Curl",
+              "tier": "T3",
+              "scheme": "4×12+",
+              "top": 240,
+              "sets": [
+                {
+                  "reps": 12,
+                  "weight": 240,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 240,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 240,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 240,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "18+ on last set → 245",
+              "ifFail": "fewer → stay at 240"
+            }
+          ]
+        },
+        {
+          "dayId": "B1",
+          "name": "Day B1 · OHP",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 275,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 275,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 280",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 205,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 215",
+              "ifFail": "miss → 3×6 @ 205"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 85,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 90",
+              "ifFail": "fewer → stay at 85"
+            }
+          ]
+        },
+        {
+          "dayId": "A2",
+          "name": "Day A2 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 330,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 330,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 335",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 195,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 195,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 200",
+              "ifFail": "miss → 3×6 @ 195"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 100,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 100,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 100,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 100,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 105",
+              "ifFail": "fewer → stay at 100"
+            }
+          ]
+        },
+        {
+          "dayId": "B2",
+          "name": "Day B2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 560,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 560,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 570",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 100,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 100,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 100,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 100,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 105",
+              "ifFail": "miss → 3×6 @ 100"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 85,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 85,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 90",
+              "ifFail": "fewer → stay at 85"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "name": null,
+      "days": [
+        {
+          "dayId": "A1",
+          "name": "Day A1 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 535,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 535,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 545",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 180,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 180,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 180,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 180,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 185",
+              "ifFail": "miss → 3×6 @ 180"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 90,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 95",
+              "ifFail": "fewer → stay at 90"
+            },
+            {
+              "lift": "bicepCurl",
+              "name": "Bicep Curl",
+              "tier": "T3",
+              "scheme": "4×12+",
+              "top": 245,
+              "sets": [
+                {
+                  "reps": 12,
+                  "weight": 245,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 245,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 245,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 245,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "18+ on last set → 250",
+              "ifFail": "fewer → stay at 245"
+            }
+          ]
+        },
+        {
+          "dayId": "B1",
+          "name": "Day B1 · OHP",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 280,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 280,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 285",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 215,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 215,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 215,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 215,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 225",
+              "ifFail": "miss → 3×6 @ 215"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 90,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 95",
+              "ifFail": "fewer → stay at 90"
+            }
+          ]
+        },
+        {
+          "dayId": "A2",
+          "name": "Day A2 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 335,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 335,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 340",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 200,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 200,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 200,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 200,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 205",
+              "ifFail": "miss → 3×6 @ 200"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 105,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 105,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 105,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 105,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 110",
+              "ifFail": "fewer → stay at 105"
+            }
+          ]
+        },
+        {
+          "dayId": "B2",
+          "name": "Day B2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 570,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 570,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 580",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 105,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 105,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 105,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 105,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 110",
+              "ifFail": "miss → 3×6 @ 105"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 90,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 90,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 95",
+              "ifFail": "fewer → stay at 90"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "name": null,
+      "days": [
+        {
+          "dayId": "A1",
+          "name": "Day A1 · Squat",
+          "exercises": [
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 545,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 545,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 555",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 185,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 185,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 185,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 185,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 190",
+              "ifFail": "miss → 3×6 @ 185"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 95,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 100",
+              "ifFail": "fewer → stay at 95"
+            },
+            {
+              "lift": "bicepCurl",
+              "name": "Bicep Curl",
+              "tier": "T3",
+              "scheme": "4×12+",
+              "top": 250,
+              "sets": [
+                {
+                  "reps": 12,
+                  "weight": 250,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 250,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 250,
+                  "amrap": false
+                },
+                {
+                  "reps": 12,
+                  "weight": 250,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "18+ on last set → 255",
+              "ifFail": "fewer → stay at 250"
+            }
+          ]
+        },
+        {
+          "dayId": "B1",
+          "name": "Day B1 · OHP",
+          "exercises": [
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 285,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 285,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 290",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 225,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 225,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 225,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 225,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 235",
+              "ifFail": "miss → 3×6 @ 225"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 95,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 100",
+              "ifFail": "fewer → stay at 95"
+            }
+          ]
+        },
+        {
+          "dayId": "A2",
+          "name": "Day A2 · Bench",
+          "exercises": [
+            {
+              "lift": "bench",
+              "name": "Bench Press",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 340,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 340,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 345",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "squat",
+              "name": "Back Squat",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 205,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 205,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 210",
+              "ifFail": "miss → 3×6 @ 205"
+            },
+            {
+              "lift": "latPulldown",
+              "name": "Lat Pulldown",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 110,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 110,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 110,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 110,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 115",
+              "ifFail": "fewer → stay at 110"
+            }
+          ]
+        },
+        {
+          "dayId": "B2",
+          "name": "Day B2 · Deadlift",
+          "exercises": [
+            {
+              "lift": "deadlift",
+              "name": "Deadlift",
+              "tier": "T1",
+              "scheme": "10×1+",
+              "top": 580,
+              "sets": [
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": false
+                },
+                {
+                  "reps": 1,
+                  "weight": 580,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 180,
+              "ifSuccess": "10 reps → 590",
+              "ifFail": "miss → retest 5RM"
+            },
+            {
+              "lift": "ohp",
+              "name": "Overhead Press",
+              "tier": "T2",
+              "scheme": "3×8",
+              "top": 110,
+              "sets": [
+                {
+                  "reps": 8,
+                  "weight": 110,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 110,
+                  "amrap": false
+                },
+                {
+                  "reps": 8,
+                  "weight": 110,
+                  "amrap": false
+                }
+              ],
+              "restSeconds": 120,
+              "ifSuccess": "24 reps → 115",
+              "ifFail": "miss → 3×6 @ 110"
+            },
+            {
+              "lift": "dbRow",
+              "name": "Dumbbell Row",
+              "tier": "T3",
+              "scheme": "3×15+",
+              "top": 95,
+              "sets": [
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": false
+                },
+                {
+                  "reps": 15,
+                  "weight": 95,
+                  "amrap": true
+                }
+              ],
+              "restSeconds": 75,
+              "ifSuccess": "25+ on last set → 100",
+              "ifFail": "fewer → stay at 95"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "start": {
+    "trainingDays": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "startWeights": {
+      "a1-t1": 515,
+      "a1-t2": 170,
+      "a1-t3": 80,
+      "a1-t3b": 235,
+      "b1-t1": 270,
+      "b1-t2": 195,
+      "b1-t3": 80,
+      "a2-t1": 325,
+      "a2-t2": 190,
+      "a2-t3": 95,
+      "b2-t1": 550,
+      "b2-t2": 95,
+      "b2-t3": 80
+    },
+    "trainingMaxes": {},
+    "maxLabel": "Training max",
+    "labels": {
+      "a1-t1": "A1 · T1 Back Squat",
+      "a1-t2": "A1 · T2 Bench Press",
+      "a1-t3": "A1 · T3 Lat Pulldown",
+      "a1-t3b": "A1 · T3 Bicep Curl",
+      "b1-t1": "B1 · T1 Overhead Press",
+      "b1-t2": "B1 · T2 Deadlift",
+      "b1-t3": "B1 · T3 Dumbbell Row",
+      "a2-t1": "A2 · T1 Bench Press",
+      "a2-t2": "A2 · T2 Back Squat",
+      "a2-t3": "A2 · T3 Lat Pulldown",
+      "b2-t1": "B2 · T1 Deadlift",
+      "b2-t2": "B2 · T2 Overhead Press",
+      "b2-t3": "B2 · T3 Dumbbell Row"
+    }
+  }
+}

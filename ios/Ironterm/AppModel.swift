@@ -29,7 +29,7 @@ final class AppModel: ObservableObject {
 
     /// Screens under MORE.
     enum More: String, CaseIterable, Identifiable, Hashable {
-        case lifts, calendar, program, body, insights, stats, setup, gallery
+        case lifts, calendar, program, programs, body, insights, stats, setup, gallery
         var id: String { rawValue }
         var title: String { rawValue.uppercased() }
         /// needs the server's program / analytics (Direct mode shows "needs a server")
@@ -37,8 +37,17 @@ final class AppModel: ObservableObject {
     }
 
     @Published var tab: Tab = .today
-    /// navigation path of the MORE tab
-    @Published var morePath: [More] = []
+    /// navigation path of the MORE tab. A NavigationPath, not [More]: screens pushed inside MORE
+    /// (a lift's detail, a workout) are other types, and a typed path silently refuses them.
+    @Published var morePath = NavigationPath()
+    /// the MORE screens last opened by name (deep links, launch args, after starting a program)
+    private(set) var moreScreens: [More] = []
+
+    /// Replace the MORE stack with these screens.
+    func setMore(_ screens: [More]) {
+        moreScreens = screens
+        morePath = NavigationPath(screens)
+    }
     /// navigation path of the FRIENDS tab
     @Published var socialPath: [SocialRoute] = []
     /// FRIENDS tab section (FEED / FRIENDS / MINE)
@@ -139,13 +148,13 @@ final class AppModel: ObservableObject {
     /// Open a tab or a MORE screen by name (launch argument, widget link).
     func open(_ name: String) {
         let n = name.lowercased()
-        if let t = Tab(rawValue: n) { tab = t; if t == .more { morePath = [] }; return }
+        if let t = Tab(rawValue: n) { tab = t; if t == .more { setMore([]) }; return }
         if n == "notifications" || n == "feed" { tab = .friends; openSocial(n); return }
         if n == "graph" { tab = .today; return }
-        if n == "web" { tab = .more; morePath = [.setup]; return }
+        if n == "web" { tab = .more; setMore([.setup]); return }
         if let m = More(rawValue: n) {
             tab = .more
-            morePath = m == .gallery ? [.setup, .gallery] : [m]
+            setMore(m == .gallery ? [.setup, .gallery] : [m])
         }
     }
 
