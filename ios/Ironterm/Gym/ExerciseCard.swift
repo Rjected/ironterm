@@ -346,7 +346,10 @@ struct NumberPad: View {
             }
             HStack(spacing: 10) {
                 TermButton(title: "CANCEL") { dismiss() }
-                TermButton(title: "SET", style: .primary) { onDone(value); dismiss() }
+                TermButton(title: "SET", style: .primary) {
+                    // untouched: keep the exact value (the display rounds to 0.1, e.g. 1.25 shows as 1.3)
+                    onDone(fresh ? target.value : value); dismiss()
+                }
             }
         }
         .padding(16)
