@@ -197,3 +197,30 @@ describe("Complete 16 Week / Calgary Barbell (vs the source sheet: maxes S255 B1
     expect(s.log[s.log.length - 1].dayId).toBe("W16D4");
   });
 });
+
+// The same sheet at the maxes cached in the owner's copy (bench 320 / squat 550 / deadlift 600 lb).
+// These separate MROUND(1RM × %) ± 5 lb from the plain percentages the template used to guess.
+describe("Candito 6 Week formulas (sheet values at B320 S550 D600)", () => {
+  const { def, cfg } = setup(candito6, { bench: 320, squat: 550, deadlift: 600 });
+  it("every main-lift load", () => {
+    const sheet: [string, string, number[]][] = [
+      ["W1D1", "squat", [440, 440, 440, 440]], ["W1D1", "deadlift", [480, 480]], ["W1D2", "bench", [160, 215, 240, 250]],
+      ["W1D4", "squat", [385, 385, 385, 385]], ["W1D4", "deadlift", [420, 420]], ["W1D5", "bench", [255]],
+      ["W2D1", "squat", [440, 445, 445, 445, 445, 445]], ["W2D2", "bench", [230, 250, 260]],
+      ["W2D3", "squat", [445, ...Array(10).fill(435)]], ["W2D5", "bench", [250]],
+      ["W3D1", "squat", [475, 475, 475]], ["W3D1", "deadlift", [525, 525]], ["W3D2", "bench", [270, 270, 270]],
+      ["W3D3", "squat", [480]], ["W3D4", "bench", [275, 275, 275]],
+      ["W4D1", "squat", [490, 495, 500]], ["W4D2", "bench", [275, 285, 290]],
+      ["W4D3", "squat", [500, 525]], ["W4D3", "deadlift", [545, 570]], ["W4D4", "bench", [280, 290, 305]],
+      ["W5D1", "squat", [535]], ["W5D1", "deadlift", [405, 420, 435]], ["W5D2", "bench", [310]], ["W5D3", "deadlift", [585]],
+    ];
+    for (const [day, lift, want] of sheet) expect([day, lift, loads(def, cfg, day, lift)]).toEqual([day, lift, want]);
+  });
+  it("\"If you ever fail a required rep, reduce your max by 2.5%\"", () => {
+    const s = initialState(def, cfg);
+    const miss = applyWorkout(def, cfg, s, W("m", "2026-01-05", [[title("squat"), [[440, 6], [440, 6], [440, 6], [440, 5]]]]), 0);
+    expect(miss.tms.squat).toBeCloseTo(536.25, 2);
+    const ok = applyWorkout(def, cfg, s, W("o", "2026-01-05", [[title("squat"), [[440, 6], [440, 6], [440, 6], [440, 6]]]]), 0);
+    expect(ok.tms.squat).toBe(550);
+  });
+});

@@ -4,6 +4,7 @@ import { applyRamp } from "../shared/travel";
 import { LIFTS } from "../shared/lifts";
 import { planDay, replay, type PlannedExercise, type PlannedSession, type ProgramConfig } from "../shared/program";
 import { buildProgram } from "../shared/programs";
+import { e1rmsFrom, fillMissing } from "../shared/fill";
 import { roundTo, toKg } from "../shared/units";
 import { Hevy } from "./hevy";
 import { allWorkouts, deleteWorkouts, kvGet, kvPut, upsertWorkouts, workoutCount } from "./store";
@@ -147,7 +148,11 @@ export async function pushRoutines(db: D1Database, key: string, cfg: ProgramConf
   const hevy = new Hevy(key);
   const def = buildProgram(cfg);
   if (!def) throw new Error("No active program");
-  const state = replay(def, cfg, await allWorkouts(db), { today: new Date().toISOString().slice(0, 10) });
+  const workouts = await allWorkouts(db);
+  const today = new Date().toISOString().slice(0, 10);
+  // values missing from an older saved config are filled for this replay only (cfg itself is returned unchanged)
+  const run = fillMissing(cfg, (need) => e1rmsFrom(workouts, cfg.unit, today, need, cfg.liftMap));
+  const state = replay(def, run, workouts, { today });
   const all = await templates(db, hevy);
   let folder = await kvGet<number>(db, `folder:${cfg.templateId}`);
   if (folder == null) {
