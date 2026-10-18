@@ -13,6 +13,8 @@ export interface SyncState {
   /** events cursor; null until the first full backfill finishes */
   cursor: string | null;
   backfill?: { page: number; startedAt: string };
+  /** an events catch-up longer than one run: where to carry on, and the cursor to move to once it's done */
+  catchup?: { page: number; startedAt: string };
   at?: string;
   count?: number;
   error?: string;
@@ -42,8 +44,13 @@ export async function sync(db: D1Database, key: string): Promise<SyncState> {
         st.backfill = bf;
       }
     } else {
-      const startedAt = new Date().toISOString();
-      for (let page = 1; page <= MAX_PAGES; page++) {
+      // A long catch-up spans runs: keep the old cursor and carry on from the next page, and only
+      // move the cursor (to when the catch-up began) once the last page is in. Advancing it after
+      // MAX_PAGES would skip every change on the pages that weren't fetched.
+      const cu = (st.catchup ??= { page: 1, startedAt: new Date().toISOString() });
+      let done = false;
+      for (let n = 0; n < MAX_PAGES; n++, cu.page++) {
+        const page = cu.page;
         const r = await hevy.events(st.cursor, page);
         // An empty page comes back as {workouts: []} rather than {events: []}; accept bare workouts too.
         const raw = (r as any).events ?? (r as any).workouts ?? [];
@@ -54,9 +61,12 @@ export async function sync(db: D1Database, key: string): Promise<SyncState> {
         await deleteWorkouts(db, del);
         added += up.length;
         deleted += del.length;
-        if (page >= r.page_count || !events.length) break;
+        if (page >= r.page_count || !events.length) { done = true; break; }
       }
-      st.cursor = startedAt;
+      if (done) {
+        st.cursor = cu.startedAt;
+        st.catchup = undefined;
+      }
     }
     st.error = undefined;
   } catch (e) {
