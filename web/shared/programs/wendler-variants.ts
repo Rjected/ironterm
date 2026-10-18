@@ -165,7 +165,7 @@ export const monolith: ProgramTemplate = {
       ],
     };
   },
-  defaults: defaults(0.85),
+  defaults: (unit: Unit) => ({ ...defaults(0.85)(unit), startWeights: { "mo2-row": unit === "lb" ? 60 : 26 } }),
 };
 
 // ───────────────────────── Boring But Big 3-Month Challenge ─────────────────────────

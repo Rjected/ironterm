@@ -4,6 +4,7 @@ import type { HevyWorkout } from "../shared/hevy";
 import { BIG_FOUR, LIFTS, matchLift } from "../shared/lifts";
 import { planDay, replay, type PlannedSession, type ProgramDef, type ProgramState } from "../shared/program";
 import { buildProgram } from "../shared/programs";
+import { e1rmsFrom, fillMissing } from "../shared/fill";
 import {
   addDays, dailyCells, durationMin, liftHistory, localDate, weekStart, weekStreak, weeklyTotals, workoutVolumeKg,
   type DayCell, type GraphMetric, type LiftPoint,
@@ -54,9 +55,10 @@ export function derive(b: Bootstrap, metric: GraphMetric): Derived {
   const asc = [...b.workouts].sort((a, c) => a.start_time.localeCompare(c.start_time));
   const map = b.program?.liftMap;
 
-  const def = b.program ? buildProgram(b.program) : null;
-  const state = def && b.program ? replay(def, b.program, asc, { today, reentry: b.settings.reentry === false ? false : undefined }) : null;
-  const cfg = b.program;
+  // A config saved before its template changed may lack a start weight or TM: fill it (not saved).
+  const cfg = b.program ? fillMissing(b.program, (need) => e1rmsFrom(asc, unit, today, need, map, tz)) : null;
+  const def = cfg ? buildProgram(cfg) : null;
+  const state = def && cfg ? replay(def, cfg, asc, { today, reentry: b.settings.reentry === false ? false : undefined }) : null;
 
   const seen = new Set<string>();
   for (const w of asc) for (const e of w.exercises) { const l = matchLift(e.title, e.exercise_template_id, map); if (l) seen.add(l); }
