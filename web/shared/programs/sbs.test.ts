@@ -25,12 +25,13 @@ function asPlanned(def: ReturnType<typeof setup>["def"], cfg: ProgramConfig, s: 
 }
 
 describe("SBS Strength RTF", () => {
-  it("builds every days-per-week option with 10 lifts a week", () => {
+  it("builds every days-per-week option with 10 lifts a week (8 at 2x)", () => {
     for (const d of ["2", "3", "4", "5", "6"]) {
       const def = sbsRtf.build({ days: d });
       const lifts = def.days.filter((x) => x.id.startsWith("D") && !x.id.startsWith("DL")).flatMap((x) => x.slots.map((s) => s.lift));
-      expect(new Set(lifts).size).toBe(10);
-      expect(lifts.length).toBe(10);
+      const n = d === "2" ? 8 : 10;
+      expect(new Set(lifts).size).toBe(n);
+      expect(lifts.length).toBe(n);
       expect(def.sessionsPerWeek).toBe(Number(d));
       const ids = def.days.flatMap((x) => x.slots.map((s) => s.id));
       expect(new Set(ids).size).toBe(ids.length);
@@ -63,11 +64,11 @@ describe("SBS Strength RTF", () => {
   it("reps over target raise the max, reps under lower it", () => {
     const { cfg, def } = setup(sbsRtf);
     const s0 = initialState(def, cfg);
-    // 13 on a 10+ target: +3 → +1.5% of 315 = 4.7 → 5
+    // 13 on a 10+ target: +3 → +1.5% of 315 = 4.725 (the max isn't rounded; loads are)
     const up = applyWorkout(def, cfg, s0, W("a", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5, 13)]]), 0);
     expect(up.tms.squat).toBeCloseTo(319.72, 2);
     expect(up.log[0].results[0].outcome).toBe("tm-up");
-    // 8 on a 10+ target: −2 → −5% of 315 = 15.75 → 15
+    // 8 on a 10+ target: −2 → −5% of 315 = 15.75
     const down = applyWorkout(def, cfg, s0, W("b", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5, 8)]]), 0);
     expect(down.tms.squat).toBeCloseTo(299.25, 2);
     // hit the target exactly: max holds
@@ -103,8 +104,8 @@ describe("SBS Strength RTF", () => {
       W("1", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5, 12)], ["Incline Bench Press (Barbell)", rep(5, 115, 7, 14)], ["Sumo Deadlift", rep(5, 220, 7, 14)]]),
       W("2", "2026-01-03", [["Bench Press (Barbell)", rep(5, 157.5, 5, 11)]]),
     ]);
-    expect(s.tms.squat).toBeCloseTo(318.15, 2); // +2 → +1% = 3.15 → 2.5
-    expect(s.tms.bench).toBeCloseTo(226.13, 2); // +1 → +0.5% = 1.1 → 0 (engine rounds the change to 2.5)
+    expect(s.tms.squat).toBeCloseTo(318.15, 2); // +2 → +1% = 3.15
+    expect(s.tms.bench).toBeCloseTo(226.13, 2); // +1 → +0.5% = 1.125
     expect(s.dayIndex).toBe(2 * 2); // D1, DL1, D2, DL2 → next is D3
   });
 });
@@ -128,12 +129,48 @@ describe("SBS Strength RIR", () => {
     const { cfg, def } = setup(sbsRir);
     const s = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5, 7)]]), 0);
     expect(s.tms.squat).toBeCloseTo(318.15, 2); // 2 above → +1%
-    const f = applyWorkout(def, cfg, initialState(def, cfg), W("b", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 4)]]), 0);
-    expect(f.tms.squat).toBeCloseTo(308.7, 2); // 1 short → −2% = 6.3 → 7.5 (2.5 lb steps)
-    // Known gap: the engine reads the best set near the weight, so dropping sets (the sheet's
-    // "fewer sets completed" rows) isn't penalized when an earlier set hit the reps.
-    const dropped = applyWorkout(def, cfg, initialState(def, cfg), W("c", "2026-01-02", [["Squat (Barbell)", [[220, 5], [220, 4], [220, 4]]]]), 0);
-    expect(dropped.tms.squat).toBe(315);
+  });
+
+  // Source rules (Last Set RIR doc): failed sets/reps → −5%; completed but RIR below target → −2%;
+  // RIR = target → 0; target + 3 → +1.5%.
+  it("missing reps or sets is −5%, RIR below target is −2% however far below", () => {
+    const { cfg, def } = setup(sbsRir);
+    const s0 = initialState(def, cfg);
+    const short = applyWorkout(def, cfg, s0, W("b", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 4)]]), 0);
+    expect(short.tms.squat).toBeCloseTo(299.25, 2);
+    const dropped = applyWorkout(def, cfg, s0, W("c", "2026-01-02", [["Squat (Barbell)", [[220, 5], [220, 5], [220, 5], [220, 5]]]]), 0);
+    expect(dropped.tms.squat).toBeCloseTo(299.25, 2);
+    // all 5×5 done, RPE 9.5 logged on the last set: RIR 0.5 vs target 3 → −2% (not −5%)
+    const rpe = (x: number): HevyWorkout => ({ ...W("d", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5)]]), exercises: [{ title: "Squat (Barbell)", exercise_template_id: "x", sets: rep(5, 220, 5).map(([lb, r], i) => ({ type: "normal" as const, weight_kg: toKg(lb, "lb"), reps: r, rpe: i === 4 ? x : null })) }] });
+    expect(applyWorkout(def, cfg, s0, rpe(9.5), 0).tms.squat).toBeCloseTo(308.7, 2);
+    // RPE 7 = RIR 3 = target → hold; RPE 4 = RIR 6 = target + 3 → +1.5%
+    expect(applyWorkout(def, cfg, s0, rpe(7), 0).tms.squat).toBe(315);
+    expect(applyWorkout(def, cfg, s0, rpe(4), 0).tms.squat).toBeCloseTo(319.72, 2);
+    // no RPE logged and exactly the listed reps: assume you stopped at the target → hold
+    expect(applyWorkout(def, cfg, s0, W("e", "2026-01-02", [["Squat (Barbell)", rep(5, 220, 5)]]), 0).tms.squat).toBe(315);
+  });
+});
+
+describe("SBS day layouts (bundle 2x–6x tabs)", () => {
+  const days = (t: ProgramTemplate, d: string) => t.build({ days: d }).days.filter((x) => !x.id.startsWith("DL")).map((x) => x.slots.map((s) => s.lift));
+  it("Strength", () => {
+    expect(days(sbsRtf, "2")).toEqual([["squat", "bench", "sumoDeadlift", "pushPress"], ["deadlift", "ohp", "frontSquat", "cgBench"]]);
+    expect(days(sbsRtf, "3")).toEqual([["squat", "sumoDeadlift", "inclineBench"], ["bench", "ohp", "frontSquat"], ["deadlift", "cgBench", "pauseSquat", "pushPress"]]);
+    expect(days(sbsRir, "4")).toEqual([["squat", "inclineBench", "sumoDeadlift"], ["bench", "frontSquat", "pushPress"], ["deadlift", "cgBench"], ["ohp", "pauseSquat"]]);
+    expect(days(sbsRtf, "5")).toEqual([["squat", "pushPress"], ["bench", "frontSquat"], ["deadlift", "cgBench"], ["ohp", "pauseSquat"], ["inclineBench", "sumoDeadlift"]]);
+    expect(days(sbsRtf, "6")).toEqual([["squat", "cgBench"], ["pushPress", "sumoDeadlift"], ["bench", "frontSquat"], ["inclineBench", "pauseSquat"], ["deadlift"], ["ohp"]]);
+  });
+  it("Hypertrophy (block pulls log as rack pulls)", () => {
+    expect(days(sbsHypertrophy, "3")).toEqual([["squat", "rdl", "dbBench"], ["bench", "ohp", "legPress"], ["rackPull", "inclineBench", "hackSquat", "dbOhp"]]);
+    expect(days(sbsHypertrophy, "6")).toEqual([["squat", "inclineBench"], ["dbOhp", "rdl"], ["bench", "legPress"], ["dbBench", "hackSquat"], ["rackPull"], ["ohp"]]);
+  });
+});
+
+describe("SBS RTF / Hypertrophy failed sets", () => {
+  it("a normal set short of its reps counts as 2+ short (−5%) even when the AMRAP beats the target", () => {
+    const { cfg, def } = setup(sbsRtf);
+    const s = applyWorkout(def, cfg, initialState(def, cfg), W("a", "2026-01-02", [["Squat (Barbell)", [[220, 5], [220, 5], [220, 3], [220, 5], [220, 12]]]]), 0);
+    expect(s.tms.squat).toBeCloseTo(299.25, 2);
   });
 });
 
@@ -158,13 +195,32 @@ describe("SBS Hypertrophy", () => {
 });
 
 describe("SBS Novice Hypertrophy", () => {
-  it("adds weight once all three sets reach 12", () => {
+  it("3x tab: body-part split, each lift once a week", () => {
+    const def = sbsNoviceHypertrophy.build({ days: "3" });
+    expect(def.days.map((d) => d.slots.map((s) => s.lift))).toEqual([
+      ["dbBench", "tBarRow", "machineShoulderPress", "latPulldown", "dbInclineBench", "cableRow", "preacherCurl", "skullcrusher"],
+      ["squat", "rdl", "legPress", "gluteHamRaise", "splitSquat", "calfRaise", "rearDeltFly"],
+      ["dbOhp", "pullUp", "legCurl", "seatedCalfRaise", "shrug", "chestFly", "lateralRaise"],
+    ]);
+    for (const d of ["4", "5"]) expect(sbsNoviceHypertrophy.build({ days: d }).days.flatMap((x) => x.slots).length).toBe(22);
+  });
+
+  it("sets → reps → +10% load; a miss repeats the week", () => {
     const { cfg, def } = setup(sbsNoviceHypertrophy);
     let s = initialState(def, cfg);
-    expect(planDay(def, cfg, s).exercises[0].scheme).toBe("3×8–12");
-    s = applyWorkout(def, cfg, s, W("a", "2026-01-02", [["Squat (Barbell)", rep(3, 185, 12)], ["Bench Press (Dumbbell)", [[50, 12], [50, 11], [50, 10]]]]), 0);
-    expect(s.slots["a-squat"].weight).toBe(195);
-    expect(s.slots["a-dbbench"].weight).toBe(50);
-    expect(s.dayIndex).toBe(1);
+    const sq = (x: ProgramState) => planDay(def, cfg, x, 1).exercises[0];
+    expect(sq(s).scheme).toBe("3×8");
+    const seen: string[] = [];
+    for (let k = 0; k < 9; k++) {
+      const e = sq(s);
+      seen.push(`${e.scheme}@${e.sets[0].weight}`);
+      s = applyWorkout(def, cfg, s, W(`w${k}`, "2026-01-02", [["Squat (Barbell)", e.sets.map((x) => [x.weight, x.reps] as [number, number])]]), 1);
+    }
+    expect(seen).toEqual(["3×8@185", "4×8@185", "5×8@185", "3×10@185", "4×10@185", "5×10@185", "3×12@185", "4×12@185", "5×12@185"]);
+    expect(sq(s).scheme).toBe("3×8");
+    expect(sq(s).sets[0].weight).toBe(205); // 185 × 1.1 = 203.5 → 205 (5 lb rounding)
+    // miss a rep at 3×8: same prescription next week
+    const miss = applyWorkout(def, cfg, s, W("m", "2026-03-01", [["Squat (Barbell)", [[205, 8], [205, 8], [205, 6]]]]), 1);
+    expect(miss.slots["a-squat"]).toMatchObject({ stage: 0, weight: 205 });
   });
 });

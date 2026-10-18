@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Bootstrap } from "../src/api";
 import { derive } from "../src/derive";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession, type ProgramDetail } from "./appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramBody, appProgramDetail, appPrograms, appStats, appWorkout, parseDays, startProgram, startSession, type ProgramBody, type ProgramDetail } from "./appapi";
+import { LIFTS } from "./lifts";
+import { MUSCLES } from "./muscles";
 import { TEMPLATES } from "./programs";
 import { demoData } from "./demo";
+import { history as dayHistory } from "./schedule";
 
 const today = "2026-10-15";
 const demo = demoData(today);
@@ -69,12 +72,17 @@ describe("app API", () => {
     const p2 = appHistory(boot, { cursor: p1.next, limit: 20 }, d);
     expect(p2.workouts[0].id).not.toBe(p1.workouts[19].id);
     expect(new Set([...p1.workouts, ...p2.workouts].map((w) => w.id)).size).toBe(40);
+    // a junk ?limit (NaN) falls back to the default page, not an empty one
+    expect(appHistory(boot, { limit: Number("abc") }, d).workouts).toHaveLength(30);
+    expect(appHistory(boot, { limit: 2.5 }, d).workouts).toHaveLength(2);
     expect(appHistory(boot, { q: "arms" }, d).workouts.every((w) => /arms/i.test(w.title) || w.exercises.some((e) => /arms/i.test(e)))).toBe(true);
     await fixture("history", p1);
     const w = appWorkout(boot, p1.workouts[0].id, d)!;
     expect(w.exercises[0].sets.length).toBeGreaterThan(0);
     await fixture("workout", w);
     expect(appWorkout(boot, "missing", d)).toBeNull();
+    // keys from the URL that only exist on Object.prototype used to throw (a 500)
+    for (const k of ["__proto__", "constructor", "toString", "hasOwnProperty"]) expect(appLift(boot, k, d)).toBeNull();
   });
 
   it("calendar month grid", async () => {
@@ -84,6 +92,11 @@ describe("app API", () => {
     expect(c.days.some((x) => x.status === "done")).toBe(true);
     expect(c.days.some((x) => x.status === "planned")).toBe(true);
     await fixture("calendar", c);
+    // ?month=2026-13 used to throw "Invalid time value" (a 500); now it's this month
+    // ?month=0000-01 put the grid in year -1, where addDays stops advancing: the server hung
+    for (const bad of ["2026-13", "2026-00", "x", "0000-01", "0001-01", "1000-01"]) expect(appCalendar(boot, bad, d).month).toBe(today.slice(0, 7));
+    expect(appCalendar(boot, "1970-01", d).month).toBe("1970-01");
+    expect(dayHistory(boot.workouts, [], "UTC", [0], today, "-000001-12").size).toBeGreaterThanOrEqual(0);
   });
 
   it("program", async () => {
@@ -94,6 +107,24 @@ describe("app API", () => {
     expect(p.log.length).toBeGreaterThan(0);
     expect(p.slots.some((x) => x.ifSuccess)).toBe(true);
     await fixture("program", appProgram(boot, d));
+  });
+
+  it("program and snapshot explain the re-entry ramp after a break", () => {
+    expect(appProgram(boot, d).program!.reentry).toBeNull();
+    expect(appHome(boot, d).snapshot.program?.next?.reentryNote).toBeNull();
+    const last = demo.workouts.map((w) => w.start_time.slice(0, 10)).sort().at(-1)!;
+    const later = new Date(Date.parse(last) + 40 * 864e5).toISOString().slice(0, 10);
+    const b = { ...boot, today: later };
+    const bd = derive(b, "volume");
+    const r = appProgram(b, bd).program!.reentry!;
+    expect(r).toMatchObject({ done: 0, gapDays: 40, headline: `Session 1 of ${r.total} back after 40 days off` });
+    expect(r.lifts.length).toBeGreaterThan(0);
+    expect(r.lifts[0].load).toBeCloseTo(0.82, 2);
+    expect(r.summary).toContain("82% load");
+    expect(r.suggest.map((x) => x.templateId)).toEqual(["comeback", "comeback-squat"]);
+    const next = appHome(b, bd).snapshot.program!.next!;
+    expect(next.reentry).toBe(true);
+    expect(next.reentryNote).toBe(r.summary);
   });
 
   it("body renders both modes as SVG", async () => {
@@ -141,7 +172,7 @@ describe("app API", () => {
       const c = appPrograms(boot);
       expect(c.active).toBe("gzclp");
       expect(c.programs).toHaveLength(TEMPLATES.length);
-      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
+      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "bodyweight", "comeback"];
       const ranks = c.programs.map((p) => order.indexOf(p.category));
       expect(ranks.every((r, i) => r >= 0 && (i === 0 || r >= ranks[i - 1]))).toBe(true);
       expect(c.programs.find((p) => p.id === "531")).toMatchObject({ weekCount: null, daysPerWeek: [4] });
@@ -172,7 +203,7 @@ describe("app API", () => {
       const p = detail(boot, "531");
       expect(p.basis).toBe("e1rm");
       expect(p.weeks.map((w) => w.name)).toEqual(["5s week", "3s week", "5/3/1 week", "Deload"]);
-      expect(p.weeks[3].days[0].exercises).toHaveLength(1); // BBB skipped on deload
+      expect(p.weeks[3].days[0].exercises).toHaveLength(2); // BBB kept on deload ("as normal")
       expect(p.start.trainingMaxes.squat).toBeGreaterThan(0);
       expect(p.start.labels.squat).toBe("Back Squat");
       expect(p.weeks[0].days[3].exercises[0].sets[2]).toMatchObject({ reps: 5, amrap: true });
@@ -214,6 +245,69 @@ describe("app API", () => {
       expect(appProgramDetail(boot, "531", { deload: "sometimes" })).toMatchObject({ status: 400 });
       expect(appProgramDetail(boot, "531", { nope: "x" })).toMatchObject({ status: 400 });
       expect(appProgramDetail(boot, "nope")).toMatchObject({ status: 404 });
+    });
+
+    it("body: weekly load and gaps figures, muscles vs range, overlaps, summary", async () => {
+      const body = (id: string, q: Parameters<typeof appProgramBody>[2] = {}) => {
+        const r = appProgramBody(boot, id, q, d);
+        if ("error" in r) throw new Error(r.error);
+        return r as ProgramBody;
+      };
+      const g = body("gzclp");
+      expect(g.mode).toBe("load");
+      expect(g.trainingDays).toEqual([0, 1, 3, 4]); // your usual days (4 = GZCLP's count)
+      expect(g.svgFront?.startsWith("<svg")).toBe(true);
+      expect(g.svgBack).toContain("</svg>");
+      expect(g.muscles).toHaveLength(MUSCLES.length);
+      // sorted by load, busiest = 1
+      expect(g.muscles[0].load).toBe(Math.max(...g.muscles.map((m) => m.load)));
+      expect(g.muscles.every((m, i) => i === 0 || m.load <= g.muscles[i - 1].load)).toBe(true);
+      const quads = g.muscles.find((m) => m.id === "rectusFemoris")!;
+      expect(quads.hardSets).toBeGreaterThan(0);
+      expect(quads.lifts).toContain(LIFTS.squat.short);
+      for (const m of g.muscles) {
+        if (m.sets < 0.5) expect(m.status, m.id).toBe("none");
+        else if (!m.target) expect(m.status, m.id).toBe("n/a");
+        else expect(m.status, m.id).toBe(m.hardSets < m.target[0] ? "low" : m.hardSets > m.target[1] ? "high" : "ok");
+      }
+      expect(g.summary.mostTrained).toHaveLength(3);
+      expect(g.summary.mostTrained[0].hardSets).toBeGreaterThanOrEqual(g.summary.mostTrained[1].hardSets);
+      expect(g.summary.gaps.every((x) => x.hardSets < x.target[0])).toBe(true);
+      expect(g.summary.lines).toHaveLength(3);
+      expect(g.summary.lines[0]).toMatch(/^Most trained: /);
+      expect(g.overlapsByWeek).toHaveLength(g.weeks);
+      expect(g.overlapsByWeek.reduce((a, c) => a + c, 0)).toBe(g.overlaps.length);
+      expect(g.summary.overlapsPerWeek).toBeCloseTo(g.overlaps.length / g.weeks, 1);
+      await fixture("programs-gzclp-body", g);
+
+      // gaps: coloured by lowest readiness, least recovered first
+      const gaps = body("gzclp", { mode: "gaps" });
+      expect(gaps.legend).toEqual(["recovered", "taxed"]);
+      expect(gaps.muscles[0].gap).toBe(Math.max(...gaps.muscles.map((m) => m.gap)));
+      expect(gaps.svgFront).not.toBe(g.svgFront);
+      await fixture("programs-gzclp-body-gaps", gaps);
+
+      // training days matter: back-to-back days overlap more than spread ones
+      const packed = body("531", { days: [0, 1, 2, 3] });
+      const spread = body("531", { days: [0, 2, 4, 6] });
+      expect(packed.trainingDays).toEqual([0, 1, 2, 3]);
+      expect(packed.summary.overlapsPerWeek).toBeGreaterThanOrEqual(spread.summary.overlapsPerWeek);
+      expect(packed.overlaps.every((o) => o.from && o.to && !/^W\d/.test(o.to))).toBe(true);
+      // options matter: BBB adds 5×10 of each main lift on top of no supplemental work
+      const bbb = body("531", { opt: { supp: "bbb" }, svg: false });
+      const none = body("531", { opt: { supp: "none" }, svg: false });
+      expect(bbb.svgFront).toBeUndefined();
+      const sets = (x: ProgramBody, id: string) => x.muscles.find((m) => m.id === id)!.sets;
+      expect(sets(bbb, "rectusFemoris")).toBeGreaterThan(sets(none, "rectusFemoris") + 1);
+      await fixture("programs-531-body-gaps", body("531", { mode: "gaps", svg: false }));
+
+      expect(appProgramBody(boot, "nope")).toMatchObject({ status: 404 });
+      expect(appProgramBody(boot, "531", { opt: { nope: "x" } })).toMatchObject({ status: 400 });
+      expect(parseDays("4,0,2")).toEqual([0, 2, 4]);
+      expect(parseDays(null)).toBeNull();
+      expect(parseDays("0,0")).toHaveProperty("error");
+      expect(parseDays("7")).toHaveProperty("error");
+      expect(parseDays("a")).toHaveProperty("error");
     });
 
     it("every template plans without NaN", () => {

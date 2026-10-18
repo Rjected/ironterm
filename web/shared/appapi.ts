@@ -15,12 +15,13 @@
 //   GET  /api/app/stats                AppStats
 //   GET  /api/app/programs             AppProgramList       (docs/api/programs.md)
 //   GET  /api/app/programs/{id}        ProgramDetail        ?opt.<key>=<value>
+//   GET  /api/app/programs/{id}/body   ProgramBody          ?mode=load|gaps&days=0,2,4&svg=0&opt.<key>=<value>
 //   POST /api/app/programs/{id}/start  { ok, program }      body StartBody
 //
 // Weights are in `unit`; dates are local YYYY-MM-DD. Fields are only ever added (see snapshot.ts).
 
 import type { Bootstrap } from "../src/api";
-import { derive, type Derived } from "../src/derive";
+import { bestAt, derive, type Derived } from "../src/derive";
 import { evaluateAchievements, recentUnlocks, sortAchievements, type Achievement } from "./achievements";
 import { cardioStats } from "./cardio";
 import type { HevyWorkout } from "./hevy";
@@ -36,7 +37,7 @@ import { standardPct } from "./rpe";
 import { projectLift } from "./projection";
 import { prWall, recentPRs } from "./prwall";
 import { strengthBalance } from "./ratios";
-import { analyzeHistory, analyzeProgram, defaultSchedule } from "./recovery";
+import { analyzeHistory, analyzeProgram, defaultSchedule, DOW } from "./recovery";
 import { history as dayHistory, trainingDays, upcoming, weekStatus } from "./schedule";
 import { snapshot, type NextSession, type Snapshot } from "./snapshot";
 import { addDays, durationMin, localDate, repPRs, weekStart, workingSets, workoutVolumeKg } from "./stats";
@@ -45,6 +46,7 @@ import { fromKg, loadStep, roundTo, toKg, type Unit } from "./units";
 import { renderBodySvg } from "./anatomy-svg";
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
+const r2 = (x: number) => Math.round(x * 100) / 100;
 
 // ───────────────────────── home ─────────────────────────
 
@@ -62,10 +64,7 @@ export interface AppHome {
   recentPRs: { lift: string; short: string; kind: string; reps: number; weight: number; date: string }[];
 }
 
-function e1rmAt(points: { date: string; e1rm: number }[], date: string): number | null {
-  const before = points.filter((p) => p.date <= date && p.date > addDays(date, -28));
-  return before.length ? Math.max(...before.map((p) => p.e1rm)) : null;
-}
+const e1rmAt = (points: { date: string; e1rm: number }[], date: string) => bestAt(points, date);
 
 export function appHome(b: Bootstrap, d: Derived = derive(b, b.settings.graphMetric ?? "volume")): AppHome {
   const keys = d.liftKeys;
@@ -132,9 +131,9 @@ export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
 
 /** The session the app starts: today's plan (or another day / empty), same as the web GYM view. */
 export function startSession(b: Bootstrap, opts: { dayIndex?: number; empty?: boolean }, now = new Date().toISOString(), d: Derived = derive(b, "volume")): LiveSession {
-  if (opts.empty || !d.def) return emptySession(d.unit, now);
+  if (opts.empty || !d.def) return emptySession(d.unit, now, d.tz);
   const plan = d.plan(opts.dayIndex);
-  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now);
+  return plan ? sessionFromPlan(plan, d.unit, d.def.name, now) : emptySession(d.unit, now, d.tz);
 }
 
 // ───────────────────────── lifts ─────────────────────────
@@ -175,8 +174,10 @@ export interface AppLiftDetail {
 }
 
 export function appLift(b: Bootstrap, key: string, d: Derived = derive(b, "volume")): AppLiftDetail | null {
-  const pts = d.lifts[key];
-  if (!pts?.length && !LIFTS[key]) return null;
+  // own keys only: "__proto__" or "constructor" from a URL must not reach Object.prototype
+  const known = Object.hasOwn(LIFTS, key);
+  const pts = Object.hasOwn(d.lifts, key) ? d.lifts[key] : undefined;
+  if (!pts?.length && !known) return null;
   const points = pts ?? [];
   const best = points.length ? points.reduce((a, p) => (p.e1rm > a.e1rm ? p : a), points[0]) : null;
   const asc = [...d.workouts].reverse();
@@ -223,7 +224,8 @@ function summary(w: HevyWorkout, d: Derived): AppWorkoutSummary {
 }
 
 export function appHistory(b: Bootstrap, opts: { cursor?: string | null; limit?: number; q?: string }, d: Derived = derive(b, "volume")): AppHistory {
-  const limit = Math.min(100, Math.max(1, opts.limit ?? 30));
+  // ?limit=abc (NaN) or 2.5 from a client must not turn into an empty page
+  const limit = Math.min(100, Math.max(1, Math.floor(Number.isFinite(opts.limit) ? opts.limit! : 30)));
   const q = opts.q?.trim().toLowerCase();
   const all = q ? d.workouts.filter((w) => w.title.toLowerCase().includes(q) || w.exercises.some((e) => e.title.toLowerCase().includes(q))) : d.workouts;
   const start = opts.cursor ? all.findIndex((w) => w.id === opts.cursor) + 1 : 0;
@@ -274,7 +276,8 @@ export interface AppCalendar {
 }
 
 export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived = derive(b, "volume")): AppCalendar {
-  const m = /^\d{4}-\d\d$/.test(month ?? "") ? month! : d.today.slice(0, 7);
+  // a real month in a sane range (year 0000 made the grid start in year -1)
+  const m = /^(19[7-9]\d|2\d{3})-(0[1-9]|1[0-2])$/.test(month ?? "") ? month! : d.today.slice(0, 7);
   const first = `${m}-01`;
   const dowFirst = (new Date(first + "T12:00:00Z").getUTCDay() + 6) % 7;
   const gridStart = addDays(first, -dowFirst);
@@ -304,7 +307,17 @@ export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived 
 export interface AppProgram {
   program: null | {
     name: string; author: string | null; templateId: string; unit: Unit; week: number; weekName: string | null; complete: boolean;
-    reentry: { done: number; total: number } | null;
+    reentry: null | {
+      done: number; total: number; gapDays: number;
+      /** "Session 2 of 6 back after 21 days off" */
+      headline: string;
+      /** the full explanation, one paragraph */
+      summary: string;
+      /** main lifts of the next session; load/volume are fractions of normal */
+      lifts: { short: string; name: string; load: number; volume: number; slower: boolean; back: boolean }[];
+      /** a long break: comeback blocks worth a look (GET /api/app/programs/{templateId}?opt.weeks=…) */
+      suggest: { templateId: string; name: string; weeks: string }[];
+    };
     /** every slot's current state */
     slots: { slotId: string; lift: string; name: string; tier: string; scheme: string; weight: number; stage: number; stages: string[]; ifSuccess: string | null; ifFail: string | null; note: string | null }[];
     /** next sessions with targets */
@@ -353,7 +366,11 @@ export function appProgram(b: Bootstrap, d: Derived = derive(b, "volume")): AppP
     program: {
       name: def.name, author: getTemplate(cfg.templateId)?.author ?? null, templateId: cfg.templateId, unit: cfg.unit,
       week: wk + 1, weekName: weekNames?.[wk % weekNames.length] ?? null, complete: !!st.complete,
-      reentry: st.reentry ? { done: st.reentry.done, total: st.reentry.total } : null,
+      reentry: d.reentry ? {
+        done: d.reentry.done, total: d.reentry.total, gapDays: d.reentry.gapDays, headline: d.reentry.headline, summary: d.reentry.text,
+        lifts: d.reentry.lifts.map((x) => ({ short: LIFTS[x.lift]?.short ?? x.name, name: x.name, load: Math.round(x.load * 100) / 100, volume: Math.round(x.volume * 100) / 100, slower: x.slower, back: x.back })),
+        suggest: d.reentry.suggest,
+      } : null,
       slots, upcoming: upcomingOut,
       log: [...st.log].reverse().slice(0, 20).map((e) => ({ date: e.date, dayId: e.dayId, results: e.results.map((r) => ({ lift: r.lift, tier: r.tier, scheme: r.scheme, weight: r.weight, outcome: r.outcome, note: r.note })) })),
       pushed: !!cfg.routineDays && Object.keys(cfg.routineDays).length > 0,
@@ -518,7 +535,7 @@ export interface ProgramDetail extends ProgramSummary {
   };
 }
 
-const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking"];
+const CATEGORY_ORDER: ProgramCategory[] = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "bodyweight", "comeback"];
 
 function programSummary(t: ProgramTemplate): ProgramSummary {
   const len = programLength(t);
@@ -651,7 +668,6 @@ export function appProgramDetail(b: Bootstrap, id: string, opt: Record<string, s
   if ("error" in o) return { error: o.error, status: 400 };
   const { cfg, basis, state } = baseConfig(b, d, t, o.options);
   const def = t.build(o.options);
-  const usual = b.settings.trainingDays;
   return {
     ...programSummary(t),
     source: t.source,
@@ -662,7 +678,7 @@ export function appProgramDetail(b: Bootstrap, id: string, opt: Record<string, s
     rules: describeProgram(def, { unit: cfg.unit, increments: cfg.increments }),
     weeks: planWeeks(def, cfg, state),
     start: {
-      trainingDays: usual?.length === Math.round(def.sessionsPerWeek) ? [...usual].sort() : defaultSchedule(def.sessionsPerWeek),
+      trainingDays: programDays(b, def),
       startWeights: Object.fromEntries(allSlots(def).filter(usesStartWeight).map((s) => [s.id, r1(cfg.startWeights[s.id] ?? 0)])),
       trainingMaxes: Object.fromEntries(tmLifts(def).map((l) => [l, r1(cfg.trainingMaxes[l] ?? 0)])),
       maxLabel: def.maxLabel ?? "Training max",
@@ -671,6 +687,161 @@ export function appProgramDetail(b: Bootstrap, id: string, opt: Record<string, s
         ...Object.fromEntries(tmLifts(def).map((l) => [l, liftName(l)])),
       },
     },
+  };
+}
+
+// ───────────────────────── program body (what a program does to each muscle) ─────────────────────────
+
+export type MuscleStatus = "none" | "low" | "ok" | "high" | "n/a";
+export interface ProgramBodyMuscle {
+  id: MuscleId; name: string; short: string; group: string;
+  /** 0–1 colour on the LOAD figure: hard sets/wk ÷ the busiest muscle's (at least 11) */
+  load: number;
+  /** 0–1 colour on the GAPS figure: 1 − lowest readiness across the week */
+  gap: number;
+  /** fractional sets per week, and effort-weighted ("hard") sets per week */
+  sets: number; hardSets: number;
+  /** evidence-based weekly hard-set range, or null for small stabilisers */
+  target: [number, number] | null;
+  /** hard sets vs target: not trained · below · in · above · no range (indirect only) */
+  status: MuscleStatus;
+  hits: number; minGapH: number | null; recoverH: number | null;
+  /** 0–1 */
+  minReadiness: number;
+  /** per week */
+  overlaps: number;
+  /** lifts that load it most (short names), biggest first */
+  lifts: string[];
+}
+export interface ProgramBodyOverlap {
+  /** 1-based calendar week of the second hit */
+  week: number;
+  muscle: MuscleId; short: string;
+  /** "MON A1" → "TUE B1" */
+  from: string; to: string;
+  gapH: number;
+  /** residual fatigue as a share of the previous hit's dose (can pass 1 when older sessions add up) */
+  share: number;
+  prev: string[]; now: string[];
+}
+export interface ProgramBody {
+  id: string;
+  mode: "load" | "gaps";
+  sex: "m" | "f";
+  /** Mon = 0 */
+  trainingDays: number[];
+  /** calendar weeks in the measured window (one full program cycle, ≤ 12) */
+  weeks: number;
+  /** coloured figures for `mode`, standalone SVG documents (omitted with svg=0) */
+  svgFront?: string; svgBack?: string;
+  legend: [string, string];
+  /** most loaded first (load) / least recovered first (gaps) */
+  muscles: ProgramBodyMuscle[];
+  overlaps: ProgramBodyOverlap[];
+  overlapsByWeek: number[];
+  summary: {
+    mostTrained: { id: MuscleId; short: string; hardSets: number }[];
+    /** muscles with a target range they fall short of, biggest shortfall first */
+    gaps: { id: MuscleId; short: string; hardSets: number; target: [number, number] }[];
+    /** muscles hit again before they recovered, most often first */
+    overlapping: { id: MuscleId; short: string; perWeek: number }[];
+    overlapsPerWeek: number;
+    /** the three above as plain sentences */
+    lines: string[];
+  };
+}
+
+/** Load-figure scale floor, hard sets/wk (same as the web BODY view). */
+const BODY_FULL = 11;
+
+/** Training days a program would use: your usual days when the count matches, else an even spread. */
+function programDays(b: Bootstrap, def: ProgramDef): number[] {
+  const usual = b.settings.trainingDays;
+  return usual?.length === Math.round(def.sessionsPerWeek) ? [...usual].sort((a, c) => a - c) : defaultSchedule(def.sessionsPerWeek);
+}
+
+/** Parse a `days=0,2,4` query value (Mon = 0). */
+export function parseDays(v: string | null | undefined): number[] | null | { error: string } {
+  if (v == null || v === "") return null;
+  const xs = v.split(",").map((x) => Number(x.trim()));
+  if (xs.length > 7 || xs.some((x) => !Number.isInteger(x) || x < 0 || x > 6) || new Set(xs).size !== xs.length) return { error: "days must be 1–7 distinct weekdays, 0 (Mon) to 6 (Sun), comma separated" };
+  return xs.sort((a, c) => a - c);
+}
+
+export function appProgramBody(
+  b: Bootstrap, id: string,
+  q: { opt?: Record<string, string>; mode?: "load" | "gaps"; days?: number[] | null; svg?: boolean } = {},
+  d: Derived = derive(b, "volume"),
+): ProgramBody | { error: string; status: number } {
+  const t = getTemplate(id);
+  if (!t) return { error: "unknown program", status: 404 };
+  const o = resolveOptions(t, q.opt ?? {}, b.program);
+  if ("error" in o) return { error: o.error, status: 400 };
+  const { cfg } = baseConfig(b, d, t, o.options);
+  const def = t.build(o.options);
+  const mode = q.mode ?? "load";
+  const days = q.days?.length ? q.days : programDays(b, def);
+  const pa = analyzeProgram(def, cfg, { schedule: days });
+  const maxEff = Math.max(BODY_FULL, ...MUSCLES.map((m) => pa.muscles[m.id].effSets));
+  const short = (k: string) => LIFTS[k]?.short ?? k.toUpperCase();
+
+  const muscles: ProgramBodyMuscle[] = MUSCLES.map((m) => {
+    const s = pa.muscles[m.id];
+    const by = new Map<string, number>();
+    for (const x of pa.sessions) for (const [k, v] of Object.entries(x.doses[m.id]?.by ?? {})) by.set(k, (by.get(k) ?? 0) + v);
+    return {
+      id: m.id, name: m.name, short: m.short, group: m.group,
+      load: r2(s.effSets / maxEff), gap: r2(1 - s.minReadiness),
+      sets: r1(s.sets), hardSets: r1(s.effSets), target: m.range ?? null, status: s.status,
+      hits: r1(s.hits), minGapH: s.minGapH == null ? null : Math.round(s.minGapH), recoverH: s.recoverH == null ? null : Math.round(s.recoverH),
+      minReadiness: r2(s.minReadiness), overlaps: r1(s.overlaps),
+      lifts: [...by].sort((a, c) => c[1] - a[1]).slice(0, 4).map(([k]) => short(k)),
+    };
+  });
+  const key = (m: ProgramBodyMuscle) => (mode === "load" ? m.load : m.gap);
+  muscles.sort((a, c) => key(c) - key(a) || c.hardSets - a.hardSets);
+
+  const strip = (label: string) => label.replace(/^(W\d+|prev) /, "");
+  const overlaps: ProgramBodyOverlap[] = pa.overlaps.map((x) => ({
+    week: Math.floor(x.t / 168) + 1, muscle: x.muscle, short: MUSCLE[x.muscle].short,
+    from: strip(x.prevLabel), to: strip(x.label), gapH: Math.round(x.gapH), share: r2(x.share),
+    prev: x.prev.map(short), now: x.now.map(short),
+  }));
+  const overlapsByWeek = Array.from({ length: pa.weeks }, (_, i) => overlaps.filter((x) => x.week === i + 1).length);
+
+  // ── summary ──
+  const byHard = [...muscles].sort((a, c) => c.hardSets - a.hardSets);
+  const mostTrained = byHard.filter((m) => m.hardSets > 0).slice(0, 3).map((m) => ({ id: m.id, short: m.short, hardSets: m.hardSets }));
+  const gaps = muscles
+    .filter((m): m is ProgramBodyMuscle & { target: [number, number] } => !!m.target && (m.status === "low" || m.status === "none"))
+    .sort((a, c) => (c.target[0] - c.hardSets) - (a.target[0] - a.hardSets))
+    .map((m) => ({ id: m.id, short: m.short, hardSets: m.hardSets, target: m.target }));
+  const overlapping = muscles.filter((m) => m.overlaps > 0).sort((a, c) => c.overlaps - a.overlaps).map((m) => ({ id: m.id, short: m.short, perWeek: m.overlaps }));
+  const overlapsPerWeek = r1(pa.overlaps.length / pa.weeks);
+  const low = (s: string) => s.toLowerCase();
+  const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+  const dayNames = days.map((x) => DOW[x][0] + DOW[x].slice(1).toLowerCase()).join(" ");
+  const lines = [
+    mostTrained.length ? `Most trained: ${list(mostTrained.map((m) => `${low(m.short)} ${m.hardSets}`))} hard sets a week.` : "No muscle gets a hard set.",
+    gaps.length
+      ? `Below range: ${gaps.length > 4
+        ? `${gaps.slice(0, 3).map((m) => `${low(m.short)} ${m.hardSets} of ${m.target[0]}–${m.target[1]}`).join(", ")} and ${gaps.length - 3} more`
+        : list(gaps.map((m) => `${low(m.short)} ${m.hardSets} of ${m.target[0]}–${m.target[1]}`))} (hard sets a week).`
+      : "Every muscle with a target range is at or above it.",
+    overlapping.length
+      ? `${overlapsPerWeek} muscle overlap${overlapsPerWeek === 1 ? "" : "s"} a week (hit again before it recovered), mostly ${list(overlapping.slice(0, 2).map((m) => low(m.short)))}.`
+      : `No overlaps: every muscle recovers before its next hit on ${dayNames}.`,
+  ];
+
+  const sex = b.settings.sex === "female" ? "f" : "m";
+  const values: Partial<Record<MuscleId, number>> = Object.fromEntries(muscles.map((m) => [m.id, key(m)]));
+  const scheme = mode === "load" ? "ramp" : "warn";
+  return {
+    id: t.id, mode, sex, trainingDays: days, weeks: pa.weeks,
+    ...(q.svg === false ? {} : { svgFront: renderBodySvg(sex, "front", values, scheme), svgBack: renderBodySvg(sex, "back", values, scheme) }),
+    legend: mode === "load" ? ["0", `${r1(maxEff)} hard sets/wk`] : ["recovered", "taxed"],
+    muscles, overlaps, overlapsByWeek,
+    summary: { mostTrained, gaps, overlapping, overlapsPerWeek, lines },
   };
 }
 

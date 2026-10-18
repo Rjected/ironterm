@@ -8,14 +8,34 @@ import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import directory from "../directory/worker";
 import { NodeD1 } from "./d1";
+import { setPeerFetch } from "../worker/social/net";
+import { peerFetch } from "./peerfetch";
+import { checkDirectoryConfig, dataDirError, listenError } from "./config";
+
+const report = checkDirectoryConfig(process.env);
+for (const w of report.warnings) console.warn(`config: ${w}`);
+if (report.errors.length) {
+  for (const e of report.errors) console.error(`config: ${e}`);
+  process.exit(1);
+}
 
 const PORT = Number(process.env.PORT ?? 8790);
 const HOST = process.env.HOST ?? "0.0.0.0";
 const DATA = resolve(process.env.DATA_DIR ?? "./data");
-mkdirSync(DATA, { recursive: true });
+let DB!: NodeD1;
+try {
+  mkdirSync(DATA, { recursive: true });
+  DB = new NodeD1(join(DATA, "directory.sqlite"));
+} catch (e) {
+  console.error(`config: ${dataDirError(e as NodeJS.ErrnoException, DATA)}`);
+  process.exit(1);
+}
 
-const env: Record<string, unknown> = { DB: new NodeD1(join(DATA, "directory.sqlite")) };
+const env: Record<string, unknown> = { DB };
 for (const k of ["DIRECTORY_ORIGIN", "SOCIAL_ALLOW_HTTP"]) if (process.env[k]) env[k] = process.env[k];
+// Registering makes the directory fetch the claimed server's .well-known: keep that off private addresses.
+const on = (v: string | undefined) => v === "1" || v === "true";
+if (!on(process.env.SOCIAL_ALLOW_HTTP) && !on(process.env.SOCIAL_ALLOW_PRIVATE)) setPeerFetch(peerFetch as typeof fetch);
 // Behind a proxy, rate limits key on its forwarded client address; set TRUST_PROXY=1 only then.
 const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 
@@ -44,6 +64,9 @@ createServer(async (req, res) => {
     if (!res.headersSent) res.writeHead(500, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "internal error" }));
   }
+}).on("error", (e: NodeJS.ErrnoException) => {
+  console.error(listenError(e, PORT, HOST));
+  process.exit(1);
 }).listen(PORT, HOST, () => console.log(`ironterm directory on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT} · data ${DATA}`));
 
 process.on("SIGTERM", () => process.exit(0));

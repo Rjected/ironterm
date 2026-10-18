@@ -19,12 +19,15 @@
 //   Lyle GBR     bodyrecomposition.com forum sticky, via JCDFitness' write-up. Thursday's
 //                deadlift / leg press day and Friday's incline-and-pulldown-first day are Lyle's
 //                suggested variations ("repeat" option runs the same two days twice).
-//   Ivysaur      r/Fitness post by /u/ivysaur via Liftosaur's script and drworkout.fitness.
-//                Weights are a "4-rep weight" per lift; 4×8 work is at 90% of it.
-//   Candito LP   CanditoTrainingHQ free PDF via LiftVault and physiqz.com. Heavy days and the
-//                Strength/Control days are as published. The Strength/Hypertrophy variation days
-//                are APPROXIMATED (5×8 squat / DB bench / row, 3×8 SLDL) from LiftVault's and
-//                MyWorkouts' summaries; check them against the PDF before relying on them.
+//   Ivysaur      r/Fitness post by /u/ivysaur (2016, archived) and its program image: weights are a
+//                "4-rep weight" per lift, 4×8 work at 90% of it. "Squat/Deadlift 15lb/week,
+//                Bench/Rows 10lb/week, Overhead Press 5lb/week"; 8+ on an AMRAP doubles that lift's
+//                next week; a failed set → deload 10%.
+//   Candito LP   Candito's own "Candito Linear Programming" PDF (canditotraininghq.com, archived 2017,
+//                with the 11/18/13 and 5/13/14 updates): heavy, control and hypertrophy days as
+//                published. +0–10 lb a week (5 lb the goal); a missed lift drops 15 lb next week.
+//                Not modelled: the Strength/Power variant, the 3-day option, shoulder / vertical
+//                pull +0–10 lb per 3 weeks (a note), and "after 3 resets, progress every 2 weeks".
 
 import { LIFTS } from "../lifts";
 import type { DayDef, PercentSet, ProgramDef, ProgramTemplate, SlotDef, Stage, Tier, TmRule, Weights } from "../program";
@@ -204,8 +207,9 @@ export const phul: ProgramTemplate = {
       ],
       notes: [
         "Mon Upper Power, Tue Lower Power, Thu Upper Hypertrophy, Fri Lower Hypertrophy.",
-        "Most exercises are written 3–4 sets (2–3 for OHP and arms on power day); 3 is shown.",
-        "Hit the top of the rep range on every set → add weight next time.",
+        "Most exercises are written 3–4 sets (2–3 for OHP and arms on power day, 3–5 for leg press); the low end is shown.",
+        "The article gives no progression rule (keep a rep in the tank); here: hit the top of the rep range on every set → add weight next time.",
+        "The published program runs 12 weeks.",
       ],
     };
   },
@@ -220,7 +224,8 @@ export const phul: ProgramTemplate = {
 // percentage of it. Get 5 reps on every 3–5 set → the power-day weight goes up.
 const POWER: PercentSet[] = rep(3, { pct: 1, reps: 3, repsMax: 5, target: 5 });
 const SPEED: PercentSet[] = rep(6, { pct: 0.7, reps: 3 });
-const POWER_RULE: TmRule = { type: "amrapVsTarget", setIndex: 2, allSets: true, table: [{ diff: -99, increments: 0 }, { diff: 0, increments: 1 }] };
+// Layne's article gives no load rule; this one is ours: 5 on all three sets → up one jump.
+const POWER_RULE: TmRule = { type: "amrapVsTarget", setIndex: 2, allSets: true, penalizeMissingSets: true, table: [{ diff: -99, increments: 0 }, { diff: 0, increments: 1 }] };
 
 export const phat: ProgramTemplate = {
   id: "phat",
@@ -321,7 +326,7 @@ export const lyleGbr: ProgramTemplate = {
         ] },
         { id: "U2", name: "Fri · Upper (incline first)", slots: [
           dbl("u2-incl", "inclineBench", heavy, 6, 8, { ...H, tier: "MAIN" }), dbl("u2-pd", "latPulldown", heavy, 6, 8, { ...H, note: "or chins" }),
-          dbl("u2-bench", "bench", mid, 10, 12, { ...Mi, note: "or dips" }), dbl("u2-row", "cableRow", mid, 10, 12, Mi),
+          dbl("u2-bench", "bench", mid, 10, 12, { ...Mi, note: "or dips" }), dbl("u2-row", "row", mid, 10, 12, Mi),
           dbl("u2-tri", "tricepPushdown", arms, 12, 15, A), dbl("u2-curl", "bicepCurl", arms, 12, 15, A),
         ] }];
     return {
@@ -344,12 +349,14 @@ export const lyleGbr: ProgramTemplate = {
 
 // ───────────────────────── Ivysaur 4-4-8 ─────────────────────────
 
-// TM = the lift's 4-rep weight. 4×4 at 100%, 4×8 at 90%. The AMRAP set (at least 4 reps) moves the
-// 4-rep weight once per two-week cycle: +1 increment, +2 for 8+ reps, under 4 → -10%.
+// TM = the lift's 4-rep weight. 4×4 at 100%, 4×8 at 90%. Every week each 4-rep weight goes up by its
+// weekly rate; 8+ on an AMRAP adds another week's worth; any failed set → −10%.
 const FOURS: PercentSet[] = rep(4, { pct: 1, reps: 4 });
 const EIGHTS: PercentSet[] = rep(4, { pct: 0.9, reps: 8 });
 const FOURS_AMRAP: PercentSet[] = [...rep(3, { pct: 1, reps: 4 }), { pct: 1, reps: 4, amrap: true, target: 4 }];
-const IVY_RULE: TmRule = { type: "amrapVsTarget", setIndex: 3, useLast: true, table: [{ diff: -99, pct: -0.1 }, { diff: 0, increments: 1 }, { diff: 4, increments: 2 }] };
+const IVY_RULE: TmRule = { type: "amrapVsTarget", setIndex: 3, useLast: true, penalizeMissingSets: true, applyAt: "weekEnd", table: [{ diff: -99, pct: -0.1 }, { diff: 0, increments: 0 }, { diff: 4, increments: 1 }] };
+const IVY_MISS: TmRule = { type: "missCut", pct: 0.1 };
+const IVY_WEEKLY = { squat: W(15, 7.5), deadlift: W(15, 7.5), bench: W(10, 5), row: W(10, 5), ohp: W(5, 2.5) };
 
 export const ivysaur448: ProgramTemplate = {
   id: "ivysaur-448",
@@ -362,8 +369,8 @@ export const ivysaur448: ProgramTemplate = {
   daysPerWeek: [3],
   options: [],
   build() {
-    const p4 = (id: string, lift: string) => pct(id, lift, "MAIN", FOURS);
-    const p8 = (id: string, lift: string) => pct(id, lift, "SUPP", EIGHTS);
+    const p4 = (id: string, lift: string) => pct(id, lift, "MAIN", FOURS, { tmRule: IVY_MISS });
+    const p8 = (id: string, lift: string) => pct(id, lift, "SUPP", EIGHTS, { tmRule: IVY_MISS });
     const pA = (id: string, lift: string) => pct(id, lift, "MAIN", FOURS_AMRAP, { tmRule: IVY_RULE });
     const chin = (id: string, reps: number) => fixed(id, "chinUp", 4, reps, "add weight once the reps are easy");
     return {
@@ -371,8 +378,8 @@ export const ivysaur448: ProgramTemplate = {
       name: "Ivysaur 4-4-8",
       sessionsPerWeek: 3,
       maxLabel: "4-rep weight",
-      tmIncrement: { squat: W(15, 7.5), deadlift: W(15, 7.5), bench: W(10, 5), ohp: W(5, 2.5) },
-      cycle: { weeks: 2, weekNames: ["Week A", "Week B"], tmIncrease: { row: W(10, 5) } },
+      tmIncrement: IVY_WEEKLY,
+      cycle: { weeks: 2, weekNames: ["Week A", "Week B"], tmIncrease: IVY_WEEKLY, tmIncreaseEvery: 1 },
       days: [
         { id: "A1", name: "Week A · Day 1", weeks: [0], slots: [p4("a1-bench", "bench"), p8("a1-sq", "squat"), p8("a1-ohp", "ohp"), chin("a1-chin", 8)] },
         { id: "A2", name: "Week A · Day 2", weeks: [0], slots: [p8("a2-bench", "bench"), p4("a2-dl", "deadlift"), p4("a2-ohp", "ohp"), p8("a2-row", "row")] },
@@ -383,8 +390,9 @@ export const ivysaur448: ProgramTemplate = {
       ],
       notes: [
         "Mon / Wed / Fri, alternating Week A and Week B. 8-rep sets are 90% of the 4-rep weight.",
-        "AMRAP sets (bench + squat in Week A, deadlift + OHP in Week B): 4+ reps → +15 lb squat/deadlift, +10 lb bench, +5 lb OHP; 8+ doubles it; fewer than 4 → -10%.",
-        "Rows go up 10 lb every two weeks. Chin-ups: add weight once you beat the reps.",
+        "Every week the 4-rep weights go up: +15 lb squat/deadlift, +10 lb bench and rows, +5 lb OHP (use the smallest jumps between sessions you can).",
+        "AMRAP sets (bench + squat in Week A, deadlift + OHP in Week B): 8+ reps → double that lift's next weekly jump. Fail any set → that lift drops 10%.",
+        "Chin-ups: bodyweight; add weight once 4/8 reps are easy.",
       ],
     };
   },
@@ -399,39 +407,46 @@ export const canditoLinear: ProgramTemplate = {
   id: "candito-linear",
   name: "Candito Linear Program",
   author: "Jonnie Candito",
-  source: "CanditoTrainingHQ free Linear Program PDF, via LiftVault and physiqz.com summaries (hypertrophy days approximated)",
+  source: "Candito Linear Programming PDF (canditotraininghq.com, archived 2017)",
   summary: "Four-day upper/lower: heavy 3×6 days plus control (paused 6×4) or hypertrophy days. Add weight weekly; miss a lift and drop it about 15 lb.",
   category: "strength",
   level: "beginner",
   daysPerWeek: [4],
   options: [
-    { key: "variant", label: "Template", default: "control", choices: [{ value: "control", label: "Strength / Control" }, { value: "hypertrophy", label: "Strength / Hypertrophy (approx.)" }] },
+    { key: "variant", label: "Template", default: "control", choices: [{ value: "control", label: "Strength / Control" }, { value: "hypertrophy", label: "Strength / Hypertrophy" }] },
   ],
   build(o) {
     const opts = pick(o, { variant: "control" });
     // Weekly +5 lb. A missed lift drops 15 lb next week.
     const wk = { increment: UP, dropBy: { lb: 15, kg: 7.5 } };
-    const opt = (id: string, lift: string) => dbl(id, lift, 3, 8, 12, { note: "optional" });
+    const opt = (id: string, lift: string, sets = 3) => dbl(id, lift, sets, 8, 12, { note: "optional" });
     const every3 = "add weight every 3 weeks";
     const heavy: DayDef[] = [
       { id: "HL", name: "Mon · Heavy Lower", slots: [lin("hl-sq", "squat", "MAIN", st(3, 6), wk), lin("hl-dl", "deadlift", "MAIN", st(2, 6), wk), opt("hl-opt1", "legPress"), opt("hl-opt2", "legCurl")] },
       { id: "HU", name: "Tue · Heavy Upper", slots: [
         lin("hu-bench", "bench", "MAIN", st(3, 6), wk), lin("hu-row", "row", "SUPP", st(3, 6), { ...wk, note: "upper back 1 (horizontal pull)" }),
-        fixed("hu-sh", "ohp", 1, 6, every3), fixed("hu-pu", "pullUp", 1, 6, `weighted · ${every3}`), opt("hu-opt", "barbellCurl"),
+        fixed("hu-sh", "ohp", 1, 6, every3), fixed("hu-pu", "pullUp", 1, 6, `weighted · ${every3}`), opt("hu-opt", "barbellCurl"), opt("hu-opt2", "tricepPushdown"),
       ] },
     ];
     const control: DayDef[] = [
       { id: "CL", name: "Thu · Control Lower", slots: [lin("cl-psq", "pauseSquat", "SUPP", st(6, 4), wk), lin("cl-pdl", "pauseDeadlift", "SUPP", st(3, 4), wk), opt("cl-opt1", "bulgarianSplitSquat"), opt("cl-opt2", "backExtension")] },
       { id: "CU", name: "Fri · Control Upper", slots: [
         lin("cu-spoto", "spotoPress", "SUPP", st(6, 4), wk), lin("cu-row", "row", "SUPP", st(6, 4), { ...wk, note: "paused" }),
-        fixed("cu-sh", "ohp", 1, 10, every3), fixed("cu-pu", "pullUp", 1, 10, `no pause · ${every3}`), opt("cu-opt", "lateralRaise"),
+        fixed("cu-sh", "ohp", 1, 10, every3), fixed("cu-pu", "pullUp", 1, 10, `no pause · ${every3}`), opt("cu-opt", "lateralRaise"), opt("cu-opt2", "bicepCurl"),
       ] },
     ];
+    // PDF: Thu squat (back or front) 5×8, deadlift variation 3×8, hamstring curl 3×12, calf raise
+    // 5×15, 2 optional 4×8–12. Fri chest press 4×8 and incline press 4×8 (dumbbells recommended),
+    // upper back #1 and #2 4×8, shoulder 3×10, biceps 3×10, 2 optional 4×8–12.
     const hyper: DayDef[] = [
-      { id: "YL", name: "Thu · Hypertrophy Lower", slots: [lin("yl-sq", "squat", "SUPP", st(5, 8), wk), lin("yl-sldl", "stiffLegDeadlift", "SUPP", st(3, 8), { ...wk, note: "or deficit / snatch-grip deadlift" }), opt("yl-opt1", "legPress"), opt("yl-opt2", "legCurl")] },
+      { id: "YL", name: "Thu · Hypertrophy Lower", slots: [
+        lin("yl-sq", "squat", "SUPP", st(5, 8), { ...wk, note: "back or front squat" }), lin("yl-sldl", "stiffLegDeadlift", "SUPP", st(3, 8), { ...wk, note: "or deficit / snatch-grip deadlift" }),
+        dbl("yl-lc", "legCurl", 3, 12, 15), dbl("yl-calf", "calfRaise", 5, 15, 20), opt("yl-opt1", "legPress", 4), opt("yl-opt2", "backExtension", 4),
+      ] },
       { id: "YU", name: "Fri · Hypertrophy Upper", slots: [
-        lin("yu-dbb", "dbBench", "SUPP", st(5, 8), wk), lin("yu-row", "row", "SUPP", st(5, 8), wk),
-        fixed("yu-sh", "ohp", 1, 10, every3), fixed("yu-pu", "pullUp", 1, 10, every3), opt("yu-opt", "bicepCurl"),
+        lin("yu-dbb", "dbBench", "SUPP", st(4, 8), { ...wk, note: "flat or decline" }), lin("yu-incl", "dbInclineBench", "SUPP", st(4, 8), wk),
+        lin("yu-row", "row", "SUPP", st(4, 8), { ...wk, note: "upper back #1" }), lin("yu-pd", "latPulldown", "SUPP", st(4, 8), { ...wk, note: "upper back #2" }),
+        dbl("yu-sh", "dbOhp", 3, 10, 12), dbl("yu-curl", "bicepCurl", 3, 10, 12), opt("yu-opt", "lateralRaise", 4), opt("yu-opt2", "tricepPushdown", 4),
       ] },
     ];
     return {
@@ -448,7 +463,7 @@ export const canditoLinear: ProgramTemplate = {
     };
   },
   defaults(unit) {
-    const over = { "hl-sq": 245, "hl-dl": 295, "hu-bench": 185, "hu-row": 155, "cl-psq": 195, "cl-pdl": 225, "cu-spoto": 155, "cu-row": 135, "yl-sq": 205, "yu-dbb": 60, "yu-row": 135, "hu-pu": 0, "cu-pu": 0, "yu-pu": 0 };
+    const over = { "hl-sq": 245, "hl-dl": 295, "hu-bench": 185, "hu-row": 155, "cl-psq": 195, "cl-pdl": 225, "cu-spoto": 155, "cu-row": 135, "yl-sq": 205, "yu-dbb": 60, "yu-incl": 50, "yu-row": 135, "yu-pd": 120, "hu-pu": 0, "cu-pu": 0 };
     const sw = { ...startWeights(canditoLinear.build({ variant: "control" }), unit, over), ...startWeights(canditoLinear.build({ variant: "hypertrophy" }), unit, over) };
     return { startWeights: sw, trainingMaxes: {} };
   },

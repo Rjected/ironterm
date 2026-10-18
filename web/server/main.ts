@@ -10,7 +10,19 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { setPeerFetch } from "../worker/social/net";
+import { peerFetch } from "./peerfetch";
+import { PAGE_HEADERS } from "../worker/headers";
 import { isLocal } from "./local";
+import { checkServerConfig, dataDirError, listenError } from "./config";
+
+// Configuration mistakes stop here with a sentence, before anything else runs.
+const report = checkServerConfig(process.env);
+for (const w of report.warnings) console.warn(`config: ${w}`);
+if (report.errors.length) {
+  for (const e of report.errors) console.error(`config: ${e}`);
+  process.exit(1);
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8787);
@@ -18,9 +30,18 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 const DATA = resolve(process.env.DATA_DIR ?? "./data");
 const STATIC = resolve(process.env.STATIC_DIR ?? join(here, "../client"));
 const SYNC_MIN = Number(process.env.SYNC_MINUTES ?? 15);
+/** behind a reverse proxy: take the client address from X-Forwarded-For */
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 
-mkdirSync(DATA, { recursive: true });
-const DB = new NodeD1(join(DATA, "hevy.sqlite"));
+let DB!: NodeD1;
+try {
+  mkdirSync(DATA, { recursive: true });
+  DB = new NodeD1(join(DATA, "hevy.sqlite"));
+} catch (e) {
+  console.error(`config: ${dataDirError(e as NodeJS.ErrnoException, DATA)}`);
+  process.exit(1);
+}
+if (!existsSync(join(STATIC, "index.html"))) console.warn(`No web app in ${STATIC}: run \`pnpm build:node\` (or set STATIC_DIR). The API still works.`);
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
@@ -33,7 +54,8 @@ const ASSETS = {
   async fetch(req: Request): Promise<Response> {
     const path = decodeURIComponent(new URL(req.url).pathname);
     let file = normalize(join(STATIC, path));
-    if (!file.startsWith(STATIC)) return new Response("Not found", { status: 404 });
+    // _headers is Workers Assets config (served as headers there, never as a file)
+    if (!file.startsWith(STATIC) || path === "/_headers") return new Response("Not found", { status: 404 });
     if (!existsSync(file) || statSync(file).isDirectory()) {
       // like Workers' SPA mode: unknown pages get the app, unknown files 404
       if (extname(path)) return new Response("Not found", { status: 404 });
@@ -42,7 +64,7 @@ const ASSETS = {
     if (!existsSync(file)) return new Response("Build the client first (pnpm build:node).", { status: 500 });
     const immutable = path.startsWith("/assets/");
     return new Response(Readable.toWeb(createReadStream(file)) as ReadableStream, {
-      headers: { "content-type": TYPES[extname(file)] ?? "application/octet-stream", "cache-control": immutable ? "public, max-age=31536000, immutable" : "no-cache" },
+      headers: { ...PAGE_HEADERS, "content-type": TYPES[extname(file)] ?? "application/octet-stream", "cache-control": immutable ? "public, max-age=31536000, immutable" : "no-cache" },
     });
   },
 };
@@ -51,10 +73,15 @@ const ASSETS = {
 const KEYS = [
   "HEVY_API_KEY", "APP_PASSWORD", "SESSION_SECRET", "WEBHOOK_SECRET", "TIMEZONE", "ALLOWED_EMAILS",
   "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "WHOOP_CLIENT_ID", "WHOOP_CLIENT_SECRET",
-  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN",
+  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN", "SOCIAL_ALLOW_PRIVATE",
 ];
 const env: Record<string, unknown> = { DB, ASSETS };
 for (const k of KEYS) if (process.env[k]) env[k] = process.env[k];
+
+// Friend servers and directories are URLs other people choose: never let them point this box at
+// its own LAN or loopback, unless that's explicitly what you want (local testing, a private network).
+const on = (v: unknown) => v === "1" || v === "true";
+if (!on(env.SOCIAL_ALLOW_HTTP) && !on(env.SOCIAL_ALLOW_PRIVATE)) setPeerFetch(peerFetch as typeof fetch);
 
 const pending = new Set<Promise<unknown>>();
 const ctx = {
@@ -69,7 +96,11 @@ function toRequest(req: IncomingMessage): Request {
   const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] ?? "http";
   const host = (req.headers["x-forwarded-host"] as string) ?? req.headers.host ?? `localhost:${PORT}`;
   const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) if (v != null) for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  for (const [k, v] of Object.entries(req.headers)) if (v != null && k !== "cf-connecting-ip") for (const x of Array.isArray(v) ? v : [v]) headers.append(k, x);
+  // The client address for rate limits (password sign-in). Clients can't set it: from the socket,
+  // or with TRUST_PROXY=1 from the proxy's X-Forwarded-For.
+  const fwd = TRUST_PROXY ? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() : null;
+  headers.set("cf-connecting-ip", fwd || req.socket.remoteAddress || "unknown");
   const body = req.method === "GET" || req.method === "HEAD" ? undefined : (Readable.toWeb(req) as ReadableStream);
   return new Request(`${proto}://${host}${req.url}`, { method: req.method, headers, body, duplex: "half" } as RequestInit);
 }
@@ -106,6 +137,9 @@ createServer(async (req, res) => {
     if (!res.headersSent) res.writeHead(500, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "internal error" }));
   }
+}).on("error", (e: NodeJS.ErrnoException) => {
+  console.error(listenError(e, PORT, HOST));
+  process.exit(1);
 }).listen(PORT, HOST, () => console.log(`ironterm on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT} · data ${DATA}`));
 
 // The worker's cron, on a timer: sync Hevy (and WHOOP) every SYNC_MINUTES.

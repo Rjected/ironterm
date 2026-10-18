@@ -48,6 +48,8 @@ final class GymStore: ObservableObject {
         var queued: Bool
         var demo: Bool
         var prs: [FinishPR] = []
+        /// stored on a server with no Hevy connected
+        var local: Bool = false
     }
 
     let queue: OfflineQueue
@@ -214,10 +216,13 @@ final class GymStore: ObservableObject {
         let summary = Live.summary(s) { Self.name($0, catalog: gym?.catalog) }
         let api = apiProvider()
         if let api {
+            // A save still queued (or in flight) would PUT the session back after the finish, and the
+            // next load would adopt the finished workout as a running one.
+            await queue.cancelSaves(of: s.id)
             do {
                 let r = try await api.finishLive(s)
                 end()
-                finished = FinishedInfo(session: s, summary: summary, workoutId: r.workout.id, queued: false, demo: r.demo == true, prs: r.prs ?? [])
+                finished = FinishedInfo(session: s, summary: summary, workoutId: r.workout.id, queued: false, demo: r.demo == true, prs: r.prs ?? [], local: r.local == true)
                 onWorkoutSaved?()
                 return
             } catch let e as ApiError where !e.isTransient {
@@ -251,6 +256,7 @@ final class GymStore: ObservableObject {
             finished?.workoutId = r?.workout.id
             finished?.queued = false
             finished?.demo = r?.demo == true
+            finished?.local = r?.local == true
             finished?.prs = r?.prs ?? []
         }
         onWorkoutSaved?()

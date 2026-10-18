@@ -65,6 +65,24 @@ final class OfflineQueueTests: XCTestCase {
         XCTAssertEqual(q.failures.first?.message, "Server error 400: nope")
     }
 
+    func testRevokedTokenKeepsQueuedFinish() async {
+        let q = OfflineQueue(file: nil)
+        var revoked = true
+        var sent = 0
+        q.sender = { _ in if revoked { throw ApiError.unauthorized(.server) }; sent += 1; return nil }
+        q.enqueue(.finish(session("a"), queuedAt: "t"))
+        let ok = await q.flush()
+        XCTAssertFalse(ok)
+        XCTAssertEqual(q.pendingFinishes, 1, "a 401 must not throw the workout away")
+        XCTAssertTrue(q.failures.isEmpty)
+        XCTAssertNotNil(q.authError)
+        revoked = false // reconnected with a new token
+        let ok2 = await q.flush()
+        XCTAssertTrue(ok2)
+        XCTAssertEqual(sent, 1)
+        XCTAssertNil(q.authError)
+    }
+
     func testConcurrentFlushesSendOnce() async {
         let q = OfflineQueue(file: nil)
         var sent = 0
@@ -98,6 +116,7 @@ final class GymStoreTests: XCTestCase {
     var puts: [LiveSession] = []
     var finishes: [LiveSession] = []
     var deletes = 0
+    var finishBody = #"{"workout":{"id":"w-1"},"demo":true,"prs":[{"lift":"bench","short":"BENCH","kind":"rep","reps":1,"weight":325,"prev":320}]}"#
 
     override func setUp() {
         StubProtocol.requests = []
@@ -121,7 +140,7 @@ final class GymStoreTests: XCTestCase {
             case ("DELETE", "/api/live"): self.deletes += 1; return (200, Data(#"{"ok":true}"#.utf8))
             case ("POST", "/api/live/finish"):
                 self.finishes.append(try! JSONDecoder().decode(LiveSession.self, from: body))
-                return (200, Data(#"{"workout":{"id":"w-1"},"demo":true,"prs":[{"lift":"bench","short":"BENCH","kind":"rep","reps":1,"weight":325,"prev":320}]}"#.utf8))
+                return (200, Data(self.finishBody.utf8))
             default: return (404, Data())
             }
         }
@@ -195,6 +214,35 @@ final class GymStoreTests: XCTestCase {
         XCTAssertEqual(f.summary.sets, 1)
         XCTAssertEqual(f.summary.exercises.first?.name, "Bench Press")
         XCTAssertEqual(f.prs, [FinishPR(lift: "bench", short: "BENCH", kind: "rep", reps: 1, weight: 325, prev: 320)])
+    }
+
+    func testFinishOnlineDropsAQueuedSaveSoTheWorkoutDoesNotComeBack() async throws {
+        let g = store()
+        await g.start(dayIndex: nil, empty: false)
+        let s = try XCTUnwrap(g.session)
+        // a save that failed while offline is still queued
+        online = false
+        g.complete(exId: s.exercises[0].id, set: 0)
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(g.queue.ops.count, 1)
+        online = true
+        await g.finish()
+        XCTAssertEqual(finishes.count, 1)
+        await g.queue.flush()
+        XCTAssertTrue(puts.isEmpty, "the stale save must not re-create the finished session on the server")
+        XCTAssertTrue(g.queue.ops.isEmpty)
+    }
+
+    func testFinishOnALocalModeServerSaysSo() async throws {
+        finishBody = #"{"workout":{"id":"local-1"},"local":true,"prs":[]}"#
+        let g = store()
+        await g.start(dayIndex: nil, empty: false)
+        let s = try XCTUnwrap(g.session)
+        g.complete(exId: s.exercises[0].id, set: 0)
+        await g.finish()
+        let f = try XCTUnwrap(g.finished)
+        XCTAssertTrue(f.local, "no Hevy on the server: the summary must not say it went to Hevy")
+        XCTAssertFalse(f.demo)
     }
 
     func testDiscardDeletesOnServer() async throws {

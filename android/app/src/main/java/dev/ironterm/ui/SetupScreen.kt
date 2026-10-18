@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.ironterm.BuildConfig
+import dev.ironterm.data.Cleartext
 import dev.ironterm.Fmt
 import androidx.compose.ui.window.Dialog
 import dev.ironterm.data.ConnectPrompt
@@ -77,6 +78,10 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
                 TButton("▣ Scan QR", modifier = Modifier.fillMaxWidth(), onClick = actions::scanQr)
                 Spacer(Modifier.height(12.dp))
                 Field("Server URL", url, { url = it }, placeholder = "https://gym.example.com", keyboard = KeyboardType.Uri)
+                Cleartext.warning(url)?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Mono(it, size = 10.sp, color = T.down)
+                }
                 Spacer(Modifier.height(12.dp))
                 Field("App token", token, { token = it }, placeholder = "ht_…", secret = true)
                 Spacer(Modifier.height(8.dp))
@@ -151,7 +156,7 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
         }
         if (state.mode == SourceMode.SERVER && state.configured) {
             Section("Program & lifts") {
-                Mono("Choosing a program, its options and mapping lifts to your Hevy exercises happen in the web app.", size = 11.sp, color = T.dim)
+                Mono("Pick and start a program in MORE → PROGRAM. Program options and mapping lifts to your Hevy exercises are in the web app.", size = 11.sp, color = T.dim)
                 Spacer(Modifier.height(10.dp))
                 TButton("Advanced setup (web) ↗", modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { actions.openWeb("/#set") }
             }

@@ -19,11 +19,30 @@ export function demoData(today: string): { workouts: HevyWorkout[]; config: Prog
   const r = rng(11);
   const start = addDays(weekStart(today), -7 * 51);
   const cfg = defaultConfig("gzclp", "lb", start + "T00:00:00Z");
+  cfg.options.curls = "on"; // the demo lifter does the optional curls
   for (const k of Object.keys(cfg.startWeights)) cfg.startWeights[k] = roundTo(cfg.startWeights[k] * 0.72, 5);
   const def = buildProgram(cfg)!;
   let state = initialState(def, cfg);
   const workouts: HevyWorkout[] = [];
   const offWeeks = new Set([17, 18, 33]);
+
+  // The demo lifter has a real (hidden) strength per lift that grows with diminishing returns,
+  // and reps come from it (Epley inverted): progression stalls and resets like it would for a
+  // person, instead of every AMRAP beating its target forever (a 400 lb curl after a year).
+  const cap0: Record<string, number> = {};
+  for (const day of def.days) for (const s of day.slots) {
+    const sw = cfg.startWeights[s.id];
+    if (!sw) continue;
+    const c = sw * (s.tier === "T3" ? 1.9 : 1.45);
+    cap0[s.lift] = Math.max(cap0[s.lift] ?? 0, c);
+  }
+  const capacity = (lift: string, wk: number) => (cap0[lift] ?? 100) * (1 + 0.3 * (1 - Math.exp(-wk / 30)));
+  /** reps doable at `lb` for set `k` of an exercise (a little fatigue per set, a little day-to-day noise) */
+  const doable = (lift: string, wk: number, lb: number, k: number) => {
+    if (lb <= 0) return 30;
+    const cap = capacity(lift, wk) * (1 - 0.012 * k) * (0.97 + r() * 0.06);
+    return lb > cap ? 0 : Math.min(30, Math.floor(30 * (cap / lb - 1)) || 1);
+  };
 
   for (let d = start; d <= today; d = addDays(d, 1)) {
     const wk = Math.floor((Date.parse(d) - Date.parse(start)) / (7 * 864e5));
@@ -49,17 +68,18 @@ export function demoData(today: string): { workouts: HevyWorkout[]; config: Prog
       const sets: HevyExercise["sets"] = [];
       const kgOf = (lb: number) => Math.round(toKg(lb, "lb") * 100) / 100;
       if (p.scheme.includes("RM TEST")) {
-        const top = state.slots[p.slotId].weight * 1.12;
-        for (const f of [0.5, 0.7, 0.85, 0.95, 1]) sets.push({ type: "normal", weight_kg: kgOf(roundTo(top * f, 5)), reps: 5 });
+        // work up to about a true 5RM
+        const top = roundTo(capacity(p.lift, wk) / (1 + 5 / 30), 5);
+        for (const f of [0.5, 0.7, 0.85, 0.95, 1]) {
+          const lb = roundTo(top * f, 5);
+          sets.push({ type: "normal", weight_kg: kgOf(lb), reps: Math.min(5, doable(p.lift, wk, lb, 0)) });
+        }
         return ex(p.lift, sets);
       }
       if (p.tier === "T1") for (const f of [0.5, 0.75]) sets.push({ type: "warmup", weight_kg: kgOf(roundTo(p.sets[0].weight * f, 5)), reps: 3 });
-      const missP = p.tier === "T1" ? 0.13 : p.tier === "T2" ? 0.1 : 0;
-      const miss = r() < missP;
       p.sets.forEach((s, k) => {
-        let reps = s.reps;
-        if (miss && k >= p.sets.length - 2) reps = Math.max(1, s.reps - 1 - Math.floor(r() * 2));
-        else if (s.amrap) reps = p.tier === "T3" ? 18 + Math.floor(r() * 10) : s.reps + Math.floor(r() * 5);
+        const can = doable(p.lift, wk, s.weight, k);
+        const reps = s.amrap ? can : Math.min(s.reps, can);
         sets.push({ type: "normal", weight_kg: kgOf(s.weight), reps, rpe: s.amrap ? 9 : null });
       });
       return ex(p.lift, sets);

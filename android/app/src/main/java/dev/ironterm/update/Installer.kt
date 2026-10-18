@@ -41,7 +41,9 @@ object Installer {
         Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
+    /** Throws (SecurityException) without starting a session when [apk] fails [ApkVerifier]. */
     fun install(context: Context, apk: File) {
+        ApkVerifier.verify(context, apk)
         val pi = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(context.packageName)

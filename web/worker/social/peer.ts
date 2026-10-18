@@ -7,7 +7,7 @@ import {
   addComment, firstSeen, friendByServer, getConfig, identity, interactionsFor, listFriends, notify, pendingIncoming, putFriend,
   removeFriend, setReaction, type FriendRow,
 } from "./db";
-import { allowHttp, directoryUser, fetchWellKnown, signedFetch, type SocialEnv } from "./net";
+import { allowHttp, directoryUser, fetchWellKnown, readLimited, signedFetch, type SocialEnv } from "./net";
 import { friendId, normOrigin, precheck, verifyRequest, type ParsedSig } from "./sign";
 import { EMOJI, HANDLE_RE, type FeedPage, type InboxMessage, type WellKnown } from "./types";
 
@@ -101,9 +101,8 @@ async function myItemIds(c: SocialCtx, f: FriendRow): Promise<Set<string>> {
 export async function inbox(req: Request, c: SocialCtx): Promise<Response> {
   const db = c.env.DB;
   const http = allowHttp(c.env);
-  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY) return err(400, "message too large");
-  const raw = await req.text();
-  if (raw.length > MAX_BODY) return err(400, "message too large");
+  let raw: string;
+  try { raw = await readLimited(req, MAX_BODY); } catch { return err(400, "message too large"); }
   const pre = precheck(req, c.self, http);
   if (!pre.ok) return err(pre.status, pre.error);
   let body: unknown;
