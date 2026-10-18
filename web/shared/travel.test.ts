@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { HevyWorkout } from "./hevy";
 import { initialState, planDay, rampLength, rampNeed, replay } from "./program";
 import { buildProgram, defaultConfig } from "./programs";
-import { applyRamp, onTrip, rampFactors, returnStats, travelDays, travelSessions, type Trip } from "./travel";
+import { applyRamp, onTrip, rampFactors, rampInfo, returnStats, travelDays, travelSessions, type Trip } from "./travel";
 import { toKg } from "./units";
 
 const W = (date: string, ex: [string, [number, number][]][]): HevyWorkout => ({
@@ -100,6 +100,29 @@ describe("re-entry", () => {
     const s = replay(def, cfg, ws);
     expect(s.log.length).toBe(7);
     expect(s.reentry).toBeUndefined();
+  });
+
+  it("explains the ramp in words: where you are, slower lifts, lifts already back", () => {
+    const r = { gapDays: 21, total: 6, done: 1, seen: { squat: 1, bench: 1, deadlift: 4 } };
+    const info = rampInfo(r, ["squat", "bench", "deadlift"], "gzclp");
+    expect(info.headline).toBe("Session 2 of 6 back after 21 days off");
+    expect(info.text).toBe(
+      "Session 2 of 6 back after 21 days off: 92% load, ~67% volume, no all-out sets. " +
+      "Back Squat ramps slower (91%, ~55% volume): legs get more sore, so they get one more light session. " +
+      "Deadlift is back to full. " +
+      "These sessions can't count against your progression; hit your normal weight and that lift is done ramping.");
+    expect(info.lifts.map((x) => [x.lift, x.slower, x.back])).toEqual([["squat", true, false], ["bench", false, false], ["deadlift", true, true]]);
+    expect(info.suggest).toEqual([]);
+  });
+
+  it("suggests a comeback block after a month or more off, unless you're on one", () => {
+    const r = { gapDays: 45, total: 4, done: 0, seen: {} };
+    expect(rampInfo(r, ["squat"], "gzclp").suggest).toEqual([
+      { templateId: "comeback", name: "Return to Training", weeks: "3" }, { templateId: "comeback-squat", name: "Squat Comeback", weeks: "3" }]);
+    expect(rampInfo(r, ["squat"], "gzclp").text).toContain("a short comeback block (Return to Training or Squat Comeback)");
+    expect(rampInfo({ ...r, gapDays: 120 }, ["squat"]).suggest[0].weeks).toBe("4");
+    expect(rampInfo(r, ["squat"], "comeback-squat").suggest).toEqual([]);
+    expect(rampInfo({ ...r, gapDays: 20 }, ["squat"]).suggest).toEqual([]);
   });
 
   it("re-entry can be turned off", () => {

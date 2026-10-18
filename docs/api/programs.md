@@ -69,6 +69,60 @@ interface ProgramDetail extends ProgramSummary {
 }
 ```
 
+## `GET /api/app/programs/{id}/body?mode=load|gaps&days=0,2,4&svg=0&opt.<key>=<value>…`
+
+What the program does to each muscle, before you start it: one full cycle laid on a weekly schedule
+and run through the same load and recovery model as the BODY screen (`web/shared/recovery.ts`).
+A separate call because the two figures are ~260 KB. Samples: `docs/api/app/programs-gzclp-body.json`
+and `programs-gzclp-body-gaps.json` (load / gaps, with SVGs), `programs-531-body-gaps.json` (4 weeks, `svg=0`).
+
+- `mode`: `load` (default) colours by weekly hard sets; `gaps` by lowest readiness across the week.
+  Only the figures, `legend` and the order of `muscles` change; every muscle carries both values.
+- `days`: training weekdays, Mon = 0. Default: your usual training days when their count matches the
+  program's sessions a week, else an even spread (the same as `start.trainingDays` in the detail).
+- `svg=0`: leave out `svgFront` / `svgBack` (the web draws its own figure).
+- `opt.*`: as for the detail. Errors: `400 {error}` bad mode, days or option; `404 {error}` unknown id.
+
+```ts
+interface ProgramBody {
+  id: string; mode: "load" | "gaps"; sex: "m" | "f";
+  trainingDays: number[];                 // the schedule used
+  weeks: number;                          // calendar weeks measured (one full cycle, ≤ 12); per-week numbers average over them
+  svgFront?: string; svgBack?: string;    // standalone SVGs coloured for `mode` (same renderer as GET /api/app/body)
+  legend: [string, string];               // ["0", "20.5 hard sets/wk"] · ["recovered", "taxed"]
+  muscles: {                              // every muscle; most loaded (load) / least recovered (gaps) first
+    id: MuscleId; name: string; short: string; group: "chest" | "shoulders" | "arms" | "back" | "core" | "hips" | "legs";
+    load: number;                         // 0–1, LOAD colour: hard sets ÷ the busiest muscle's (at least 11)
+    gap: number;                          // 0–1, GAPS colour: 1 − lowest readiness
+    sets: number; hardSets: number;       // fractional sets / effort-weighted sets, per week
+    target: [number, number] | null;      // weekly hard-set range (null: small stabiliser, indirect only)
+    status: "none" | "low" | "ok" | "high" | "n/a";   // hardSets vs target: not trained · below · in · above · no range
+    hits: number; minGapH: number | null; recoverH: number | null;  // per week · shortest gap · hours an average hit needs
+    minReadiness: number;                 // 0–1
+    overlaps: number;                     // per week
+    lifts: string[];                      // short names of the lifts that load it most
+  }[];
+  overlaps: {                             // a muscle hit again while > 25 % of its last dose is still there
+    week: number;                         // 1-based
+    muscle: MuscleId; short: string;
+    from: string; to: string;             // "MON A1" → "TUE B1"
+    gapH: number; share: number;          // hours apart · residual ÷ the last dose (can pass 1)
+    prev: string[]; now: string[];        // lifts behind each hit
+  }[];
+  overlapsByWeek: number[];               // count per week (length = weeks)
+  summary: {
+    mostTrained: { id: MuscleId; short: string; hardSets: number }[];               // top 3
+    gaps: { id: MuscleId; short: string; hardSets: number; target: [number, number] }[];  // below range, biggest shortfall first
+    overlapping: { id: MuscleId; short: string; perWeek: number }[];
+    overlapsPerWeek: number;
+    lines: string[];                      // the three as sentences: most trained · below range · overlaps
+  };
+}
+```
+
+Estimates from a model, as on the BODY screen: AMRAPs end near failure, % sets are converted from
+the program's own max, RPE sets use their RIR.
+
 ## `POST /api/app/programs/{id}/start`
 
 ```ts
