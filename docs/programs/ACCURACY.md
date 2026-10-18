@@ -26,38 +26,38 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| 5/3/1 (`531`) | | not yet re-checked | |
-| 5/3/1 for Beginners (`531-beginners`) | | not yet re-checked | |
-| 5/3/1 2-Day / 3-Day (`531-2-3day`) | | not yet re-checked | |
-| 5's PRO + FSL / BBS (`531-fives-pro`) | | not yet re-checked | |
-| Building the Monolith (`531-monolith`) | | not yet re-checked | |
-| BBB 3-Month Challenge (`531-bbb-challenge`) | | not yet re-checked | |
+| 5/3/1 (`531`) | 5/3/1 (2009) / Beyond structure via the Wendler 5-3-1 v1.3 sheet (LiftVault); [jimwendler.com: Boring But Big](https://www.jimwendler.com/blogs/jimwendler-com/101077382-boring-but-big) | approximation: every percentage, AMRAP, the 90% TM and +5/+10 lb a cycle match. BBB stays 5×10 in the deload ("as normal"); FSL drops. The book's stall rule (back the TM off) is a note, not automatic. | 2026-10-18 |
+| 5/3/1 for Beginners (`531-beginners`) | [thefitness.wiki: 5/3/1 for Beginners](https://thefitness.wiki/routines/5-3-1-for-beginners/) | exact: days, 5/3/1 + FSL 5×5, no deload, TM +5/+10 every cycle, push/pull/core 50–100 reps. The optional TM-test week is a note. | 2026-10-18 |
+| 5/3/1 2-Day / 3-Day (`531-2-3day`) | 5/3/1 (2009) layouts (book, not public); Wendler 5-3-1 v1.3 sheet | approximation: percentages as 5/3/1. The layouts come from the book from memory; FSL as the default supplemental is from Beyond. | 2026-10-18 |
+| 5's PRO + FSL / BBS / SSL (`531-fives-pro`) | 5/3/1 Forever (book, not public); [jimwendler.com: 5x5 FSL vs BBB](https://www.jimwendler.com/blogs/jimwendler-com/5x5-first-set-last-vs-boring-but-big) | approximation: 5's PRO, FSL/SSL 5×5 and BBS 10×5 at the usual percentages with an 85% TM. Forever's leader/anchor and 7th-week structure is a note. | 2026-10-18 |
+| Building the Monolith (`531-monolith`) | [jimwendler.com: Building the Monolith](https://www.jimwendler.com/blogs/jimwendler-com/101078918-building-the-monolith-5-3-1-for-size) | approximation: every number on the page matches (waves, 5×5 / 3×5 / 20-rep sets, Friday press volume, assistance). The week-4 TM raise amount (+5/+10) is ours, since the page says only "adjust TM". | 2026-10-18 |
+| BBB 3-Month Challenge (`531-bbb-challenge`) | [jimwendler.com: BBB 3 Month Challenge](https://www.jimwendler.com/blogs/jimwendler-com/boring-but-big-3-month-challenge) | approximation: prescribed reps only, BBB 50/60/70%, and one push, pull and ab movement a day all match. The page doesn't define a month, deloads or TM raises; we use the book's 4-week cycle with +5/+10 after each month. | 2026-10-18 |
 
 ## nSuns
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| nSuns LP 5-Day (`nsuns5`) | | not yet re-checked | |
-| nSuns LP 4-Day (`nsuns-4day`) | | not yet re-checked | |
-| nSuns LP 6-Day squat (`nsuns-6day-squat`) | | not yet re-checked | |
-| nSuns LP 6-Day deadlift (`nsuns-6day-deadlift`) | | not yet re-checked | |
+| nSuns LP 5-Day (`nsuns5`) | [LiftVault nSuns LP Complete Bundle](https://www.liftvault.com/programs/powerlifting/n-suns-lifting-spreadsheets/) (formulas); nSuns' r/Fitness post (archived) | exact: every T1/T2 set, AMRAP flag and the 1+ set table. The sheet gives "+5–10 / +10–15 lb" ranges only; upper lifts take the low end and lower lifts the high end, and kg increments are 2.5 kg. | 2026-10-18 |
+| nSuns LP 4-Day (`nsuns-4day`) | same (4 Day LP tab); nSuns' reply in the original thread | exact: the 5-day tables minus the press day. OHP TM +5 lb when every Monday OHP rep is done (nSuns: "Yes exactly"). | 2026-10-18 |
+| nSuns LP 6-Day squat (`nsuns-6day-squat`) | same (squat-focus tab) | exact: the 5-day week plus Saturday 8×3 @ 72.5% and 6×3 @ 56.25% (the sheet's formulas). | 2026-10-18 |
+| nSuns LP 6-Day deadlift (`nsuns-6day-deadlift`) | same (6 Day Deadlift Focus tab) | exact: as the squat focus with Tuesday/Thursday swapped. | 2026-10-18 |
 
 ## Novice linear progressions
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| StrongLifts 5×5 (`stronglifts`) | | not yet re-checked | |
-| Starting Strength (`starting-strength`) | | not yet re-checked | |
-| GreySkull LP (`greyskull`) | | not yet re-checked | |
-| Phrak's GSLP (`phrak-gslp`) | | not yet re-checked | |
-| Basic Beginner Routine (`reddit-bbr`) | | not yet re-checked | |
-| Ice Cream Fitness 5×5 (`icf-5x5`) | | not yet re-checked | |
-| Fierce 5 (`fierce5`) | | not yet re-checked | |
-| AllPro Simple Beginner (`allpro`) | | not yet re-checked | |
-| Madcow 5×5 (`madcow`) | | not yet re-checked | |
-| Bill Starr 5×5 (`bill-starr`) | | not yet re-checked | |
-| Texas Method (`texas-method`) | | not yet re-checked | |
-| Bromley's Simplest Beginner (`bromley-beginner`) | | not yet re-checked | |
+| StrongLifts 5×5 (`stronglifts`) | [stronglifts.com](https://stronglifts.com/stronglifts-5x5/workout-program/) workout, failure and progress pages | exact: A/B, +5 lb a session (deadlift +10), three failed sessions at a weight → −10%. Switching the deadlift to +5 later is up to you (increment override). | 2026-10-18 |
+| Starting Strength (`starting-strength`) | startingstrength.com Programs and "The Reset: Why and How" (archived) | approximation: phases 1–3 and the second-stall → 5% reset match. The later 5×3 switch and the bigger early jumps are notes. | 2026-10-18 |
+| GreySkull LP (`greyskull`) | Johnny Pain's original post (quoted on LiftVault) | approximation: presses alternate, squat Mon/Fri, deadlift Wed, last set under 5 → −10%, curls / weighted chins. The 10+ double jump is from the e-book summaries (the post's FAQ says 15 reps → +10 lb). Bodyweight chins every day aren't tracked. | 2026-10-18 |
+| Phrak's GSLP (`phrak-gslp`) | r/Fitness wiki (archived) | exact: the 6-session rotation, 3×5+, ≥15 total reps (raw), more than 10 → double, under 15 → −10%. | 2026-10-18 |
+| Basic Beginner Routine (`reddit-bbr`) | [thefitness.wiki](https://thefitness.wiki/routines/r-fitness-basic-beginner-routine/) | exact: A/B, every lift 3×5+ including the deadlift, same rules as Phrak. Cardio is a note. | 2026-10-18 |
+| Ice Cream Fitness 5×5 (`icf-5x5`) | LiftVault ICF page and its 1.0 calculator (a community revision) | approximation: lifts and increments match the calculator (deadlift +5, OHP +2.5, a lighter B-day row). Accessories add weight when complete; the sheet adds every other session. The sheet has no failure rule; 3 strikes → −10% is ours. | 2026-10-18 |
+| Fierce 5 (`fierce5`) | the original bodybuilding.com post (2014 repost); fitnessvolt.com | exact: ABA/BAB, main lifts +5 lb upper / +10 lb lower a week, FitnessVolt's lineup (the 2014 original swaps in deadlift, reverse flies and leg curls). The source gives no failure rule; stalls are a note. | 2026-10-18 |
+| AllPro Simple Beginner (`allpro`) | [LiftVault AllPro](https://liftvault.com/programs/bodybuilding/all-pro-simple-beginner-routine-program-spreadsheet/) + FAQ | exact: 100/90/80% days, reps 8→12 over 5 weeks, +10% only when both week-5 heavy sets reach 12. | 2026-10-18 |
+| Madcow 5×5 (`madcow`) | Madcow's original "Linear 5x5" page (archived) | exact: 12.5% ramps, the Wednesday light squat, the Friday +2.5% triple and 1×8, +2.5% a week, a miss holds, open-ended. | 2026-10-18 |
+| Bill Starr 5×5 (`bill-starr`) | breakingmuscle.com on *The Strongest Shall Survive*; LiftVault | approximation: the Big Three ramped 5×5, 80% / 90% days, OHP on Wednesday, raise only when the top set is made. Ramp spacing and jump sizes are LiftVault's. | 2026-10-18 |
+| Texas Method (`texas-method`) | [startingstrength.com: The Texas Method](https://startingstrength.com/article/the_texas_method) (archived) | approximation: Monday 5×5 @ 90%, Wednesday 2×5 @ 80% of Monday, Friday 5RM, bench and press alternating, deadlift, cleans, chins and back extensions all match. Wednesday press at 81% and the Friday +5 lb are ours. | 2026-10-18 |
+| Bromley's Simplest Beginner (`bromley-beginner`) | LiftVault sheet (Read Me and stage tabs) | approximation: stages 1 and 2 match; 4×6+ adds weight every completed session. 3×F uses double progression 8–12 (the source says "above 12 add, below 8 take off"). | 2026-10-18 |
 
 ## Hypertrophy
 
@@ -104,10 +104,10 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Sheiko #29–#32 (`sheiko-29-32`) | | not yet re-checked | |
-| Sheiko #37 (`sheiko-37`) | | not yet re-checked | |
-| Sheiko Beginner (`sheiko-beginner`) | | not yet re-checked | |
-| Sheiko Advanced Medium Load (`sheiko-aml`) | | not yet re-checked | |
+| Sheiko #29–#32 (`sheiko-29-32`) | ChaseT 2008 "Sheiko Training Collection" sheet ([LiftVault](https://www.liftvault.com/programs/powerlifting/sheiko-program-spreadsheets/)) | exact: every day, %, reps, sets and exercise order (scripted diff). "100–105% × 2–3 singles" is planned as 2×1 @ 100% plus a note. | 2026-10-18 |
+| Sheiko #37 (`sheiko-37`) | same | exact. | 2026-10-18 |
+| Sheiko Beginner (`sheiko-beginner`) | ChaseT "Sheiko Beginner" sheet | exact. Accessory "%" cells are read as effort notes (the sheet computes no weight for them). | 2026-10-18 |
+| Sheiko Advanced Medium Load (`sheiko-aml`) | ChaseT "Sheiko AML" sheet | exact. Incline shoulder press is logged as incline bench, with a note. | 2026-10-18 |
 
 ## Specialization
 
