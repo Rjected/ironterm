@@ -113,9 +113,9 @@ private fun CalendarBody(cal: AppCalendar, todayIso: String?, refreshing: Boolea
     val ym = runCatching { YearMonth.parse(cal.month) }.getOrNull()
     RefreshColumn(refreshing, onRefresh) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clickable { shift(-1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("‹", size = 22.sp, color = T.amber, bold = true) }
+            Box(Modifier.clickable { shift(-1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("‹", Modifier.semantics { contentDescription = "Previous month" }, size = 22.sp, color = T.amber, bold = true) }
             Mono(ym?.let { "${Fmt.month(it.atDay(1))} ${it.year}" } ?: cal.month, Modifier.weight(1f), size = 15.sp, bold = true, align = TextAlign.Center)
-            Box(Modifier.clickable { shift(1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("›", size = 22.sp, color = T.amber, bold = true) }
+            Box(Modifier.clickable { shift(1) }.size(52.dp), contentAlignment = Alignment.Center) { Mono("›", Modifier.semantics { contentDescription = "Next month" }, size = 22.sp, color = T.amber, bold = true) }
         }
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp).pointerInput(cal.month) {
