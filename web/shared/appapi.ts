@@ -223,7 +223,8 @@ function summary(w: HevyWorkout, d: Derived): AppWorkoutSummary {
 }
 
 export function appHistory(b: Bootstrap, opts: { cursor?: string | null; limit?: number; q?: string }, d: Derived = derive(b, "volume")): AppHistory {
-  const limit = Math.min(100, Math.max(1, opts.limit ?? 30));
+  // ?limit=abc (NaN) or 2.5 from a client must not turn into an empty page
+  const limit = Math.min(100, Math.max(1, Math.floor(Number.isFinite(opts.limit) ? opts.limit! : 30)));
   const q = opts.q?.trim().toLowerCase();
   const all = q ? d.workouts.filter((w) => w.title.toLowerCase().includes(q) || w.exercises.some((e) => e.title.toLowerCase().includes(q))) : d.workouts;
   const start = opts.cursor ? all.findIndex((w) => w.id === opts.cursor) + 1 : 0;

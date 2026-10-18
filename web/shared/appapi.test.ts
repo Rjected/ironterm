@@ -71,6 +71,9 @@ describe("app API", () => {
     const p2 = appHistory(boot, { cursor: p1.next, limit: 20 }, d);
     expect(p2.workouts[0].id).not.toBe(p1.workouts[19].id);
     expect(new Set([...p1.workouts, ...p2.workouts].map((w) => w.id)).size).toBe(40);
+    // a junk ?limit (NaN) falls back to the default page, not an empty one
+    expect(appHistory(boot, { limit: Number("abc") }, d).workouts).toHaveLength(30);
+    expect(appHistory(boot, { limit: 2.5 }, d).workouts).toHaveLength(2);
     expect(appHistory(boot, { q: "arms" }, d).workouts.every((w) => /arms/i.test(w.title) || w.exercises.some((e) => /arms/i.test(e)))).toBe(true);
     await fixture("history", p1);
     const w = appWorkout(boot, p1.workouts[0].id, d)!;
