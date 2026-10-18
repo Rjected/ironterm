@@ -1,0 +1,9 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+.prod-secrets.json
+.env
+data
+public/fonts/*
+!public/fonts/.gitkeep

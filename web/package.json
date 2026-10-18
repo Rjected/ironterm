@@ -1,0 +1,34 @@
+{
+  "name": "ironterm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply hevy --local",
+    "db:migrate:remote": "wrangler d1 migrations apply hevy --remote",
+    "fonts": "node scripts/copy-fonts.mjs",
+    "deploy:hooks": "wrangler deploy --config wrangler.hooks.jsonc",
+    "deploy:pages": "cd ../gym-proxy && wrangler pages deploy --project-name hevy-gym --branch main",
+    "build:node": "tsc --noEmit -p server && vite build && esbuild server/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server/main.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
+    "start": "node --disable-warning=ExperimentalWarning dist/server/main.mjs"
+  },
+  "dependencies": {
+    "preact": "10.29.8",
+    "qrcode-generator": "1.4.4"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.62.3",
+    "@cloudflare/workers-types": "5.20260930.2",
+    "@types/node": "22.13.0",
+    "esbuild": "0.28.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.1",
+    "vitest": "5.0.3",
+    "wrangler": "4.145.0"
+  }
+}

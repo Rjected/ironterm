@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="100dp"
+    android:minResizeHeight="50dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:configure="dev.ironterm.ui.WidgetConfigActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    android:updatePeriodMillis="0"
+    android:previewImage="@drawable/widget_preview_lifts"
+    android:description="@string/widget_lifts_desc" />

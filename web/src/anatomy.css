@@ -1,0 +1,53 @@
+/* Anatomy figure — hairline écorché on black, load in the widget-blue ramp. */
+:root { --anat-idle: #121317; --anat-skin: #08090b; --anat-fascia: #0b0c0f; }
+
+.anat { display: grid; gap: 8px; min-width: 0; }
+.anat-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.anat-bar .legend { margin-left: auto; }
+.anat-figs { display: grid; gap: 4px; justify-items: center; min-width: 0; }
+.anat-figs.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.anat-figs.n1 { grid-template-columns: minmax(0, 1fr); }
+.anat-svg { width: 100%; height: auto; max-height: 78vh; display: block; overflow: visible; }
+.anat-figs.n1 .anat-svg { max-width: 460px; }
+
+.anat-svg .base { fill: var(--anat-skin); stroke: var(--line-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.anat-svg .decor { fill: #0e0f12; stroke: #1c1e22; stroke-width: .5; vector-effect: non-scaling-stroke; }
+.anat-svg .fascia { fill: var(--anat-fascia); }
+.anat-svg .ln { fill: none; stroke: #2a2d33; stroke-width: .5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.anat-svg .mu { cursor: pointer; stroke: #000; stroke-width: .6; vector-effect: non-scaling-stroke; transition: fill .2s; }
+.anat-svg .deep { stroke: var(--dim); stroke-dasharray: 3 2; stroke-width: .9; fill-opacity: .55; }
+.anat-svg .hl { fill: none; stroke: var(--hi); stroke-width: 1.4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.anat-svg .anat-lbl { fill: var(--faint); font-size: 14px; font-family: var(--mono); letter-spacing: .1em; }
+.anat-credit { font-size: 10px; color: var(--faint); }
+.anat-credit a { color: var(--dim); }
+
+/* BODY view */
+.body-detail { display: grid; gap: 6px; align-content: start; }
+.body-detail h4 { margin: 0; color: var(--hi); font-weight: 400; font-size: 15px; }
+.bars-h { display: grid; gap: 3px; }
+.bar-h { display: grid; grid-template-columns: 96px minmax(0, 1fr) 48px; gap: 8px; align-items: center; font-size: var(--fs-s); cursor: pointer; }
+.bar-h:hover span:first-child, .bar-h.on span:first-child { color: var(--hi); }
+.bar-h span:first-child { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-h .trk { position: relative; height: 10px; background: var(--l0); }
+.bar-h .trk i { position: absolute; top: 0; bottom: 0; left: 0; }
+.bar-h .trk b { position: absolute; top: -2px; bottom: -2px; border-left: 1px dashed var(--faint); border-right: 1px dashed var(--faint); }
+.bar-h span:last-child { text-align: right; }
+.dgrid { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.dgrid table.t td.cell { text-align: center; padding: 3px 2px; font-size: var(--fs-s); }
+.chip { display: inline-block; font-size: var(--fs-s); border: 1px solid var(--line-2); padding: 0 5px; margin: 0 4px 4px 0; color: var(--dim); }
+.chip.warn { border-color: var(--down); color: var(--down); }
+.chip.ok { border-color: var(--l2); color: var(--up); }
+.ovl { display: grid; gap: 4px; font-size: var(--fs-s); }
+.ovl div { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 8px; border-bottom: 1px solid #111215; padding: 3px 0; cursor: pointer; }
+.ovl div:hover { background: var(--raise); }
+
+@media (max-width: 720px) {
+  .anat-svg { max-height: 62vh; }
+  .bar-h { grid-template-columns: 84px minmax(0, 1fr) 40px; }
+  .ovl div { grid-template-columns: 90px minmax(0, 1fr) auto; }
+}
+.body-ctl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.body-ctl select.inp { width: auto; max-width: 100%; flex: 1 1 220px; padding: 2px 6px; }
+.anat-svg .seam { stroke: #000; stroke-width: .6; }
+/* hover / pin on the pre-built female figure (its muscle paths carry their own soft stroke) */
+.anat-svg .mu.on { stroke: var(--hi) !important; stroke-opacity: 1 !important; stroke-width: 1.4; }

@@ -1,0 +1,7 @@
+{
+  "$schema": "../web/node_modules/wrangler/config-schema.json",
+  "name": "hevy-gym",
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2026-09-01",
+  "services": [{ "binding": "APP", "service": "hevy-terminal" }]
+}

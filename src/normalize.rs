@@ -70,9 +70,11 @@ mod tests {
 
     #[test]
     fn test_single_nonzero() {
+        // One training day: every quartile equals it, so it's the lightest non-zero level, the
+        // same as GitHub's graph and the web / Android / iOS ports of this function.
         let volumes = vec![0.0, 100.0, 0.0];
         let levels = compute_intensity_levels(&volumes);
-        assert_eq!(levels, vec![0, 4, 0]);
+        assert_eq!(levels, vec![0, 1, 0]);
     }
 
     #[test]

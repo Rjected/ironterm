@@ -1,0 +1,9 @@
+# docker compose up -d   →  http://localhost:8787
+# Put secrets in .env next to this file (see .env.example). Data lives in ./data.
+services:
+  hevy:
+    build: .
+    restart: unless-stopped
+    ports: ["8787:8787"]
+    env_file: .env
+    volumes: ["./data:/data"]

@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "HevyGraphWidget"
+rootProject.name = "ironterm"
 include(":app")

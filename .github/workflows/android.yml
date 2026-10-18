@@ -1,44 +1,103 @@
-name: Android Build
+name: Android
 
 on:
   push:
     branches: [main]
+    paths: ["android/**", ".github/workflows/android.yml"]
+  # every PR runs it: it's a required check on main
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  android:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: android
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: temurin
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Debug APK
+      - name: Unit + screenshot tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: app-debug
+          name: test-reports
+          path: android/app/build/reports/tests/
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ironterm-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
+  # Every merge to main that touches the app ships a signed release. The app checks
+  # GitHub Releases and updates itself over the air (see android/README.md → Updates).
+  release:
+    needs: android
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: android
+    env:
+      # versionCode must only ever go up; the offset keeps it above early local builds
+      IRONTERM_VERSION_CODE: ${{ github.run_number }}00
+      IRONTERM_VERSION_NAME: 2.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
         with:
-          name: app-release-unsigned
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          java-version: "17"
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "ANDROID_KEYSTORE_B64 secret missing"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "IRONTERM_KEYSTORE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        env:
+          IRONTERM_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          IRONTERM_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          IRONTERM_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          IRONTERM_UPDATE_REPO: ${{ github.repository }}
+        run: |
+          ./gradlew assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/ironterm-$IRONTERM_VERSION_NAME.apk"
+
+      - name: Verify signature
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | tail -1)
+          $APKSIGNER verify --print-certs "$RUNNER_TEMP/ironterm-$IRONTERM_VERSION_NAME.apk" | head -3
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="android-v$IRONTERM_VERSION_CODE"
+          NOTES=$(git log -1 --pretty=%s)
+          gh release create "$TAG" "$RUNNER_TEMP/ironterm-$IRONTERM_VERSION_NAME.apk" \
+            --title "Ironterm for Android $IRONTERM_VERSION_NAME" \
+            --notes "$NOTES"$'\n\n'"Install: open this page on your phone and tap the APK. The app updates itself from here afterwards." \
+            --latest
