@@ -281,7 +281,7 @@ struct ProgramHeader: View {
     var active: Bool
 
     var tags: String {
-        [ProgramText.category(d.category), ProgramText.days(d.daysPerWeek), ProgramText.length(d.weekCount)]
+        [ProgramText.category(d.category), ProgramText.days(d.daysPerWeek), ProgramText.length(d.weekCount, kind: d.length, cycleWeeks: d.cycleWeeks)]
             .filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
     }
 
@@ -338,7 +338,7 @@ struct ProgramAboutTab: View {
             HStack(spacing: 14) {
                 Stat(value: d.level.uppercased(), label: "level", size: 13)
                 Stat(value: ProgramText.days(d.daysPerWeek).uppercased(), label: "per week", size: 13)
-                Stat(value: ProgramText.length(d.weekCount).uppercased(), label: "length", size: 13)
+                Stat(value: ProgramText.length(d.weekCount, kind: d.length, cycleWeeks: d.cycleWeeks).uppercased(), label: "length", size: 13)
                 Stat(value: d.unit.uppercased(), label: "unit", size: 13)
             }
             if !d.options.isEmpty {
