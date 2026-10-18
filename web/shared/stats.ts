@@ -44,7 +44,7 @@ export interface DayCell {
   workouts: string[];
 }
 
-/** Daily values → GitHub-style levels 0–4 using quartiles of non-zero days (port of normalize.rs). */
+/** Daily values → GitHub-style levels 0–4 using quartiles of non-zero days (the original CLI's normalize.rs; the CLI in web/cli now uses this). */
 export function dailyCells(workouts: HevyWorkout[], tz: string, metric: GraphMetric = "volume"): Map<string, DayCell> {
   const m = new Map<string, DayCell>();
   for (const w of workouts) {

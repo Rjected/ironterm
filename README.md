@@ -9,7 +9,6 @@
 [![Web](https://github.com/Rjected/ironterm/actions/workflows/web.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/web.yml)
 [![Android](https://github.com/Rjected/ironterm/actions/workflows/android.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/android.yml)
 [![iOS](https://github.com/Rjected/ironterm/actions/workflows/ios.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/ios.yml)
-[![CLI](https://github.com/Rjected/ironterm/actions/workflows/cli.yml/badge.svg)](https://github.com/Rjected/ironterm/actions/workflows/cli.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ffb000.svg)](LICENSE)
 
 <img src="docs/screens/web/tour.gif" alt="Ironterm web app tour: dashboard, body map, program, gym mode, lifts, insights, calendar" width="900">
@@ -67,7 +66,7 @@ More: [web](docs/screens/web) · [Android](docs/screens/android) (every widget a
 | [`web/`](web/) | The app: a Preact UI plus an API. Runs on **Cloudflare Workers + D1** or **anywhere with Docker / Node + SQLite** ([self-hosting](web/SELF_HOSTING.md)). |
 | [`android/`](android/) | Native Kotlin / Compose app with Glance widgets. Updates itself over the air from GitHub Releases. |
 | [`ios/`](ios/) | Native SwiftUI app with WidgetKit widgets, including the lock screen. |
-| [`src/`](src/) | `ironterm-graph`: a terminal CLI that prints your contribution graph. |
+| [`web/cli/`](web/cli/) | `ironterm-graph`: a terminal CLI that prints your contribution graph. No dependencies beyond Node. |
 | [`docs/api/`](docs/api/) | The small JSON API the apps read. |
 
 ## Get started
@@ -99,9 +98,10 @@ Then host it on one of these:
 ## CLI
 
 ```bash
+cd web && pnpm install
 export HEVY_API_KEY="your-api-key"
-cargo run                   # last 52 weeks
-cargo run -- --weeks 26 --ascii
+pnpm cli                    # last 52 weeks
+pnpm cli --weeks 26 --ascii
 ```
 
 ## Development
@@ -110,10 +110,9 @@ Every directory builds on its own, and CI runs each one:
 
 | | Check |
 |---|---|
-| web | `pnpm typecheck && pnpm test && pnpm build:node` (and the Docker image) |
+| web (and the CLI) | `pnpm typecheck && pnpm test && pnpm build:node` (and the Docker image) |
 | android | `./gradlew testDebugUnitTest assembleDebug` (unit, network and screenshot tests) |
 | ios | `xcodebuild -project Ironterm.xcodeproj -scheme Ironterm test` |
-| cli | `cargo test` |
 
 ## Credits
 
