@@ -65,6 +65,24 @@ final class OfflineQueueTests: XCTestCase {
         XCTAssertEqual(q.failures.first?.message, "Server error 400: nope")
     }
 
+    func testRevokedTokenKeepsQueuedFinish() async {
+        let q = OfflineQueue(file: nil)
+        var revoked = true
+        var sent = 0
+        q.sender = { _ in if revoked { throw ApiError.unauthorized(.server) }; sent += 1; return nil }
+        q.enqueue(.finish(session("a"), queuedAt: "t"))
+        let ok = await q.flush()
+        XCTAssertFalse(ok)
+        XCTAssertEqual(q.pendingFinishes, 1, "a 401 must not throw the workout away")
+        XCTAssertTrue(q.failures.isEmpty)
+        XCTAssertNotNil(q.authError)
+        revoked = false // reconnected with a new token
+        let ok2 = await q.flush()
+        XCTAssertTrue(ok2)
+        XCTAssertEqual(sent, 1)
+        XCTAssertNil(q.authError)
+    }
+
     func testConcurrentFlushesSendOnce() async {
         let q = OfflineQueue(file: nil)
         var sent = 0

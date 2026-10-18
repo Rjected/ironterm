@@ -2,8 +2,8 @@ import Foundation
 
 /// Writes to the server that must survive being offline: the latest live session (PUT /api/live,
 /// coalesced), a discard, and finished workouts (POST /api/live/finish). Kept in order in a JSON
-/// file, flushed first-in first-out; a transient failure (offline, 5xx) stops the flush and keeps
-/// the op for later, a permanent one (4xx) drops it and reports it.
+/// file, flushed first-in first-out; a transient failure (offline, 5xx) or a rejected token stops
+/// the flush and keeps the op for later, a permanent one (other 4xx) drops it and reports it.
 @MainActor
 final class OfflineQueue: ObservableObject {
     enum Op: Codable, Equatable {
@@ -20,6 +20,8 @@ final class OfflineQueue: ObservableObject {
     @Published private(set) var flushing = false
     /// ops the server refused (4xx), newest last
     @Published private(set) var failures: [Failure] = []
+    /// the server rejected the token: everything stays queued until the app is reconnected
+    @Published private(set) var authError: String?
 
     let file: URL?
     /// Sends one op; throws ApiError. Returns the server's answer for `.finish`.
@@ -77,9 +79,14 @@ final class OfflineQueue: ObservableObject {
         while let op = ops.first {
             do {
                 let r = try await sender(op)
+                authError = nil
                 ops.removeFirst()
                 save()
                 if case .finish(let s, _) = op { onFinished?(s, r) }
+            } catch let e as ApiError where e.isAuth {
+                // A revoked token is fixed by reconnecting, not by the workout: keep it for then.
+                authError = e.errorDescription ?? "Token revoked or invalid. Reconnect."
+                return false
             } catch let e as ApiError where !e.isTransient {
                 ops.removeFirst()
                 save()
