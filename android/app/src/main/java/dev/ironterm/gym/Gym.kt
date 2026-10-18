@@ -77,7 +77,7 @@ class ServerGymTransport(private val api: AppApi) : GymTransport {
     override suspend fun put(s: LiveSession) = api.putLive(s)
     override suspend fun delete() = api.deleteLive()
     override suspend fun finish(s: LiveSession): Finished = api.finishLive(s).let { r ->
-        Finished(r.workout.id.ifBlank { null }, r.demo, r.prs?.map { it.line() })
+        Finished(r.workout.id.ifBlank { null }, r.demo, r.prs?.map { it.line() }, local = r.local)
     }
 }
 
