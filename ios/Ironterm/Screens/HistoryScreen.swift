@@ -111,6 +111,7 @@ struct HistoryScreen: View {
                 }
             if !h.query.isEmpty {
                 Button { h.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(T.faint) }
+                    .accessibilityLabel("Clear search")
             }
             Cap("\(h.total)", T.faint, size: 9)
         }
