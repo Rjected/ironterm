@@ -123,7 +123,9 @@ Bottom bar: **TODAY · GYM · FRIENDS · HISTORY · MORE** (LIFTS is the first e
     (SFSafariViewController), the only web surface.
 
 Credentials are stored in the Keychain (access group = the App Group, so the widgets can read
-them, `AfterFirstUnlockThisDeviceOnly`). The last snapshot is cached in the App Group container so
+them, `AfterFirstUnlockThisDeviceOnly`). Only an unsigned simulator build, which has no Keychain
+entitlement, keeps them in the App Group defaults instead; a device build never stores them in
+plaintext and moves any plaintext copy it finds into the Keychain. The last snapshot is cached in the App Group container so
 widgets work offline.
 
 ## Widgets

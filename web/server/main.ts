@@ -10,6 +10,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { isLocal } from "./local";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8787);
@@ -85,14 +86,10 @@ async function send(res: ServerResponse, r: Response) {
 }
 
 // With no login configured the worker only serves "localhost", judged by the URL's host. Here the
-// Host header is client-controlled, so decide from the socket instead: a loopback connection
-// that didn't come through a proxy. Anything else gets the same 403 the worker would give.
+// Host and X-Forwarded-* headers are client-controlled (a DNS-rebinding page can set them), so
+// decide from the socket and the raw headers instead (server/local.ts). Anything else gets the
+// same 403 the worker would give.
 const loginConfigured = !!(env.APP_PASSWORD || (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.SESSION_SECRET && env.ALLOWED_EMAILS) || env.ACCESS_AUD);
-const isLocal = (req: IncomingMessage) => {
-  const a = req.socket.remoteAddress ?? "";
-  const loop = a === "127.0.0.1" || a === "::1" || a === "::ffff:127.0.0.1";
-  return loop && !req.headers["x-forwarded-for"] && !req.headers.forwarded;
-};
 if (!loginConfigured) console.warn("No login configured (APP_PASSWORD or Google): only requests from this machine are served.");
 
 createServer(async (req, res) => {
