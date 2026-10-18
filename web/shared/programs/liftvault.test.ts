@@ -77,7 +77,7 @@ describe("all LiftVault templates", () => {
 
   it("finite programs run to completion", () => {
     const expected: [ProgramTemplate, number, Record<string, string>?][] = [
-      [smolov, 35], [magOrt, 10], [gzclUhf5, 25], [gzclUhf9, 45], [gzclUhf9, 53, { taper: "on" }], [gzclGgWave, 64], [canditoAdvBench, 21], [canditoAdvSquat, 30],
+      [smolov, 36], [magOrt, 10], [gzclUhf5, 25], [gzclUhf9, 45], [gzclUhf9, 53, { taper: "on" }], [gzclGgWave, 64], [canditoAdvBench, 21], [canditoAdvSquat, 30],
     ];
     for (const [t, sessions, o] of expected) {
       const { def, cfg } = setup(t, undefined, o);
@@ -87,13 +87,14 @@ describe("all LiftVault templates", () => {
   });
 });
 
-describe("Smolov (vs LiftVault sheet: squat 300, power clean 200, box squat 315)", () => {
+describe("Smolov (smolovjr.com + LiftVault sheet: squat 300, power clean 200, box squat 315)", () => {
   const { def, cfg } = setup(smolov, { squat: 300, powerClean: 200, boxSquat: 315 });
 
   it("intro and base loads match the sheet, including +20 / +30 lb base jumps", () => {
     expect(loads(def, cfg, "W1D1", "-sq")).toEqual([195, 195, 195, 210, 225, 225, 240]);
     expect(loads(def, cfg, "W1D3", "-sq")).toEqual([210, 210, 210, 210, 225, 240, 240, 270]);
-    expect(loads(def, cfg, "W2D1", "-sq")).toEqual([255, 255, 255, 255]);
+    // smolovjr.com intro week 2: 1×5 @ 80 / 82.5 / 85%
+    expect([1, 2, 3].map((d) => loads(def, cfg, `W2D${d}`, "-sq"))).toEqual([[240], [250], [255]]);
     const base: [string, number[]][] = [["D1", [210, 230, 240]], ["D2", [225, 245, 255]], ["D3", [240, 260, 270]], ["D4", [255, 275, 285]]];
     for (const [d, want] of base) expect([3, 4, 5].map((w) => loads(def, cfg, `W${w}${d}`, "-sq")[0])).toEqual(want);
     expect(reps(def, cfg, "W3D1", "-sq")).toEqual(Array(4).fill(9));
@@ -115,7 +116,10 @@ describe("Smolov (vs LiftVault sheet: squat 300, power clean 200, box squat 315)
     expect(loads(def, cfg, "W9D2", "-sq", s1)).toEqual([255, 300, 340, 385, 360, 360]);
     expect(loads(def, cfg, "W10D3", "-sq", s1)).toEqual([275, 320, 360, 385, 385, 385, 385]);
     expect(loads(def, cfg, "W12D3", "-sq", s1)).toEqual([320, 385, 405, 405, 405]);
-    expect(loads(def, cfg, "W13D1", "-sq", s1)).toEqual([320, 360, 360, 360, 360]);
+    // smolovjr.com week 13: 70×3, 80×3, 90 2×5, 95 3×4 · 75×4, 85 4×4 · test
+    expect(loads(def, cfg, "W13D1", "-sq", s1)).toEqual([300, 340, 385, 385, 405, 405, 405]);
+    expect(loads(def, cfg, "W13D2", "-sq", s1)).toEqual([320, 360, 360, 360, 360]);
+    expect(def.cycle!.weeks).toBe(13);
   });
 });
 

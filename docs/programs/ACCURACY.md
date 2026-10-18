@@ -113,8 +113,8 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Smolov Jr (`smolov-jr`) | | not yet re-checked | |
-| Smolov (`smolov`) | | not yet re-checked | |
-| Russian Squat Routine (`russian-squat`) | | not yet re-checked | |
-| Coan–Phillipi Deadlift (`coan-phillipi`) | | not yet re-checked | |
-| Magnusson–Ortmayer Deadlift (`magnusson-ortmayer`) | | not yet re-checked | |
+| Smolov Jr (`smolov-jr`) | [smolovjr.com](https://www.smolovjr.com/smolovjr/smolov-squat-program/); LiftVault Smolov Jr sheet | exact: 6×6/7×5/8×4/10×3 at 70–85%, with the week-2 and week-3 adds. smolovjr.com gives ranges (+5–10, +10–20 lb); the default "high" option is the top of them and "low" matches LiftVault (+5/+10). kg adds are conversions. | 2026-10-18 |
+| Smolov (`smolov`) | [smolovjr.com Smolov Squat Routine](https://www.smolovjr.com/smolov-squat-routine/); LiftVault Smolov sheet | approximation: intro, base (+20/+30 lb), intense and the week-13 taper and test follow smolovjr.com; the intense days match both sources. The switching block follows LiftVault's sheet; sources disagree on it. | 2026-10-18 |
+| Russian Squat Routine (`russian-squat`) | [StrengthLog](https://www.strengthlog.com/russian-squat-routine/) | exact: 3 days a week for 6 weeks, every session's sets × reps @ %, ending at 105%. | 2026-10-18 |
+| Coan–Phillipi Deadlift (`coan-phillipi`) | [elitefts](https://elitefts.com/blogs/training/manipulating-a-training-program) (2008); LiftVault sheet; Fitness Volt (assistance) | approximation: every heavy and speed %, set count and rest matches. LiftVault rounds up (CEILING) where we round to nearest (≤5 lb). Shrugs are rescaled onto the goal max. Weeks 7–9 assistance follows Fitness Volt (elitefts says shrugs only). | 2026-10-18 |
+| Magnusson–Ortmayer Deadlift (`magnusson-ortmayer`) | [LiftVault Mag/Ort (corrected 10 lb)](https://liftvault.com/programs/powerlifting/magnusson-ortmayer-magort-deadlift-program-spreadsheet/) | exact: 11 weeks plus the optional week-12 test, the +10 lb (5 kg) steps, rest weeks 4 and 8, and MROUND rounding. "Miss the 8+ set → repeat the week" is a note. | 2026-10-18 |
