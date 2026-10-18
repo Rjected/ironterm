@@ -39,7 +39,7 @@ final class ProgramBodyTests: XCTestCase {
         XCTAssertTrue(pct.overlaps.isEmpty)
     }
 
-    func testFiguresParse() throws {
+    @MainActor func testFiguresParse() throws {
         let b = try doc("programs-gzclp-body")
         XCTAssertNotNil(SVGCache.doc(try XCTUnwrap(b.svgFront)))
         XCTAssertNotNil(SVGCache.doc(try XCTUnwrap(b.svgBack)))
