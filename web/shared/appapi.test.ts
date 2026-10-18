@@ -89,6 +89,8 @@ describe("app API", () => {
     expect(c.days.some((x) => x.status === "done")).toBe(true);
     expect(c.days.some((x) => x.status === "planned")).toBe(true);
     await fixture("calendar", c);
+    // ?month=2026-13 used to throw "Invalid time value" (a 500); now it's this month
+    for (const bad of ["2026-13", "2026-00", "x"]) expect(appCalendar(boot, bad, d).month).toBe(today.slice(0, 7));
   });
 
   it("program", async () => {

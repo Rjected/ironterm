@@ -275,7 +275,7 @@ export interface AppCalendar {
 }
 
 export function appCalendar(b: Bootstrap, month: string | undefined, d: Derived = derive(b, "volume")): AppCalendar {
-  const m = /^\d{4}-\d\d$/.test(month ?? "") ? month! : d.today.slice(0, 7);
+  const m = /^\d{4}-(0[1-9]|1[0-2])$/.test(month ?? "") ? month! : d.today.slice(0, 7);
   const first = `${m}-01`;
   const dowFirst = (new Date(first + "T12:00:00Z").getUTCDay() + 6) % 7;
   const gridStart = addDays(first, -dowFirst);
