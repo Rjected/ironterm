@@ -320,6 +320,15 @@ describe("German Volume Training", () => {
     const dl = planDay(p2.def, p2.cfg, initialState(p2.def, p2.cfg), 1).exercises[0];
     expect([dl.lift, dl.sets.length, dl.sets[0].reps, dl.sets[0].weight]).toEqual(["deadlift", 10, 6, 280]);
   });
+  // Poliquin's phase 2: B exercises 3×6 (fly, EZ-bar row) and 3×12–15 (twisting crunch, calves);
+  // the arms/shoulders day stays dips + incline hammer curls with bent-over and seated laterals.
+  it("phase 2 B work and arms day follow Poliquin's text", () => {
+    const p2 = gvt.build({ phase: "2" });
+    const lifts = (id: string) => p2.days.find((d) => d.id === id)!.slots.map((x) => `${x.lift} ${x.progression.kind === "double" ? x.progression.reps.join("-") : ""}`.trim());
+    expect(lifts("A")).toEqual(["dbInclineBench", "pullUp", "chestFly 6-6", "row 6-6"]);
+    expect(lifts("B")).toEqual(["deadlift", "legCurl", "crunch 12-15", "calfRaise 12-15"]);
+    expect(lifts("C")).toEqual(["dip", "hammerCurl", "rearDeltFly 10-12", "lateralRaise 10-12"]);
+  });
 });
 
 describe("Arnold split", () => {

@@ -680,7 +680,7 @@ export const gvt: ProgramTemplate = {
   id: "gvt",
   name: "German Volume Training",
   author: "Charles Poliquin",
-  source: "LiftVault: German Volume Training Spreadsheet (GVT) · phases 1 and 2",
+  source: "Charles Poliquin, \"German Volume Training\" (Volume 51 text) · LiftVault GVT spreadsheet",
   summary: "Ten sets of ten on two supersetted main lifts per session at 60% of 1RM (phase 2: 10×6 at 70%), plus two lighter supplementary lifts.",
   category: "hypertrophy",
   level: "intermediate",
@@ -695,9 +695,11 @@ export const gvt: ProgramTemplate = {
     const sup = (id: string, lift: string, r: [number, number], tag: string) => ({ ...doubleSlot(id, lift, "ACC", 3, r, w8(5, 2.5), `${tag}: superset, 60 s between`), restSeconds: 60 });
     const days: DayDef[] = two
       ? [
-        { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbInclineBench", "A1"), main("gvt-a2", "pullUp", "A2 · wide grip"), sup("gvt-b1", "chestFly", [6, 12], "B1"), sup("gvt-b2", "row", [6, 12], "B2 · EZ bar")] },
-        { id: "B", name: "Day B · Legs + Abs", slots: [main("gvt-a1l", "deadlift", "A1"), main("gvt-a2l", "legCurl", "A2 · seated"), sup("gvt-b1l", "crunch", [10, 15], "B1 · twisting"), sup("gvt-b2l", "calfRaise", [10, 15], "B2")] },
-        { id: "C", name: "Day C · Arms + Shoulders", slots: [main("gvt-a1c", "cgBench", "A1"), main("gvt-a2c", "inclineCurl", "A2"), sup("gvt-b1c", "lateralRaise", [10, 12], "B1 · seated"), sup("gvt-b2c", "reverseCurl", [10, 12], "B2")] },
+        // Poliquin's phase 2: B1/B2 3×6 (fly, EZ-bar row) and 3×12–15 (twisting crunch, calf);
+        // arms/shoulders day keeps phase 1's dips + incline hammer curls and the two lateral raises.
+        { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbInclineBench", "A1"), main("gvt-a2", "pullUp", "A2 · wide grip"), sup("gvt-b1", "chestFly", [6, 6], "B1 · flat"), sup("gvt-b2", "row", [6, 6], "B2 · EZ bar")] },
+        { id: "B", name: "Day B · Legs + Abs", slots: [main("gvt-a1l", "deadlift", "A1 · bent-knee"), main("gvt-a2l", "legCurl", "A2 · seated"), sup("gvt-b1l", "crunch", [12, 15], "B1 · twisting"), sup("gvt-b2l", "calfRaise", [12, 15], "B2 · standing")] },
+        { id: "C", name: "Day C · Arms + Shoulders", slots: [main("gvt-a1c", "dip", "A1"), main("gvt-a2c", "hammerCurl", "A2 · incline"), sup("gvt-b1c", "rearDeltFly", [10, 12], "B1 · bent-over"), sup("gvt-b2c", "lateralRaise", [10, 12], "B2 · seated")] },
       ]
       : [
         { id: "A", name: "Day A · Chest + Back", slots: [main("gvt-a1", "dbDeclineBench", "A1 · palms facing"), main("gvt-a2", "chinUp", "A2"), sup("gvt-b1", "inclineFly", [10, 12], "B1"), sup("gvt-b2", "dbRow", [10, 12], "B2")] },

@@ -63,14 +63,14 @@ Sources marked *(community)* are third-party extractions of a paid or unreachabl
 
 | Program | Source | Status | Checked |
 |---|---|---|---|
-| Reddit PPL (`reddit-ppl`) | | not yet re-checked | |
-| PHUL (`phul`) | | not yet re-checked | |
-| PHAT (`phat`) | | not yet re-checked | |
-| Lyle's Generic Bulking Routine (`lyle-gbr`) | | not yet re-checked | |
-| Ivysaur 4-4-8 (`ivysaur-448`) | | not yet re-checked | |
-| Candito Linear (`candito-linear`) | | not yet re-checked | |
-| German Volume Training (`gvt`) | | not yet re-checked | |
-| Arnold Split (`arnold-split`) | | not yet re-checked | |
+| Reddit PPL (`reddit-ppl`) | /u/Metallicadpa's r/Fitness post (archived) | exact: rotation, every exercise, sets × reps, +5 lb a session (deadlift +10), three misses in a row → −10%, accessories add weight at 3×12. Accessory jump sizes are ours (the post doesn't give them). | 2026-10-18 |
+| PHUL (`phul`) | muscleandstrength.com PHUL (archived) | approximation: every exercise and rep range matches, using the low end of each set range. The article has no progression rule, so ours is double progression. | 2026-10-18 |
+| PHAT (`phat`) | simplyshredded.com Layne Norton PHAT (archived) | approximation: every exercise, sets × reps and the 6×3 speed work at 65–70% match. The article has no load rule; ours is +1 jump when all three power sets reach 5. Power-movement rotation and deloads are in the notes. | 2026-10-18 |
+| Lyle's Generic Bulking Routine (`lyle-gbr`) | Lyle's forum post as reproduced by jcdfitness.com | approximation: days, exercises, set ranges and rests match. Lyle progresses on the first set ("or all sets"); we use the all-sets variant. The Thursday/Friday "vary" option is our reading of his one-line suggestion. | 2026-10-18 |
+| Ivysaur 4-4-8 (`ivysaur-448`) | /u/ivysaur's r/Fitness post and program image (archived) | exact: all six days, 90% eights, weekly jumps (+15 squat/deadlift, +10 bench/rows, +5 OHP), 8+ AMRAP → double next week, failed set → −10%. kg values are conversions. | 2026-10-18 |
+| Candito Linear (`candito-linear`) | Candito Linear Programming PDF (archived 2017) | approximation: heavy, control and hypertrophy days match the PDF, with +5 lb a week and −15 lb after a miss. Not modelled: shoulder and vertical-pull +0–10 lb every 3 weeks (a note), progressing every 2 weeks after 3 resets, and the power and 3-day variants. | 2026-10-18 |
+| German Volume Training (`gvt`) | Poliquin's GVT text (Volume 51); LiftVault GVT sheet | approximation: phase 1 and phase 2 exercises, sets × reps, rests and the +5% rule match Poliquin. Phase 2 uses 70% of 1RM for his "12-rep weight". The 3-week interim block and tempos aren't modelled. | 2026-10-18 |
+| Arnold Split (`arnold-split`) | LiftVault Arnold Split (Basic Training #1) | approximation: matches LiftVault's version (not checked against the book). Pyramids are shown as 4×6–15 with no load progression. | 2026-10-18 |
 
 ## Candito and spreadsheet blocks
 
