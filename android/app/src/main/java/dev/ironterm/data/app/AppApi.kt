@@ -85,6 +85,11 @@ class AppApi(
         val qs = options.toSortedMap().entries.joinToString("&") { "opt.${enc(it.key)}=${enc(it.value)}" }
         return get("/api/app/programs/${enc(id)}" + (if (qs.isEmpty()) "" else "?$qs"), ProgramDetailSerializer)
     }
+    /** What the program does to each muscle (docs/api/programs.md), the figures coloured for [mode] ("load" | "gaps"). */
+    suspend fun programBody(id: String, options: Map<String, String> = emptyMap(), mode: String = "load"): ProgramBody {
+        val qs = (listOf("mode=${enc(mode)}") + options.toSortedMap().map { (k, v) -> "opt.${enc(k)}=${enc(v)}" }).joinToString("&")
+        return get("/api/app/programs/${enc(id)}/body?$qs", ProgramBody.serializer())
+    }
     suspend fun startProgram(id: String, body: ProgramStartBody): ProgramStartResult =
         call("POST", "/api/app/programs/${enc(id)}/start", AppJson.json.encodeToString(ProgramStartBody.serializer(), body), ProgramStartResult.serializer())!!
     suspend fun body(mode: String) = get("/api/app/body?mode=${enc(mode)}", AppBody.serializer())

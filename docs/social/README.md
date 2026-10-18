@@ -106,6 +106,7 @@ serve that same key at `/.well-known/ironterm`. A handle belongs to the first ke
 | `SOCIAL_DIRECTORY` | directory URL, e.g. `https://directory.example.com` (optional, no default) |
 | `SOCIAL_ORIGIN` | this server's public origin, when requests reach it under another URL |
 | `SOCIAL_ALLOW_HTTP` | `1` allows `http://` peers (local testing only; set it on every server involved, and on the directory) |
+| `SOCIAL_ALLOW_PRIVATE` | Self-hosted (Node) only: `1` allows peers and directories on private/loopback addresses. By default the Node server and directory refuse them, checked on the resolved address. |
 
 If a login proxy sits in front of your server (Cloudflare Access, for example), it must let
 `/.well-known/ironterm` and `/social/*` through. Those are the only endpoints that answer without your

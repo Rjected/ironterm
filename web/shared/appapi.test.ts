@@ -109,6 +109,24 @@ describe("app API", () => {
     await fixture("program", appProgram(boot, d));
   });
 
+  it("program and snapshot explain the re-entry ramp after a break", () => {
+    expect(appProgram(boot, d).program!.reentry).toBeNull();
+    expect(appHome(boot, d).snapshot.program?.next?.reentryNote).toBeNull();
+    const last = demo.workouts.map((w) => w.start_time.slice(0, 10)).sort().at(-1)!;
+    const later = new Date(Date.parse(last) + 40 * 864e5).toISOString().slice(0, 10);
+    const b = { ...boot, today: later };
+    const bd = derive(b, "volume");
+    const r = appProgram(b, bd).program!.reentry!;
+    expect(r).toMatchObject({ done: 0, gapDays: 40, headline: `Session 1 of ${r.total} back after 40 days off` });
+    expect(r.lifts.length).toBeGreaterThan(0);
+    expect(r.lifts[0].load).toBeCloseTo(0.82, 2);
+    expect(r.summary).toContain("82% load");
+    expect(r.suggest.map((x) => x.templateId)).toEqual(["comeback", "comeback-squat"]);
+    const next = appHome(b, bd).snapshot.program!.next!;
+    expect(next.reentry).toBe(true);
+    expect(next.reentryNote).toBe(r.summary);
+  });
+
   it("body renders both modes as SVG", async () => {
     for (const mode of ["ready", "load"] as const) {
       const b = appBody(boot, mode, d);
@@ -154,7 +172,7 @@ describe("app API", () => {
       const c = appPrograms(boot);
       expect(c.active).toBe("gzclp");
       expect(c.programs).toHaveLength(TEMPLATES.length);
-      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "comeback"];
+      const order = ["gzcl", "novice", "strength", "powerlifting", "hypertrophy", "peaking", "bodyweight", "comeback"];
       const ranks = c.programs.map((p) => order.indexOf(p.category));
       expect(ranks.every((r, i) => r >= 0 && (i === 0 || r >= ranks[i - 1]))).toBe(true);
       expect(c.programs.find((p) => p.id === "531")).toMatchObject({ weekCount: null, daysPerWeek: [4] });
@@ -185,7 +203,7 @@ describe("app API", () => {
       const p = detail(boot, "531");
       expect(p.basis).toBe("e1rm");
       expect(p.weeks.map((w) => w.name)).toEqual(["5s week", "3s week", "5/3/1 week", "Deload"]);
-      expect(p.weeks[3].days[0].exercises).toHaveLength(1); // BBB skipped on deload
+      expect(p.weeks[3].days[0].exercises).toHaveLength(2); // BBB kept on deload ("as normal")
       expect(p.start.trainingMaxes.squat).toBeGreaterThan(0);
       expect(p.start.labels.squat).toBe("Back Squat");
       expect(p.weeks[0].days[3].exercises[0].sets[2]).toMatchObject({ reps: 5, amrap: true });
