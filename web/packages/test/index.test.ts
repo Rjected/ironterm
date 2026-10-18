@@ -137,6 +137,27 @@ describe("hooks and vi", () => {
     expect(new Date().getFullYear()).toBeLessThan(2030);
   });
 
+  it("vi.fn records calls and fakes results", async () => {
+    const f = vi.fn((x: number) => x * 2);
+    expect(f(2)).toBe(4);
+    f.mockReturnValueOnce(7);
+    expect(f(1)).toBe(7);
+    expect(f(1)).toBe(2);
+    expect(f).toHaveBeenCalled();
+    expect(f).toHaveBeenCalledTimes(3);
+    expect(f).toHaveBeenCalledWith(2);
+    expect(f).toHaveBeenNthCalledWith(2, 1);
+    expect(f).toHaveBeenLastCalledWith(1);
+    fails(() => expect(f).toHaveBeenCalledWith(3));
+    fails(() => expect(f).toHaveBeenCalledTimes(2));
+    const g = vi.fn().mockResolvedValue("ok");
+    expect(await g()).toBe("ok");
+    expect(vi.fn()).not.toHaveBeenCalled();
+    expect(vi.isMockFunction(g)).toBe(true);
+  });
+
+  it("takes a per-test timeout", async () => { await new Promise((r) => setTimeout(r, 5)); }, 1_000);
+
   it.each([[1, 2, 3], [2, 3, 5]])("%i + %i = %i", (a, b, c) => expect(a + b).toBe(c));
   it.each([{ id: "x", n: 1 }])("$id has n = $n", (o) => expect(o.n).toBe(1));
 });

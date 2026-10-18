@@ -20,10 +20,17 @@ export function describe(name: string, fn: () => void) {
 
 type Runner = (name: string, options: { timeout?: number }, fn?: () => Promise<void>) => unknown;
 
+/**
+ * A test or hook that runs longer fails ("hung", not "slow"): generous, because the end-to-end
+ * tests run several in-process servers. A test can pass its own as the third argument.
+ */
+export const TEST_TIMEOUT_MS = 60_000;
+export const HOOK_TIMEOUT_MS = 120_000;
+
 function testWith(runner: Runner) {
-  return (name: string, fn?: Fn, timeout?: number): void => {
+  return (name: string, fn?: Fn, timeout: number | { timeout?: number } = TEST_TIMEOUT_MS): void => {
     const path = [...stack, name];
-    runner(name, timeout ? { timeout } : {}, fn ? async () => {
+    runner(name, { timeout: typeof timeout === "number" ? timeout : timeout.timeout ?? TEST_TIMEOUT_MS }, fn ? async () => {
       current = { name: path.join(" > "), counts: new Map() };
       await fn();
     } : undefined);
@@ -72,16 +79,63 @@ function formatEachName(name: string, args: readonly unknown[], index: number): 
 
 export const it = makeIt();
 export const test = it;
-export const beforeAll = (fn: Fn) => nodeTest.before(fn);
-export const afterAll = (fn: Fn) => nodeTest.after(fn);
-export const beforeEach = (fn: Fn) => nodeTest.beforeEach(fn);
-export const afterEach = (fn: Fn) => nodeTest.afterEach(fn);
+export const beforeAll = (fn: Fn, timeout = HOOK_TIMEOUT_MS) => nodeTest.before(fn, { timeout });
+export const afterAll = (fn: Fn, timeout = HOOK_TIMEOUT_MS) => nodeTest.after(fn, { timeout });
+export const beforeEach = (fn: Fn, timeout = HOOK_TIMEOUT_MS) => nodeTest.beforeEach(fn, { timeout });
+export const afterEach = (fn: Fn, timeout = HOOK_TIMEOUT_MS) => nodeTest.afterEach(fn, { timeout });
+
+// ───────────────────────────── mock functions ─────────────────────────────
+
+export interface Mock<A extends unknown[] = any[], R = any> {
+  (...args: A): R;
+  mock: { calls: A[]; results: { type: "return" | "throw"; value: unknown }[] };
+  mockImplementation(fn: (...args: A) => R): Mock<A, R>;
+  mockImplementationOnce(fn: (...args: A) => R): Mock<A, R>;
+  mockReturnValue(v: R): Mock<A, R>;
+  mockReturnValueOnce(v: R): Mock<A, R>;
+  mockResolvedValue(v: Awaited<R>): Mock<A, R>;
+  mockRejectedValue(e: unknown): Mock<A, R>;
+  mockClear(): Mock<A, R>;
+  mockReset(): Mock<A, R>;
+}
+const MOCK = Symbol("mock");
+
+function fn<A extends unknown[] = any[], R = any>(impl?: (...args: A) => R): Mock<A, R> {
+  let base = impl;
+  const once: ((...args: A) => R)[] = [];
+  const m = ((...args: A): R => {
+    m.mock.calls.push(args);
+    const f = once.shift() ?? base;
+    try {
+      const value = f ? f(...args) : (undefined as R);
+      m.mock.results.push({ type: "return", value });
+      return value;
+    } catch (e) {
+      m.mock.results.push({ type: "throw", value: e });
+      throw e;
+    }
+  }) as Mock<A, R>;
+  Object.defineProperty(m, MOCK, { value: true });
+  m.mock = { calls: [], results: [] };
+  m.mockImplementation = (f) => { base = f; return m; };
+  m.mockImplementationOnce = (f) => { once.push(f); return m; };
+  m.mockReturnValue = (v) => m.mockImplementation(() => v);
+  m.mockReturnValueOnce = (v) => m.mockImplementationOnce(() => v);
+  m.mockResolvedValue = (v) => m.mockImplementation((() => Promise.resolve(v)) as (...args: A) => R);
+  m.mockRejectedValue = (e) => m.mockImplementation((() => Promise.reject(e)) as (...args: A) => R);
+  m.mockClear = () => { m.mock.calls = []; m.mock.results = []; return m; };
+  m.mockReset = () => { m.mockClear(); base = undefined; once.length = 0; return m; };
+  return m;
+}
+const isMock = (v: unknown): v is Mock => typeof v === "function" && (v as unknown as Record<symbol, unknown>)[MOCK] === true;
 
 // ───────────────────────────── vi ─────────────────────────────
 
 const stubbed = new Map<string, PropertyDescriptor | undefined>();
 
 export const vi = {
+  fn,
+  isMockFunction: isMock,
   stubGlobal(name: string, value: unknown) {
     if (!stubbed.has(name)) stubbed.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
     Object.defineProperty(globalThis, name, { value, writable: true, configurable: true, enumerable: true });
@@ -271,6 +325,12 @@ const matchers: Matchers = {
   toMatchSnapshot: (a, hint?: string) => matchSnapshot(a, hint),
 };
 matchers.toThrowError = matchers.toThrow;
+const calls = (a: unknown) => { if (!isMock(a)) throw new TypeError(`${show(a)} is not a vi.fn()`); return a.mock.calls; };
+matchers.toHaveBeenCalled = (a) => ({ pass: calls(a).length > 0, message: "expected the mock to have been called" });
+matchers.toHaveBeenCalledTimes = (a, n: number) => ({ pass: calls(a).length === n, message: `expected ${n} calls, got ${calls(a).length}` });
+matchers.toHaveBeenCalledWith = (a, ...args: unknown[]) => ({ pass: calls(a).some((c) => equals(c, args)), message: `expected a call with ${show(args)}; calls: ${show(calls(a))}` });
+matchers.toHaveBeenLastCalledWith = (a, ...args: unknown[]) => ({ pass: equals(calls(a).at(-1), args), message: `expected the last call to be ${show(args)}; calls: ${show(calls(a))}` });
+matchers.toHaveBeenNthCalledWith = (a, n: number, ...args: unknown[]) => ({ pass: equals(calls(a)[n - 1], args), message: `expected call ${n} to be ${show(args)}; calls: ${show(calls(a))}` });
 
 /** The matchers, typed (R = void, or Promise<void> after .resolves / .rejects). */
 export interface Assertion<R = void> {
@@ -299,6 +359,11 @@ export interface Assertion<R = void> {
   toThrow(expected?: string | RegExp | Error | (abstract new (...args: never[]) => unknown)): R;
   toThrowError(expected?: string | RegExp | Error | (abstract new (...args: never[]) => unknown)): R;
   toMatchSnapshot(hint?: string): R;
+  toHaveBeenCalled(): R;
+  toHaveBeenCalledTimes(n: number): R;
+  toHaveBeenCalledWith(...args: unknown[]): R;
+  toHaveBeenLastCalledWith(...args: unknown[]): R;
+  toHaveBeenNthCalledWith(n: number, ...args: unknown[]): R;
 }
 
 type Expectation = Assertion & {

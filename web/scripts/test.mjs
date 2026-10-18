@@ -73,7 +73,7 @@ const reporter = process.env.TEST_REPORTER ?? "dot";
 const outputs = files.map((f) => join(out, relative(root, f)).replace(/\.ts$/, ".mjs"));
 const r = spawnSync(
   process.execPath,
-  ["--test", `--test-reporter=${reporter}`, "--enable-source-maps", "--disable-warning=ExperimentalWarning", ...outputs],
+  ["--test", "--test-force-exit", `--test-reporter=${reporter}`, "--enable-source-maps", "--disable-warning=ExperimentalWarning", ...outputs],
   { stdio: "inherit", cwd: root, env: { ...process.env, IRONTERM_TEST_ROOT: root } },
 );
 console.log(`${files.length} test files (bundled in ${bundled}s)`);
