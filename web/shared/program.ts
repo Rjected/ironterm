@@ -205,6 +205,8 @@ export interface ProgramConfig {
   increments?: Record<string, number>;
   /** Lift key -> Hevy exercise_template_id, overriding title matching. */
   liftMap?: Record<string, string>;
+  /** Exercise swaps: original lift key -> the lift done instead, everywhere it appears (swaps.ts). */
+  swaps?: Record<string, string>;
   /** Hevy routine id -> day id, recorded when we push routines. */
   routineDays?: Record<string, string>;
   /** Manual corrections applied when replay reaches `date`. */

@@ -71,7 +71,7 @@ export function programConfig(v: unknown): Record<string, unknown> | null {
     const m = v[k];
     if (m != null && (!isObj(m) || Object.values(m).some((x) => typeof x !== "number" || !Number.isFinite(x)))) throw new BadRequest(`program.${k} must map keys to numbers`);
   }
-  for (const k of ["liftMap", "routineDays"] as const) {
+  for (const k of ["liftMap", "routineDays", "swaps"] as const) {
     const m = v[k];
     if (m != null && (!isObj(m) || Object.values(m).some((x) => typeof x !== "string"))) throw new BadRequest(`program.${k} must map keys to strings`);
   }

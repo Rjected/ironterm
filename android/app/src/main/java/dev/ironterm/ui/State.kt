@@ -175,6 +175,8 @@ interface AppActions {
     /** POST start; [onDone] runs after the server switched (the UI then shows PROGRAM). */
     fun startProgram(id: String, body: dev.ironterm.data.app.ProgramStartBody, onDone: () -> Unit = {}) {}
     fun clearStartError() {}
+    /** POST swap: [to] instead of [lift] everywhere in the program (null = as written). */
+    fun swapLift(lift: String, to: String?) {}
     fun toastShown() {}
 
     // gym

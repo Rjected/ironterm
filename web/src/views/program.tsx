@@ -7,8 +7,10 @@ import type { Nav } from "../app";
 import type { Derived } from "../derive";
 import { OutcomeTag, Panel, SessionTicket, shortDate, Tier, Watch } from "../ui";
 import { GENERIC_FIXES } from "../../shared/stall";
+import { programSwaps } from "../../shared/swap-list";
+import { api } from "../api";
 
-export function Program(props: { d: Derived; cfg: ProgramConfig | null; mode: "demo" | "live" | "local"; nav: Nav; onPush: (day?: number) => void; busy: boolean }) {
+export function Program(props: { d: Derived; cfg: ProgramConfig | null; mode: "demo" | "live" | "local"; nav: Nav; onPush: (day?: number) => void; busy: boolean; onReload?: () => void; say?: (m: string, bad?: boolean) => void }) {
   const { d, cfg, nav } = props;
   const [day, setDay] = useState<number | null>(null);
   if (!d.def || !d.state || !cfg) {
@@ -142,6 +144,8 @@ export function Program(props: { d: Derived; cfg: ProgramConfig | null; mode: "d
         </Panel>
       )}
 
+      <Swaps cfg={cfg} onReload={props.onReload} say={props.say} />
+
       <Panel n="3" title="DECISIONS" span={12} sub="every logged session, replayed against the program rules">
         {log.length ? (
           <div class="tbl-wrap">
@@ -167,5 +171,48 @@ export function Program(props: { d: Derived; cfg: ProgramConfig | null; mode: "d
         ) : <div class="empty">No program sessions since {shortDate(cfg.startDate.slice(0, 10))}. Log a workout with this program's main lift and it'll be picked up.</div>}
       </Panel>
     </div>
+  );
+}
+
+/** Swap an exercise for another everywhere the program has it; replacements most alike first. */
+function Swaps(props: { cfg: ProgramConfig; onReload?: () => void; say?: (m: string, bad?: boolean) => void }) {
+  const rows = programSwaps(props.cfg);
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!rows.length) return null;
+  const change = async (lift: string, to: string) => {
+    setBusy(lift);
+    try {
+      await api.swapLift(lift, to || null);
+      props.say?.(to ? `${LIFTS[lift]?.name} → ${LIFTS[to]?.name} everywhere in the program` : `${LIFTS[lift]?.name} is back`);
+      props.onReload?.();
+    } catch (e) {
+      props.say?.(`Couldn't swap: ${(e as Error).message}`, true);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <Panel n="4" title="SWAP EXERCISES" span={12} sub="do something else wherever the program has an exercise; the closest matches are listed first">
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th class="l">PROGRAM SAYS</th><th class="l">DO INSTEAD</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td class="l">{r.name}</td>
+                <td class="l">
+                  <select class="inp" value={r.to?.lift ?? ""} disabled={busy === r.lift} aria-label={`Swap ${r.name}`}
+                    onChange={(e) => change(r.lift, (e.target as HTMLSelectElement).value)}>
+                    <option value="">{r.name} (as written)</option>
+                    {r.to && !r.options.some((o) => o.lift === r.to!.lift) && <option value={r.to.lift}>{r.to.name}</option>}
+                    {r.options.map((o) => <option value={o.lift}>{o.name} · {Math.round(o.score * 100)}% alike</option>)}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
   );
 }

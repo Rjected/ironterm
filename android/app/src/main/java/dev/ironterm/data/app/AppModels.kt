@@ -301,7 +301,28 @@ data class ProgramInfo(
     val upcoming: List<Upcoming> = emptyList(),
     val log: List<LogEntry> = emptyList(),
     val pushed: Boolean = false,
+    /** every exercise the program prescribes, its swap (if any) and the closest replacements */
+    val swaps: List<ProgramSwap> = emptyList(),
 )
+
+@Serializable
+data class ProgramSwap(
+    val lift: String = "",
+    val name: String = "",
+    /** what's done instead, or null */
+    val to: SwapTo? = null,
+    /** replacements, most alike first */
+    val options: List<SwapOption> = emptyList(),
+)
+
+@Serializable
+data class SwapTo(val lift: String = "", val name: String = "")
+
+@Serializable
+data class SwapOption(val lift: String = "", val name: String = "", val score: Double = 0.0)
+
+@Serializable
+data class SwapBody(val lift: String, val to: String?)
 
 @Serializable
 data class Reentry(
