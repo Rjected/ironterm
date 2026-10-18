@@ -107,7 +107,7 @@ async function afterSync(env: Env) {
   if (!env.HEVY_API_KEY) return;
   const [s, cfg] = await Promise.all([settings(env, "live"), program(env, "live")]);
   if (!s.autoPush || !cfg || !cfg.routineDays || !Object.keys(cfg.routineDays).length) return;
-  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg);
+  const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, undefined, { today: today(s.tz), reentry: s.reentry });
   await kvPut(env.DB, "program", r.cfg);
 }
 
@@ -363,7 +363,9 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const { dayIndex } = await req.json<{ dayIndex?: number }>().catch(() => ({}) as { dayIndex?: number });
     const cfg = await program(env, m);
     if (!cfg) return json({ error: "Set up a program first." }, { status: 400 });
-    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex);
+    const s = await settings(env, m);
+    const r = await pushRoutines(env.DB, env.HEVY_API_KEY!, cfg, dayIndex, { today: today(s.tz), reentry: s.reentry });
+
     await kvPut(env.DB, "program", r.cfg);
     return json(r);
   }
