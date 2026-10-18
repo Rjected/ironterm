@@ -42,19 +42,30 @@ struct DirectScreens {
         var seen: [String] = []
         for x in workouts.reversed() { for e in x.exercises { if let k = DirectAggregator.matchLift(e.title), !seen.contains(k) { seen.append(k) } } }
         let ordered = LiftLibrary.bigFour.filter { seen.contains($0) } + seen.filter { !LiftLibrary.bigFour.contains($0) }
-        return AppLiftList(lifts: ordered.compactMap { k in
-            let pts = points(k)
-            guard let last = pts.last else { return nil }
+        // Built in explicit steps: older Swift compilers time out type-checking this as one chain.
+        var items: [AppLiftList.Lift] = []
+        for k in ordered {
+            let pts: [AppLiftDetail.Point] = points(k)
+            guard let last = pts.last else { continue }
             let def = LiftLibrary.byKey[k]
-            let recent = pts.filter { $0.date > Day.add(today, -28) }.map(\.e1rm)
-            return .init(key: k, name: def?.name ?? k, short: def?.short ?? k.uppercased(), kind: def?.kind ?? "barbell",
-                         e1rm: recent.max() ?? last.e1rm, best: pts.map(\.e1rm).max() ?? 0, sessions: pts.count, last: last.date,
-                         status: last.date < Day.add(today, -42) ? "inactive" : nil, spark: pts.suffix(16).map(\.e1rm))
-        }.sorted { a, b in
-            // most-trained after the big four, like the server
-            let ia = LiftLibrary.bigFour.firstIndex(of: a.key) ?? 99, ib = LiftLibrary.bigFour.firstIndex(of: b.key) ?? 99
+            let cutoff: String = Day.add(today, -28)
+            let recent: [Double] = pts.filter { $0.date > cutoff }.map { $0.e1rm }
+            let allE1rm: [Double] = pts.map { $0.e1rm }
+            let inactive: Bool = last.date < Day.add(today, -42)
+            let spark: [Double] = pts.suffix(16).map { $0.e1rm }
+            let item = AppLiftList.Lift(key: k, name: def?.name ?? k, short: def?.short ?? k.uppercased(), kind: def?.kind ?? "barbell",
+                                        e1rm: recent.max() ?? last.e1rm, best: allE1rm.max() ?? 0, sessions: pts.count, last: last.date,
+                                        status: inactive ? "inactive" : nil, spark: spark)
+            items.append(item)
+        }
+        // most-trained after the big four, like the server
+        let big: [String] = LiftLibrary.bigFour
+        items.sort { (a: AppLiftList.Lift, b: AppLiftList.Lift) -> Bool in
+            let ia: Int = big.firstIndex(of: a.key) ?? 99
+            let ib: Int = big.firstIndex(of: b.key) ?? 99
             return ia != ib ? ia < ib : a.sessions > b.sessions
-        })
+        }
+        return AppLiftList(lifts: items)
     }
 
     func liftDetail(_ key: String) -> AppLiftDetail {
