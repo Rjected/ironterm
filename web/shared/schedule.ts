@@ -64,6 +64,9 @@ export function history(workouts: HevyWorkout[], log: LogEntry[], tz: string, da
     const d = localDate(e.date, tz);
     if (d >= since) get(d).program.push(e);
   }
+  // Only real calendar dates: a malformed `since` (e.g. a year before 0001 from a URL) must not
+  // turn this into an endless loop.
+  if (!/^\d{4}-\d\d-\d\d$/.test(since) || !/^\d{4}-\d\d-\d\d$/.test(today)) return m;
   for (let d = since; d < today; d = addDays(d, 1)) {
     if (days.includes(dow(d)) && !skip(d) && !m.get(d)?.workouts.length) get(d).missed = true;
   }

@@ -106,8 +106,11 @@ export function sessionFromPlan(plan: PlannedSession, unit: Unit, programName: s
   };
 }
 
-export function emptySession(unit: Unit, now = new Date().toISOString()): LiveSession {
-  const h = new Date(now).getHours();
+/** `tz` names the part of day in the lifter's zone; without it, the runtime's (the browser's). */
+export function emptySession(unit: Unit, now = new Date().toISOString(), tz?: string): LiveSession {
+  const h = tz
+    ? Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(new Date(now)))
+    : new Date(now).getHours();
   const part = h < 11 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
   return { id: uid(), startedAt: now, unit, title: `${part} workout`, exercises: [], restEndsAt: null };
 }

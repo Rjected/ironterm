@@ -4,7 +4,9 @@
 // Juggernaut 2.0 (Chad Wesley Smith). Source: LiftVault "Juggernaut Method Base Template" sheet
 // (formulas read cell by cell). TM = 90% of 1RM. Four 4-week waves (10s, 8s, 5s, 3s), each
 // accumulation / intensification / realization / deload. The realization AMRAP moves the TM by
-// (reps − rep standard) × 5 lb lower / 2.5 lb upper, counting at most 10 extra reps.
+// (reps − rep standard) × 5 lb lower / 2.5 lb upper, up or down, uncapped
+// (CEILING(TM + (reps − std) × inc)); the deload week still uses the old TM, the new one starts with
+// the next wave. The sheet rounds every load up (CEILING) to 5 lb / 2.5 kg.
 // Accessories are left to the lifter (the book doesn't prescribe them).
 //
 // Calgary Barbell 8 week (Bryce Krawczyk). Source: Calgary Barbell's own sheets as hosted by
@@ -12,16 +14,17 @@
 // RPE, rest and accessories. The 8 week is the 16 week's weeks 5–8 and 12–15 plus the taper
 // (checked row by row), so the 16-week data is kept here as the source table. (The 16 week
 // itself is `complete16` in sheet-blocks.ts.) In weeks 5–8 the back-off sets are "% of E1RM" from
-// that day's RPE top set (`ofTop` sets); an e1rm rule also resets the 1RM from that top set so
-// later % work (the taper) runs off the latest e1RM.
+// that day's RPE top set (`ofTop` sets). The 1RM itself stays as entered: the sheet's taper runs
+// off the static "Training Maxes" tab, so no rule re-estimates it.
 // The sheets write "1+2F" / "1+2R" (top set + 2 more sets) without defining F and R.
 //
 // RTS Generalized Intermediate (Mike Tuchscherer). Source: the author's article on
 // reactivetrainingsystems.com (Dec 2015). Every lift is "work up to xN @RPE", then fatigue
 // percents: Load Drop (drop the bar 4–6% / 6–9% and do sets of N until the RPE is back at
 // target) or Repeat (repeat the top set until RPE climbs). For squat / bench / deadlift the
-// back-offs are `ofTop` sets at RTS chart % × (1 − fatigue) of today's top-set e1RM (= the top
-// load minus the fatigue %), and the comp-style top set resets the 1RM through an e1rm rule
+// back-offs are `ofTop` sets at (1 − fatigue) / (1 + reps/30) of today's top-set e1RM, which is
+// exactly the top load minus the fatigue % (Repeat: the top load), and the comp-style top set
+// resets the 1RM through an e1rm rule
 // (used by week 9's 92% single). The number of fatigue sets is open-ended in the
 // original; 2–4 are prescribed here. Week 9 is the author's taper and 1RM test.
 //
@@ -68,15 +71,15 @@ export function juggernautWave(w: Wave): PercentSet[][] {
   ];
 }
 
-// reps beyond the standard → that many increments, capped at 10; below the standard holds
-const JUGG_TABLE = Array.from({ length: 11 }, (_, d) => ({ diff: d, increments: d }));
+// reps over (or under) the standard → that many increments either way
+const JUGG_TABLE = Array.from({ length: 61 }, (_, i) => ({ diff: i - 20, increments: i - 20 }));
 const PHASES = ["Accumulation", "Intensification", "Realization", "Deload"];
 
 export const juggernaut: ProgramTemplate = {
   id: "juggernaut",
   name: "Juggernaut Method 2.0",
   author: "Chad Wesley Smith",
-  source: "The Juggernaut Method 2.0 · LiftVault Juggernaut Method Base Template sheet (percentages from its formulas)",
+  source: "The Juggernaut Method 2.0 · LiftVault Juggernaut Method Base Template sheet (percentages, TM update and rounding from its formulas)",
   summary: "Four 4-week waves of 10s, 8s, 5s and 3s. Each wave climbs from volume to a realization AMRAP, and the reps you beat the standard by raise the training max.",
   category: "powerlifting",
   level: "intermediate",
@@ -91,7 +94,7 @@ export const juggernaut: ProgramTemplate = {
       tables.forEach((table, phase) => {
         const week = wi * 4 + phase;
         lifts.forEach(([lift, label], d) => {
-          const tmRule: TmRule | undefined = phase === 2 ? { type: "amrapVsTarget", setIndex: table.length - 1, table: JUGG_TABLE } : undefined;
+          const tmRule: TmRule | undefined = phase === 2 ? { type: "amrapVsTarget", setIndex: table.length - 1, table: JUGG_TABLE, applyAt: "afterNextWeek" } : undefined;
           days.push({
             id: `W${week + 1}D${d + 1}`,
             name: `${wave.name} ${PHASES[phase]} · ${label}`,
@@ -107,18 +110,20 @@ export const juggernaut: ProgramTemplate = {
       sessionsPerWeek: 4,
       days,
       maxLabel: "Training max (90% of 1RM)",
+      roundUp: true,
       tmIncrement: { squat: { lb: 5, kg: 2.5 }, deadlift: { lb: 5, kg: 2.5 }, bench: { lb: 2.5, kg: 1.25 }, ohp: { lb: 2.5, kg: 1.25 } },
       cycle: { weeks: 16, finite: true, weekNames: WAVES.flatMap((w) => PHASES.map((p) => `${w.name} · ${p}`)) },
       notes: [
         "Training max = 90% of your 1RM. Stop working sets 1–3 reps shy of failure; the last set marked + is for max reps.",
-        "Realization week: the last set is an all-out AMRAP. Each rep over the standard (10/8/5/3) adds 5 lb (squat, deadlift) or 2.5 lb (bench, press) to the TM, up to 10 reps.",
+        "Realization week: the last set is an all-out AMRAP. Each rep over the standard (10/8/5/3) adds 5 lb (squat, deadlift) or 2.5 lb (bench, press) to the TM; each rep short takes it off. The deload week still uses the old TM.",
+        "Loads are rounded up to the nearest 5 lb / 2.5 kg, as in the sheet.",
         "Add accessories of your choice.",
       ],
     };
   },
   defaults(unit: Unit) {
-    // 1RMs 315 / 225 / 405 / 145 → TM 90%
-    return { trainingMaxes: maxes(unit, { squat: 285, bench: 205, deadlift: 365, ohp: 130 }), startWeights: {} };
+    // 1RMs 315 / 225 / 405 / 145 → TM = CEILING(90%)
+    return { trainingMaxes: maxes(unit, { squat: 285, bench: 205, deadlift: 365, ohp: 135 }), startWeights: {} };
   },
 };
 
@@ -211,13 +216,14 @@ function calgaryDays(weeks: Row[][][], taper: boolean): DayDef[] {
         const sets = parts.flatMap((p) => p.sets);
         const top = sets[0];
         // RPE top set followed by % back-offs: the % is of today's e1RM
-        const tmRule: TmRule | undefined = top.rpe != null && top.pct == null && sets.slice(1).some((s) => s.pct != null) ? { type: "e1rm", setIndex: 0, pct: e1rmPct(top.reps, top.rpe) } : undefined;
-        const finalSets = tmRule ? sets.map((s, i) => (i > 0 && s.pct != null ? { ...s, ofTop: true } : s)) : sets;
+        const backOff = top.rpe != null && top.pct == null && sets.slice(1).some((s) => s.pct != null);
+        const tmRule: TmRule | undefined = undefined;
+        const finalSets = backOff ? sets.map((s, i) => (i > 0 && s.pct != null ? { ...s, ofTop: true } : s)) : sets;
         const intense = sets.some((s) => s.pct != null || s.rpe != null);
         const tier: Tier = COMP.test(name) ? "MAIN" : intense ? "SUPP" : "ACC";
         const k = used.get(lift) ?? 0;
         used.set(lift, k + 1);
-        const note = [COMP.test(name) ? "" : name, tmRule ? "back-offs are % of the e1RM of today's top set" : "", ...parts.map((p) => p.note)].filter(Boolean).join(" · ");
+        const note = [COMP.test(name) ? "" : name, backOff ? "back-offs are % of the e1RM of today's top set" : "", ...parts.map((p) => p.note)].filter(Boolean).join(" · ");
         return {
           id: `w${w + 1}d${d + 1}-${lift}${k ? k + 1 : ""}`, lift, tier, restSeconds: g[0][4] || undefined, note: note || undefined,
           progression: { kind: "percent", tmLift: base, weeks: [finalSets], tmRule },
@@ -323,7 +329,9 @@ function rtsSets([, , reps, rpe, method, tm]: RtsRow, fatigue: Fatigue): { sets:
   const drop = fatigue === "4-6" ? 0.05 : 0.075;
   const n = method === "D" ? (fatigue === "4-6" ? 3 : 4) : fatigue === "4-6" ? 2 : 3;
   // squat / bench / deadlift: the drop as a % of today's top-set e1RM (top load = chart % of it)
-  const back: PercentSet = tm ? { pct: Math.round(rpePct(reps, rpe) * (method === "D" ? 1 - drop : 1) * 1000) / 1000, reps, ofTop: true } : method === "R" ? { rpe, reps } : { reps };
+  // ofTop % is of the top set's Epley e1RM, w × (1 + r/30): dividing it back out leaves exactly
+  // "drop the bar X%" (load drop) or the top load itself (repeat).
+  const back: PercentSet = tm ? { pct: Math.round(((method === "D" ? 1 - drop : 1) / (reps <= 1 ? 1 : 1 + reps / 30)) * 1000) / 1000, reps, ofTop: true } : method === "R" ? { rpe, reps } : { reps };
   const how = method === "D" ? `load drop ${fatigue}%: top-set weight −${drop * 100}%, sets of ${reps} until @${rpe} again` : `repeats ${fatigue}%: repeat the top set until RPE climbs`;
   return { sets: [top, ...rep(n, back)], note: `${how} (~${n})` };
 }

@@ -130,26 +130,24 @@ describe("Ivysaur 4-4-8", () => {
     expect(ex(planDay(def, cfg, s, 2), "a3-sq").scheme).toBe("4×4+");
   });
 
-  it("AMRAP moves the 4-rep weight: +1 increment, ×2 for 8+, -10% under 4; rows +10 per cycle", () => {
+  // r/Fitness post: "Squat/Deadlift 15lb/week, Bench/Rows 10lb/week, Overhead Press 5lb/week";
+  // "If you hit 8+ reps on an AMRAP set, double next week's progression rate"; deload 10% after failure.
+  it("weekly jumps, 8+ on an AMRAP doubles the next jump, a failed set → −10%", () => {
     const { cfg, def } = setup(ivysaur448);
     let s = initialState(def, cfg);
     const run = (date: string, e: [string, [number, number][]][]) => { s = applyWorkout(def, cfg, s, W(date, date, e), s.dayIndex); };
     run("2026-01-05", [[BP, rep(4, 205, 4)], [SQ, rep(4, 250, 8)], [OHP, rep(4, 120, 8)]]);
     run("2026-01-07", [[BP, rep(4, 185, 8)], [DL, rep(4, 335, 4)], [OHP, rep(4, 135, 4)], [ROW, rep(4, 160, 8)]]);
     run("2026-01-09", [[BP, rep(4, 205, 4, 8)], [SQ, rep(4, 275, 4, 5)], [OHP, rep(4, 120, 8)]]);
-    expect(s.tms.bench).toBe(225); // 8 reps → +20
-    expect(s.tms.squat).toBe(290); // 5 reps → +15
-    expect(s.dayIndex).toBe(3);
+    expect(s.tms).toMatchObject({ bench: 225, squat: 290, deadlift: 350, ohp: 140, row: 185 }); // bench +10 +10 (8 reps)
     expect(planDay(def, cfg, s).weekName).toBe("Week B");
-    run("2026-01-12", [[BP, rep(4, 200, 8)], [DL, rep(4, 300, 8)], [OHP, rep(4, 135, 4)], [ROW, rep(4, 175, 4)]]);
-    run("2026-01-14", [[BP, rep(4, 225, 4)], [SQ, rep(4, 260, 8)], [OHP, rep(4, 120, 8)]]);
-    expect(s.tms.row).toBe(175);
-    run("2026-01-16", [[BP, rep(4, 200, 8)], [DL, rep(4, 335, 3)], [OHP, rep(4, 135, 4, 4)], [ROW, rep(4, 160, 8)]]);
-    expect(s.tms.deadlift).toBeCloseTo(301.5); // 3 reps → -10%
-    expect(s.tms.ohp).toBe(140);
-    expect(s.tms.row).toBe(185);
-    expect(s.dayIndex).toBe(0);
-    expect(ex(planDay(def, cfg, s), "a1-sq").sets[0].weight).toBe(260); // 290 × .9 = 261 → 260
+    run("2026-01-12", [[BP, rep(4, 205, 8)], [DL, rep(4, 315, 8)], [OHP, rep(4, 140, 4, 3)], [ROW, rep(4, 185, 4)]]);
+    expect(s.tms.ohp).toBe(126); // missed a rep → −10% straight away
+    run("2026-01-14", [[BP, rep(4, 225, 4)], [SQ, rep(4, 260, 8)], [OHP, rep(4, 115, 8)]]);
+    run("2026-01-16", [[BP, rep(4, 205, 8)], [DL, rep(4, 350, 4, 3)], [OHP, rep(4, 125, 4, 4)], [ROW, rep(4, 165, 8)]]);
+    expect(s.tms.deadlift).toBe(330); // AMRAP 3 → −35, then the weekly +15
+    expect(s.tms.ohp).toBe(131);
+    expect(s.tms.row).toBe(195);
   });
 });
 
@@ -170,5 +168,18 @@ describe("Candito Linear", () => {
   it("hypertrophy variant swaps the Thu/Fri days", () => {
     const { def } = setup(canditoLinear, { variant: "hypertrophy" });
     expect(def.days.map((d) => d.id)).toEqual(["HL", "HU", "YL", "YU"]);
+  });
+});
+
+describe("Candito Linear hypertrophy days (Candito's PDF)", () => {
+  it("Thu squat 5×8, DL variation 3×8, ham curl 3×12, calves 5×15, 2 optional 4×8–12; Fri 4×8 presses and rows, 3×10 shoulder and biceps", () => {
+    const def = canditoLinear.build({ variant: "hypertrophy" });
+    const scheme = (id: string) => def.days.find((d) => d.id === id)!.slots.map((s) => {
+      const p = s.progression;
+      return `${s.lift} ${p.kind === "stages" ? `${p.stages[0].sets}×${p.stages[0].reps}` : p.kind === "double" ? `${p.sets}×${p.reps[0]}` : ""}`;
+    });
+    expect(scheme("YL")).toEqual(["squat 5×8", "stiffLegDeadlift 3×8", "legCurl 3×12", "calfRaise 5×15", "legPress 4×8", "backExtension 4×8"]);
+    expect(scheme("YU")).toEqual(["dbBench 4×8", "dbInclineBench 4×8", "row 4×8", "latPulldown 4×8", "dbOhp 3×10", "bicepCurl 3×10", "lateralRaise 4×8", "tricepPushdown 4×8"]);
+    expect(canditoLinear.build({}).days.find((d) => d.id === "HU")!.slots.filter((s) => s.note === "optional")).toHaveLength(2);
   });
 });

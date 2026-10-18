@@ -14,8 +14,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import dev.ironterm.testing.MockResponse
+import dev.ironterm.testing.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -142,6 +142,18 @@ class ProgramBrowseTest {
         assertEquals("3–4 days · open-ended · intermediate", ProgramBrowse.tags(p.copy(daysPerWeek = listOf(4, 3), weeks = null, level = "intermediate")))
         assertEquals("3/5 days · 1 week · advanced", ProgramBrowse.tags(p.copy(daysPerWeek = listOf(3, 5), weeks = 1, level = "advanced")))
         assertEquals("GZCL · 4 DAYS · OPEN-ENDED", ProgramBrowse.header(p.copy(category = "gzcl", daysPerWeek = listOf(4), weeks = null)))
+    }
+
+    @Test fun lengthKinds() {
+        val p = c.programs.first()
+        assertEquals("4 days · 12-week block · beginner", ProgramBrowse.tags(p.copy(daysPerWeek = listOf(4), weeks = 12, level = "beginner", length = "block", cycleWeeks = 12)))
+        assertEquals("4 days · cycles forever · intermediate", ProgramBrowse.tags(p.copy(daysPerWeek = listOf(4), weeks = null, level = "intermediate", length = "cycles", cycleWeeks = 11)))
+        assertEquals("GZCL · 3–4 DAYS · ONGOING", ProgramBrowse.header(p.copy(category = "gzcl", daysPerWeek = listOf(3, 4), weeks = null, length = "ongoing")))
+        val s = AppJson.json.decodeFromString(dev.ironterm.data.app.ProgramSummary.serializer(), """{"id":"531","weekCount":null,"length":"cycles","cycleWeeks":4,"next":null}""")
+        assertEquals("cycles", s.length)
+        assertEquals(4, s.cycleWeeks)
+        val d = AppJson.json.decodeFromString(ProgramDetailSerializer, """{"id":"x","weekCount":3,"length":"block","cycleWeeks":3,"weeks":[{"week":1}]}""")
+        assertEquals("3-week block", ProgramBrowse.length(d.summaryRow))
     }
 
     @Test fun groupsKeepCatalogOrder() {

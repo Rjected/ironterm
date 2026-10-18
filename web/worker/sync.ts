@@ -4,6 +4,7 @@ import { applyRamp } from "../shared/travel";
 import { LIFTS } from "../shared/lifts";
 import { planDay, replay, type PlannedExercise, type PlannedSession, type ProgramConfig } from "../shared/program";
 import { buildProgram } from "../shared/programs";
+import { e1rmsFrom, fillMissing } from "../shared/fill";
 import { roundTo, toKg } from "../shared/units";
 import { Hevy } from "./hevy";
 import { allWorkouts, deleteWorkouts, kvGet, kvPut, upsertWorkouts, workoutCount } from "./store";
@@ -12,6 +13,8 @@ export interface SyncState {
   /** events cursor; null until the first full backfill finishes */
   cursor: string | null;
   backfill?: { page: number; startedAt: string };
+  /** an events catch-up longer than one run: where to carry on, and the cursor to move to once it's done */
+  catchup?: { page: number; startedAt: string };
   at?: string;
   count?: number;
   error?: string;
@@ -41,8 +44,13 @@ export async function sync(db: D1Database, key: string): Promise<SyncState> {
         st.backfill = bf;
       }
     } else {
-      const startedAt = new Date().toISOString();
-      for (let page = 1; page <= MAX_PAGES; page++) {
+      // A long catch-up spans runs: keep the old cursor and carry on from the next page, and only
+      // move the cursor (to when the catch-up began) once the last page is in. Advancing it after
+      // MAX_PAGES would skip every change on the pages that weren't fetched.
+      const cu = (st.catchup ??= { page: 1, startedAt: new Date().toISOString() });
+      let done = false;
+      for (let n = 0; n < MAX_PAGES; n++, cu.page++) {
+        const page = cu.page;
         const r = await hevy.events(st.cursor, page);
         // An empty page comes back as {workouts: []} rather than {events: []}; accept bare workouts too.
         const raw = (r as any).events ?? (r as any).workouts ?? [];
@@ -53,9 +61,12 @@ export async function sync(db: D1Database, key: string): Promise<SyncState> {
         await deleteWorkouts(db, del);
         added += up.length;
         deleted += del.length;
-        if (page >= r.page_count || !events.length) break;
+        if (page >= r.page_count || !events.length) { done = true; break; }
       }
-      st.cursor = startedAt;
+      if (done) {
+        st.cursor = cu.startedAt;
+        st.catchup = undefined;
+      }
     }
     st.error = undefined;
   } catch (e) {
@@ -143,11 +154,16 @@ function routineSets(ex: PlannedExercise, cfg: ProgramConfig): HevyRoutineSet[] 
  * Create or update one Hevy routine per program day with the current prescribed weights.
  * Returns the updated config (routineDays filled in) — caller saves it.
  */
-export async function pushRoutines(db: D1Database, key: string, cfg: ProgramConfig, onlyDay?: number): Promise<{ cfg: ProgramConfig; pushed: { dayId: string; routineId: string; title: string }[] }> {
+export async function pushRoutines(db: D1Database, key: string, cfg: ProgramConfig, onlyDay: number | undefined, opts: { today: string; reentry?: boolean }): Promise<{ cfg: ProgramConfig; pushed: { dayId: string; routineId: string; title: string }[] }> {
   const hevy = new Hevy(key);
   const def = buildProgram(cfg);
   if (!def) throw new Error("No active program");
-  const state = replay(def, cfg, await allWorkouts(db), { today: new Date().toISOString().slice(0, 10) });
+  // Same replay as the app shows (derive.ts): the lifter's local date, and their re-entry setting.
+  const workouts = await allWorkouts(db);
+  const today = opts.today;
+  // values missing from an older saved config are filled for this replay only (cfg itself is returned unchanged)
+  const run = fillMissing(cfg, (need) => e1rmsFrom(workouts, cfg.unit, today, need, cfg.liftMap));
+  const state = replay(def, run, workouts, { today, reentry: opts.reentry === false ? false : undefined });
   const all = await templates(db, hevy);
   let folder = await kvGet<number>(db, `folder:${cfg.templateId}`);
   if (folder == null) {
