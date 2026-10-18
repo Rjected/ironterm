@@ -28,7 +28,7 @@ describe("GZCL family templates", () => {
       expect(new Set(ids).size).toBe(ids.length);
       const d = t.defaults!("lb");
       for (const s of def.days.flatMap((x) => x.slots)) {
-        if (s.progression.kind === "percent") expect(d.trainingMaxes?.[s.progression.tmLift], `${t.id} ${s.id}`).toBeGreaterThan(0);
+        if (s.progression.kind === "percent") expect(d.trainingMaxes?.[s.progression.tmLift], `${t.id} ${s.id}`).toBeGreaterThanOrEqual(["pullUp", "chinUp"].includes(s.lift) ? 0 : 1);
         else expect(d.startWeights?.[s.id], `${t.id} ${s.id}`).toBeDefined();
       }
       expect(t.defaults!("kg").trainingMaxes!.squat).toBe(Math.round(d.trainingMaxes!.squat / 2.20462 / 2.5) * 2.5);
@@ -50,13 +50,15 @@ describe("Jacked & Tan 2.0", () => {
     expect(sets(p, "d1-t1").slice(1)).toEqual([[255, 2, false], [255, 2, false], [255, 2, false], [255, 2, true]]);
     expect(sets(p, "d1-t2a")).toEqual(Array(7).fill([320, 2, false]));
   });
-  it("week 6 is a 1RM test that resets the TM to 90% of the single; T2a block 2 uses it", () => {
+  // Cody's J&T2.0 sheet: "Training Max is an estimated daily 2RM"; the week-6 single should be a
+  // confident double, so it becomes the block-2 TM.
+  it("week 6 is a 1RM test whose single becomes the block-2 TM; T2a block 2 uses it", () => {
     let s = atWeek(initialState(def, cfg), 5, 1);
     expect(def.days[1].id).toBe("D1-test");
     const p = planDay(def, cfg, s);
     expect(p.exercises.map((e) => e.slotId)).toEqual(["d1-test"]);
     s = applyWorkout(def, cfg, s, W("t", "2026-02-10", [[SQ, [[225, 3], [275, 1], [315, 1], [350, 1]]]]), 1);
-    expect(s.tms.squat).toBe(315);
+    expect(s.tms.squat).toBe(350);
     // week 7 day 3: front squat 5×6 @ 70% of its own TM; deficit DL on day 1 70% of deadlift TM
     const w7 = planDay(def, cfg, atWeek(s, 6, 0));
     expect(sets(w7, "d1-t2a")).toEqual(Array(5).fill([280, 6, false]));
@@ -96,10 +98,45 @@ describe("The Rippler", () => {
   });
   it("drops T2 in weeks 11–12 and finishes after 12 weeks", () => {
     let s = atWeek(initialState(def, cfg), 11, 0);
-    expect(planDay(def, cfg, s).exercises.map((e) => e.tier)).toEqual(["T1", "T3", "T3"]);
+    expect(planDay(def, cfg, s).exercises.map((e) => e.tier)).toEqual(["T1"]); // T2 and T3 off in weeks 11–12
     const titles = ["Bench Press (Barbell)", SQ, "Overhead Press (Barbell)", "Deadlift (Barbell)"];
     titles.forEach((t, i) => { s = applyWorkout(def, cfg, s, W(`r${i}`, "2026-03-30", [[t, [[200, 1]]]]), i); });
     expect(s.complete).toBe(true);
+  });
+});
+
+describe("The Rippler against Cody's compendium tab", () => {
+  const { def, cfg } = setup(gzclRippler, { bench: 200, dbOhp: 50 });
+  it("week 10 T1 is max reps at 100% of the 2RM", () => {
+    expect(sets(planDay(def, cfg, atWeek(initialState(def, cfg), 9, 0)), "d1-t1")).toEqual([[200, 2, true]]);
+  });
+  it("T3: 10RM goal weight, every set max reps, 5/4/3/2 sets; week 3 total reps set the next block", () => {
+    const at = (w: number) => planDay(def, cfg, atWeek(initialState(def, cfg), w, 0)).exercises.filter((e) => e.lift === "dbOhp");
+    expect(at(0).map((e) => e.sets.map((x) => [x.weight, x.reps, x.amrap]))).toEqual([Array(5).fill([50, 10, true])]);
+    expect(at(2).map((e) => e.slotId)).toEqual(["d1-t3a-w3"]);
+    expect(at(3)[0].sets).toHaveLength(4);
+    expect(at(6)[0].sets).toHaveLength(3);
+    expect(at(9)[0].sets).toHaveLength(2);
+    expect(at(10)).toHaveLength(0);
+    const after = (reps: number[]) => {
+      const s = applyWorkout(def, cfg, atWeek(initialState(def, cfg), 2, 0), W("r", "2026-01-20", [["Shoulder Press (Dumbbell)", reps.map((r) => [50, r] as [number, number])]]), 0);
+      return s.pendingTm?.dbOhp ?? 0;
+    };
+    expect(after([15, 15, 14, 14, 13])).toBe(15); // 71 > 70
+    expect(after([14, 14, 14, 14, 14])).toBe(10); // 70: not more than 70
+    expect(after([11, 11, 11, 11, 7])).toBe(5); // 51
+    expect(after([10, 10, 10, 10, 10])).toBe(0);
+  });
+});
+
+describe("Jacked & Tan 2.0 upper-body T2a (Cody's sheet)", () => {
+  const { def, cfg } = setup(gzclJnt2, { bench: 325 });
+  it("close-grip bench 50/55/60/62.5/65% and legs-up bench 45…60% of the bench TM", () => {
+    const wk = (w: number, d: number, id: string) => sets(planDay(def, cfg, atWeek(initialState(def, cfg), w, d)), id)?.[0];
+    expect(wk(0, 2, "d2-t2a")).toEqual([165, 10, false]); // sheet: 165
+    expect(wk(2, 2, "d2-t2a")).toEqual([195, 6, false]); // sheet: 195
+    expect(wk(0, 6, "d4-t2a")).toEqual([145, 10, false]); // 146.25
+    expect(wk(6, 2, "d2-t2a")).toEqual([230, 6, false]); // block 2: 70% of 325 = 227.5 → 230 (sheet 230)
   });
 });
 

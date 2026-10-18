@@ -112,7 +112,7 @@ fun AppScreen(
                 needsConnect -> EmptyState(state, onSetup = setup, onRetry = actions::refresh, onScan = actions::scanQr)
                 top != null -> RouteScreen(top, state, data, gym, actions, back, go, setup, now, replace = { onNav(Nav(nav.tab, it)) })
                 nav.tab == Tabs.TODAY -> TodayScreen(state, data, gym, actions, now, onGym = { onNav(Nav(Tabs.GYM)) }, onGo = go, onHistory = { onNav(Nav(Tabs.HISTORY)) })
-                nav.tab == Tabs.GYM -> GymScreen(state, data, gym, actions, now, onSetup = setup, ticking = ticking)
+                nav.tab == Tabs.GYM -> GymScreen(state, data, gym, actions, now, onSetup = setup, ticking = ticking, onBrowse = { go(Route.Programs) })
                 nav.tab == Tabs.LIFTS -> LiftsScreen(state, data, actions, onGo = go, onSetup = setup)
                 nav.tab == Tabs.FRIENDS -> FriendsScreen(state, data, actions, now, onGo = go, onSetup = setup)
                 nav.tab == Tabs.HISTORY -> HistoryScreen(state, data, actions, onGo = go, onSetup = setup)
