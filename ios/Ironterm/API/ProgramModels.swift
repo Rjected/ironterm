@@ -353,6 +353,16 @@ extension AppAPI {
         try await get(Self.programPath(id, options: options))
     }
 
+    /// `/api/app/programs/{id}/body?mode=load&opt.…` (mode first, options sorted)
+    static func programBodyPath(_ id: String, options: [String: String], mode: String) -> String {
+        let q = ProgramText.optionQuery(options)
+        return "/api/app/programs/" + seg(id) + "/body?mode=" + mode + (q.isEmpty ? "" : "&" + q)
+    }
+
+    func programBody(_ id: String, options: [String: String], mode: String) async throws -> ProgramBody {
+        try await get(Self.programBodyPath(id, options: options, mode: mode))
+    }
+
     func startProgram(_ id: String, _ body: ProgramStartBody) async throws -> ProgramStartResult {
         try await send("/api/app/programs/\(Self.seg(id))/start", method: "POST", json: try body.json())
     }

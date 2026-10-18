@@ -42,7 +42,9 @@ fun normalizeServerUrl(input: String): String? {
     }
     val url = s.toHttpUrlOrNull() ?: return null
     val port = if (url.port == okhttp3.HttpUrl.defaultPort(url.scheme)) "" else ":${url.port}"
-    return "${url.scheme}://${url.host}$port"
+    // HttpUrl.host is the bare address for IPv6 ("::1"); a URL needs it in brackets.
+    val host = if (':' in url.host) "[${url.host}]" else url.host
+    return "${url.scheme}://$host$port"
 }
 
 /** GET /api/snapshot with the app token. */

@@ -10,6 +10,8 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import worker from "../worker/index";
 import { NodeD1 } from "./d1";
+import { setPeerFetch } from "../worker/social/net";
+import { peerFetch } from "./peerfetch";
 import { PAGE_HEADERS } from "../worker/headers";
 import { isLocal } from "./local";
 import { checkServerConfig, dataDirError, listenError } from "./config";
@@ -69,10 +71,15 @@ const ASSETS = {
 const KEYS = [
   "HEVY_API_KEY", "APP_PASSWORD", "SESSION_SECRET", "WEBHOOK_SECRET", "TIMEZONE", "ALLOWED_EMAILS",
   "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "WHOOP_CLIENT_ID", "WHOOP_CLIENT_SECRET",
-  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN",
+  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN", "SOCIAL_ALLOW_PRIVATE",
 ];
 const env: Record<string, unknown> = { DB, ASSETS };
 for (const k of KEYS) if (process.env[k]) env[k] = process.env[k];
+
+// Friend servers and directories are URLs other people choose: never let them point this box at
+// its own LAN or loopback, unless that's explicitly what you want (local testing, a private network).
+const on = (v: unknown) => v === "1" || v === "true";
+if (!on(env.SOCIAL_ALLOW_HTTP) && !on(env.SOCIAL_ALLOW_PRIVATE)) setPeerFetch(peerFetch as typeof fetch);
 
 const pending = new Set<Promise<unknown>>();
 const ctx = {
@@ -127,8 +134,7 @@ createServer(async (req, res) => {
 }).on("error", (e: NodeJS.ErrnoException) => {
   console.error(listenError(e, PORT, HOST));
   process.exit(1);
-}).listen(PORT, HOST, () =>
- console.log(`ironterm on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT} · data ${DATA}`));
+}).listen(PORT, HOST, () => console.log(`ironterm on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT} · data ${DATA}`));
 
 // The worker's cron, on a timer: sync Hevy (and WHOOP) every SYNC_MINUTES.
 const tick = () => Promise.resolve(worker.scheduled?.({ cron: "timer", scheduledTime: Date.now(), noRetry() {} } as never, env as never, ctx as never)).catch((e) => console.error("sync", e));
