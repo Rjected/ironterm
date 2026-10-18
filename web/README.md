@@ -55,7 +55,7 @@ pnpm wrangler d1 create ironterm           # paste the id into wrangler.jsonc
 pnpm wrangler secret put HEVY_API_KEY
 pnpm wrangler secret put SESSION_SECRET    # any long random string
 pnpm wrangler secret put WEBHOOK_SECRET    # any long random string
-pnpm deploy
+pnpm run deploy                           # not `pnpm deploy`: that is a pnpm built-in
 ```
 
 `pnpm wrangler` installs Cloudflare's CLI into `deploy/` from its own lockfile the first time you use it. Developing, testing and self-hosting don't need it.

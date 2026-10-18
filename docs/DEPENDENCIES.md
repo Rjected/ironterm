@@ -26,7 +26,7 @@ Before is `main` at `0254df9` (October 2026); after is with every pull request b
 |---|---|---|
 | web (`web/pnpm-lock.yaml`) | 10 direct, 154 packages, 414 MB `node_modules` | 5 direct (preact, typescript, esbuild, @types/node, @cloudflare/workers-types), 33 packages of which about 26 are esbuild's per-platform binaries (10 installed), 50 MB |
 | web runtime (shipped to browsers) | preact, qrcode-generator | preact |
-| Cloudflare deploy tooling | wrangler in the dev dependencies | `web/deploy/` with its own lockfile (same versions), installed only by `pnpm wrangler` / `pnpm deploy` |
+| Cloudflare deploy tooling | wrangler in the dev dependencies | `web/deploy/` with its own lockfile (same versions), installed only by `pnpm wrangler` / `pnpm run deploy` |
 | Android runtime (`releaseRuntimeClasspath`) | 150 artifacts | 145; about 140 once security-crypto (with Tink and Gson) is removed after its migration has shipped |
 | Android unit tests (`debugUnitTestRuntimeClasspath`) | 223 artifacts | 217 |
 | iOS | 0 | 0 (Apple frameworks only, no Swift packages) |
