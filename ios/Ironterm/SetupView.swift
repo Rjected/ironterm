@@ -307,6 +307,7 @@ struct Field: View {
                 .autocorrectionDisabled()
                 if secure {
                     Button { reveal.toggle() } label: { Image(systemName: reveal ? "eye.slash" : "eye").foregroundStyle(T.faint) }
+                        .accessibilityLabel(reveal ? "Hide \(label)" : "Show \(label)")
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 9)
