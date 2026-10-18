@@ -10,11 +10,15 @@ import java.util.Locale
 enum class SourceMode { NONE, SERVER, DIRECT }
 
 /**
- * App settings and credentials. Backed by EncryptedSharedPreferences in the app; tests pass plain prefs.
+ * App settings and credentials in app-private SharedPreferences. The credentials (app token, Hevy
+ * API key) are encrypted with an Android Keystore key ([KeystoreBox]); tests pass [SecretBox.Plain].
  */
-class Settings(private val prefs: SharedPreferences) {
+class Settings(private val prefs: SharedPreferences, private val box: SecretBox = SecretBox.Plain) {
     companion object {
-        private const val FILE = "ironterm_prefs"
+        private const val FILE = "ironterm_settings"
+        /** Before Keystore: EncryptedSharedPreferences (androidx.security-crypto). Migrated once, then deleted. */
+        private const val LEGACY_FILE = "ironterm_prefs"
+        private val SECRETS = setOf("app_token", "api_key")
         private const val K_MODE = "mode"
         private const val K_SERVER = "server_url"
         private const val K_TOKEN = "app_token"
@@ -31,29 +35,40 @@ class Settings(private val prefs: SharedPreferences) {
         @Volatile private var instance: Settings? = null
 
         fun get(context: Context): Settings = instance ?: synchronized(this) {
-            instance ?: Settings(openEncrypted(context.applicationContext)).also { instance = it }
+            instance ?: open(context.applicationContext).also { instance = it }
         }
 
         /** For tests. */
         fun override(s: Settings?) { instance = s }
 
-        private fun openEncrypted(context: Context): SharedPreferences {
-            fun open(): SharedPreferences {
+        private fun open(context: Context): Settings {
+            val settings = Settings(context.getSharedPreferences(FILE, Context.MODE_PRIVATE), KeystoreBox())
+            migrateLegacy(context, settings)
+            return settings
+        }
+
+        /**
+         * One-time move from the old EncryptedSharedPreferences file, so nobody is signed out by the
+         * switch. TODO: remove with the androidx.security-crypto dependency once every installed
+         * app has run this (the app updates itself, so a few releases are enough).
+         */
+        private fun migrateLegacy(context: Context, settings: Settings) {
+            val legacyXml = java.io.File(context.applicationInfo.dataDir, "shared_prefs/$LEGACY_FILE.xml")
+            if (!legacyXml.exists()) return
+            try {
                 val key = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
-                return EncryptedSharedPreferences.create(
-                    context, FILE, key,
+                val legacy = EncryptedSharedPreferences.create(
+                    context, LEGACY_FILE, key,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
                 )
-            }
-            return try {
-                open()
+                settings.importFrom(legacy)
             } catch (e: Exception) {
-                // Keystore key lost (e.g. restored backup): the encrypted file is unreadable. Start over.
-                Log.w("Settings", "encrypted prefs unreadable, resetting", e)
-                context.deleteSharedPreferences(FILE)
-                open()
+                // Keystore key lost (e.g. restored backup): the old file is unreadable. Start over.
+                Log.w("Settings", "legacy encrypted prefs unreadable, dropping them", e)
             }
+            context.deleteSharedPreferences(LEGACY_FILE)
+            runCatching { java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry(MasterKey.DEFAULT_MASTER_KEY_ALIAS) }
         }
 
         fun defaultUnit(locale: Locale = Locale.getDefault()): String =
@@ -70,12 +85,30 @@ class Settings(private val prefs: SharedPreferences) {
         set(v) = prefs.edit().putString(K_SERVER, v).apply()
 
     var appToken: String?
-        get() = prefs.getString(K_TOKEN, null)
-        set(v) = prefs.edit().putString(K_TOKEN, v).apply()
+        get() = secret(K_TOKEN)
+        set(v) = prefs.edit().putString(K_TOKEN, v?.let(box::seal)).apply()
 
     var apiKey: String?
-        get() = prefs.getString(K_API_KEY, null)
-        set(v) = prefs.edit().putString(K_API_KEY, v).apply()
+        get() = secret(K_API_KEY)
+        set(v) = prefs.edit().putString(K_API_KEY, v?.let(box::seal)).apply()
+
+    private fun secret(key: String): String? = prefs.getString(key, null)?.let(box::open)
+
+    /** Copies every value from [old] (credentials get sealed). Synchronous, so it's on disk before [old] is deleted. */
+    fun importFrom(old: SharedPreferences) {
+        val e = prefs.edit()
+        for ((k, v) in old.all) {
+            when (v) {
+                is String -> e.putString(k, if (k in SECRETS) box.seal(v) else v)
+                is Int -> e.putInt(k, v)
+                is Long -> e.putLong(k, v)
+                is Float -> e.putFloat(k, v)
+                is Boolean -> e.putBoolean(k, v)
+                is Set<*> -> e.putStringSet(k, v.filterIsInstance<String>().toSet())
+            }
+        }
+        e.commit()
+    }
 
     var themeName: String
         get() = prefs.getString(K_THEME, "BLUE") ?: "BLUE"
@@ -133,11 +166,11 @@ class Settings(private val prefs: SharedPreferences) {
         }
 
     fun connectServer(url: String, token: String) {
-        prefs.edit().putString(K_MODE, SourceMode.SERVER.name).putString(K_SERVER, url).putString(K_TOKEN, token).apply()
+        prefs.edit().putString(K_MODE, SourceMode.SERVER.name).putString(K_SERVER, url).putString(K_TOKEN, box.seal(token)).apply()
     }
 
     fun connectDirect(key: String) {
-        prefs.edit().putString(K_MODE, SourceMode.DIRECT.name).putString(K_API_KEY, key).apply()
+        prefs.edit().putString(K_MODE, SourceMode.DIRECT.name).putString(K_API_KEY, box.seal(key)).apply()
     }
 
     fun disconnect() {
