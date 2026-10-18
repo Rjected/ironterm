@@ -32,6 +32,26 @@ enum ApiError: LocalizedError, Equatable {
     }
 }
 
+/// Task delegate for every request that carries a credential (the `ht_…` Bearer token or the Hevy
+/// `api-key` header): a redirect is only followed within the request's own origin (same scheme,
+/// host and port), so a misconfigured proxy or a compromised path on the server can't bounce the
+/// credential to another host or downgrade it to plain http. A refused redirect surfaces as the
+/// 3xx response, i.e. an `ApiError.http`.
+final class SameOriginRedirects: NSObject, URLSessionTaskDelegate {
+    static let shared = SameOriginRedirects()
+
+    static func allows(_ next: URLRequest, from original: URL?) -> Bool {
+        guard let original, let target = next.url else { return false }
+        return ConnectLink.sameOrigin(original, target)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        let original: URL? = task.originalRequest?.url
+        completionHandler(Self.allows(request, from: original) ? request : nil)
+    }
+}
+
 /// Server mode: GET /api/snapshot with the app token (docs/api/README.md).
 struct ServerClient {
     var base: URL
@@ -64,7 +84,7 @@ struct ServerClient {
 
     private func send(_ r: URLRequest) async throws -> Data {
         let (data, resp): (Data, URLResponse)
-        do { (data, resp) = try await session.data(for: r) } catch { throw ApiError.transport(error) }
+        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.transport(error) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 || code == 403 { throw ApiError.unauthorized(.server) }
         guard (200..<300).contains(code) else { throw ApiError.http(code, String(data: data, encoding: .utf8) ?? "") }
@@ -86,7 +106,7 @@ struct HevyClient {
         r.setValue(apiKey, forHTTPHeaderField: "api-key")
         r.setValue("application/json", forHTTPHeaderField: "Accept")
         let (data, resp): (Data, URLResponse)
-        do { (data, resp) = try await session.data(for: r) } catch { throw ApiError.transport(error) }
+        do { (data, resp) = try await session.data(for: r, delegate: SameOriginRedirects.shared) } catch { throw ApiError.transport(error) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 || code == 403 { throw ApiError.unauthorized(.direct) }
         // Hevy answers 404 for a page past the end
