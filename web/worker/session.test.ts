@@ -52,4 +52,22 @@ describe("session cookies", () => {
     expect((await fetchW("/api/bootstrap", { headers: { cookie: appSession } })).status).toBe(401);
     expect((await fetchW("/api/bootstrap", { headers: { cookie: owner } })).status).toBe(200);
   });
+
+  it("apps (bearer or traded session) can use the API but not manage app tokens", async () => {
+    const owner = cookieOf((await fetchW("/api/login", { method: "POST", body: JSON.stringify({ password: "pw" }) })).headers.get("set-cookie")!);
+    const created = await (await fetchW("/api/tokens", { method: "POST", headers: { cookie: owner }, body: JSON.stringify({ name: "phone" }) })).json() as { id: string; token: string };
+    const form = new FormData();
+    form.set("token", created.token);
+    const appSession = cookieOf((await fetchW("/auth/app", { method: "POST", body: form })).headers.get("set-cookie")!);
+
+    for (const headers of [{ authorization: `Bearer ${created.token}` }, { cookie: appSession }] as Record<string, string>[]) {
+      expect((await fetchW("/api/bootstrap", { headers })).status).toBe(200);
+      expect((await fetchW("/api/tokens", { headers })).status).toBe(403);
+      expect((await fetchW("/api/tokens", { method: "POST", headers, body: JSON.stringify({ name: "backdoor" }) })).status).toBe(403);
+      expect((await fetchW(`/api/tokens/${created.id}`, { method: "DELETE", headers })).status).toBe(403);
+    }
+    // nothing was minted, and the owner still manages tokens
+    const list = await (await fetchW("/api/tokens", { headers: { cookie: owner } })).json() as { name: string }[];
+    expect(list.map((t) => t.name)).not.toContain("backdoor");
+  });
 });

@@ -196,14 +196,19 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   }
   if (path === "/api/logout" && method === "POST") return json({ ok: true }, { headers: { "set-cookie": clearCookie } });
 
-  let ok = authMode === "none";
-  if (!ok && sessionSecret) {
-    const sub = await sessionSubject(req, sessionSecret);
-    if (sub === OWNER || (sub && (await tokenExists(env.DB, sub.slice(1))))) ok = true;
+  // "owner": a real sign-in (Google, password, Access) or this machine with no login configured.
+  // "app": an app token, or a web session traded for one. Apps get the whole API except managing
+  // app tokens, so a stolen phone can't mint itself a token that outlives revoking its own.
+  let principal: "owner" | "app" | null = authMode === "none" ? "owner" : null;
+  const sub = !principal && sessionSecret ? await sessionSubject(req, sessionSecret) : null;
+  if (sub === OWNER) principal = "owner";
+  if (!principal && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) principal = "owner";
+  if (!principal && sub && (await tokenExists(env.DB, sub.slice(1)))) principal = "app";
+  if (!principal && (await checkToken(env.DB, bearer(req)))) principal = "app";
+  if (!principal) return json({ error: "login required", auth: authMode }, { status: 401 });
+  if (path === "/api/tokens" || path.startsWith("/api/tokens/")) {
+    if (principal !== "owner") return json({ error: "Manage app tokens from a signed-in browser, not from an app." }, { status: 403 });
   }
-  if (!ok && env.ACCESS_AUD && env.ACCESS_TEAM_DOMAIN && (await verifyAccess(req, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD, allowed).catch(() => null))) ok = true;
-  if (!ok && (await checkToken(env.DB, bearer(req)))) ok = true;
-  if (!ok) return json({ error: "login required", auth: authMode }, { status: 401 });
 
   if (path.startsWith("/api/social/")) return handleOwner(req, socialCtx(req, env, ctx, authMode), path);
 
