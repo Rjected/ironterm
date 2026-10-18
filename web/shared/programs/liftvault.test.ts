@@ -191,15 +191,16 @@ describe("GZCL GG Wave LP (1RMs B200 S300 D400 OHP135)", () => {
   it("T1 80% / T2 70% plus weekly increments, waves restart one step up", () => {
     expect(wk(0, "bench", "T1").sets.map((x) => x.weight)).toEqual(Array(7).fill(160));
     expect(wk(0, "bench", "T1").sets.map((x) => x.reps)).toEqual([6, 1, 1, 1, 1, 1, 1]);
-    expect(wk(1, "bench", "T1").sets[0].weight).toBe(165);
-    expect(wk(4, "bench", "T1").sets[0].weight).toBe(165);
+    // the sheet's text: "Add 5kg/10lb a week, 2.5kg/5lb for OHP"
+    expect(wk(1, "bench", "T1").sets[0].weight).toBe(170);
+    expect(wk(4, "bench", "T1").sets[0].weight).toBe(170);
     expect(wk(4, "bench", "T1").sets.map((x) => x.reps)).toEqual([5, 1, 1, 1, 1, 1]);
-    expect(wk(15, "bench", "T1").sets[0].weight).toBe(190);
+    expect(wk(15, "bench", "T1").sets[0].weight).toBe(220);
     expect(wk(0, "bench", "T2").sets.map((x) => [x.weight, x.reps])).toEqual([[210, 10], [210, 5], [210, 5], [210, 5], [210, 5]]);
     expect(wk(8, "bench", "T2").sets.map((x) => x.reps)).toEqual([7, 4, 4, 3, 3]);
-    expect(wk(15, "bench", "T2").sets[0].weight).toBe(240);
+    expect(wk(15, "bench", "T2").sets[0].weight).toBe(270);
     expect(wk(0, "ohp", "T1").sets[0].weight).toBe(107.5);
-    expect(wk(1, "ohp", "T1").sets[0].weight).toBe(110);
+    expect(wk(1, "ohp", "T1").sets[0].weight).toBe(112.5);
   });
 });
 

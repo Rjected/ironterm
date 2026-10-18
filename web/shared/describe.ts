@@ -369,7 +369,9 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const n = p.failsBeforeAction ?? 1;
   const out: string[] = [];
   if (p.advance.type === "amrapAtLeast") {
-    out.push(`${st[0]}. When the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
+    const s0 = p.stages[0];
+    const others = s0.sets > 1 ? `the first ${s0.sets === 2 ? "set gets" : `${word(s0.sets - 1)} sets get`} ${s0.reps} and ` : "";
+    out.push(`${st[0]}. When ${others}the last set reaches ${p.advance.reps} reps, add ${incs.text} next time; until then, keep the weight and push the last set.`);
     return { title: st.join(" → "), text: out.join(" ") };
   }
   if (p.climb) {
@@ -387,7 +389,7 @@ function stagesText(slots: SlotDef[], wr: Writer): { title: string; text: string
   const f = p.onFinalFail;
   const bump = f.type === "reset" ? wr.perLift(slots.map((s) => ({ lift: s.lift, v: wr.slotInc(s)! })), f.bumpIncrements) : null;
   const final = f.type === "retest" ? `test a new ${f.rmReps}-rep max and restart at ${pct(f.pct)} of it`
-    : f.type === "reset" ? `go back to ${st[0]} at the weight you last started it with, plus ${bump!.text}`
+    : f.type === "reset" ? `go back to ${st[0]} at the weight you last did it with, plus ${bump!.text}`
     : f.type === "deload" ? `drop the weight ${pct(f.pct)} and build back up`
     : f.type === "deloadBy" ? `drop ${wr.w(f.amount)} and build back up`
     : "";
