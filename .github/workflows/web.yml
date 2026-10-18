@@ -16,15 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.7.1
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22.21.1'
-          cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
+
+      # pnpm via Node's own corepack, at the version and hash pinned in package.json
+      - run: corepack enable
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
