@@ -14,10 +14,10 @@ import dev.ironterm.data.SourceMode
 import dev.ironterm.data.hevy.HevyApi
 import dev.ironterm.data.hevy.WorkoutsResponse
 import kotlinx.coroutines.runBlocking
-import okhttp3.mockwebserver.Dispatcher
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.RecordedRequest
+import dev.ironterm.testing.Dispatcher
+import dev.ironterm.testing.MockResponse
+import dev.ironterm.testing.MockWebServer
+import dev.ironterm.testing.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,7 +35,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicInteger
 
-/** End-to-end: Refresher → OkHttp → a local mock server that only answers the right credential. */
+/** End-to-end: Refresher → HttpURLConnection → a local mock server that only answers the right credential. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class NetworkTest {
