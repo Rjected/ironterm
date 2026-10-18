@@ -143,7 +143,6 @@ describe("simulate", () => {
       expect(best, id).toBeLessThan(2500);
     }
   });
-
 });
 
 describe("compare", () => {
