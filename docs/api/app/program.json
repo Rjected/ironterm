@@ -1,0 +1,968 @@
+{
+  "program": {
+    "name": "GZCLP 4-Day",
+    "author": "Cody Lefever (GZCL) · sheet v4.5b5 by /u/Blacknoir",
+    "templateId": "gzclp",
+    "unit": "lb",
+    "week": 44,
+    "weekName": null,
+    "complete": false,
+    "reentry": null,
+    "slots": [
+      {
+        "slotId": "a1-t1",
+        "lift": "squat",
+        "name": "Back Squat",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "weight": 515,
+        "stage": 2,
+        "stages": [
+          "5×3+",
+          "6×2+",
+          "10×1+"
+        ]
+      },
+      {
+        "slotId": "a1-t2",
+        "lift": "bench",
+        "name": "Bench Press",
+        "tier": "T2",
+        "scheme": "3×8",
+        "weight": 170,
+        "stage": 1,
+        "stages": [
+          "3×10",
+          "3×8",
+          "3×6"
+        ]
+      },
+      {
+        "slotId": "a1-t3",
+        "lift": "latPulldown",
+        "name": "Lat Pulldown",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "weight": 80,
+        "stage": 0,
+        "stages": [
+          "3×15+"
+        ]
+      },
+      {
+        "slotId": "a1-t3b",
+        "lift": "bicepCurl",
+        "name": "Bicep Curl",
+        "tier": "T3",
+        "scheme": "4×12+",
+        "weight": 235,
+        "stage": 0,
+        "stages": [
+          "4×12+"
+        ]
+      },
+      {
+        "slotId": "b1-t1",
+        "lift": "ohp",
+        "name": "Overhead Press",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "weight": 270,
+        "stage": 2,
+        "stages": [
+          "5×3+",
+          "6×2+",
+          "10×1+"
+        ]
+      },
+      {
+        "slotId": "b1-t2",
+        "lift": "deadlift",
+        "name": "Deadlift",
+        "tier": "T2",
+        "scheme": "3×8",
+        "weight": 195,
+        "stage": 1,
+        "stages": [
+          "3×10",
+          "3×8",
+          "3×6"
+        ]
+      },
+      {
+        "slotId": "b1-t3",
+        "lift": "dbRow",
+        "name": "Dumbbell Row",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "weight": 80,
+        "stage": 0,
+        "stages": [
+          "3×15+"
+        ]
+      },
+      {
+        "slotId": "a2-t1",
+        "lift": "bench",
+        "name": "Bench Press",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "weight": 325,
+        "stage": 2,
+        "stages": [
+          "5×3+",
+          "6×2+",
+          "10×1+"
+        ]
+      },
+      {
+        "slotId": "a2-t2",
+        "lift": "squat",
+        "name": "Back Squat",
+        "tier": "T2",
+        "scheme": "3×8",
+        "weight": 190,
+        "stage": 1,
+        "stages": [
+          "3×10",
+          "3×8",
+          "3×6"
+        ]
+      },
+      {
+        "slotId": "a2-t3",
+        "lift": "latPulldown",
+        "name": "Lat Pulldown",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "weight": 95,
+        "stage": 0,
+        "stages": [
+          "3×15+"
+        ]
+      },
+      {
+        "slotId": "b2-t1",
+        "lift": "deadlift",
+        "name": "Deadlift",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "weight": 550,
+        "stage": 2,
+        "stages": [
+          "5×3+",
+          "6×2+",
+          "10×1+"
+        ]
+      },
+      {
+        "slotId": "b2-t2",
+        "lift": "ohp",
+        "name": "Overhead Press",
+        "tier": "T2",
+        "scheme": "3×8",
+        "weight": 95,
+        "stage": 1,
+        "stages": [
+          "3×10",
+          "3×8",
+          "3×6"
+        ]
+      },
+      {
+        "slotId": "b2-t3",
+        "lift": "dbRow",
+        "name": "Dumbbell Row",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "weight": 80,
+        "stage": 0,
+        "stages": [
+          "3×15+"
+        ]
+      }
+    ],
+    "upcoming": [
+      {
+        "date": "2026-10-16",
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench",
+        "exercises": [
+          {
+            "short": "BENCH",
+            "tier": "T1",
+            "summary": "10×1+ @ 325"
+          },
+          {
+            "short": "SQUAT",
+            "tier": "T2",
+            "summary": "3×8 @ 190"
+          },
+          {
+            "short": "LAT PD",
+            "tier": "T3",
+            "summary": "3×15+ @ 95"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-19",
+        "dayId": "B2",
+        "dayName": "Day B2 · Deadlift",
+        "exercises": [
+          {
+            "short": "DEADLIFT",
+            "tier": "T1",
+            "summary": "10×1+ @ 550"
+          },
+          {
+            "short": "OHP",
+            "tier": "T2",
+            "summary": "3×8 @ 95"
+          },
+          {
+            "short": "DB ROW",
+            "tier": "T3",
+            "summary": "3×15+ @ 80"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-20",
+        "dayId": "A1",
+        "dayName": "Day A1 · Squat",
+        "exercises": [
+          {
+            "short": "SQUAT",
+            "tier": "T1",
+            "summary": "10×1+ @ 515"
+          },
+          {
+            "short": "BENCH",
+            "tier": "T2",
+            "summary": "3×8 @ 170"
+          },
+          {
+            "short": "LAT PD",
+            "tier": "T3",
+            "summary": "3×15+ @ 80"
+          },
+          {
+            "short": "CURL",
+            "tier": "T3",
+            "summary": "4×12+ @ 235"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-22",
+        "dayId": "B1",
+        "dayName": "Day B1 · OHP",
+        "exercises": [
+          {
+            "short": "OHP",
+            "tier": "T1",
+            "summary": "10×1+ @ 270"
+          },
+          {
+            "short": "DEADLIFT",
+            "tier": "T2",
+            "summary": "3×8 @ 195"
+          },
+          {
+            "short": "DB ROW",
+            "tier": "T3",
+            "summary": "3×15+ @ 80"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-23",
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench",
+        "exercises": [
+          {
+            "short": "BENCH",
+            "tier": "T1",
+            "summary": "10×1+ @ 325"
+          },
+          {
+            "short": "SQUAT",
+            "tier": "T2",
+            "summary": "3×8 @ 190"
+          },
+          {
+            "short": "LAT PD",
+            "tier": "T3",
+            "summary": "3×15+ @ 95"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-26",
+        "dayId": "B2",
+        "dayName": "Day B2 · Deadlift",
+        "exercises": [
+          {
+            "short": "DEADLIFT",
+            "tier": "T1",
+            "summary": "10×1+ @ 550"
+          },
+          {
+            "short": "OHP",
+            "tier": "T2",
+            "summary": "3×8 @ 95"
+          },
+          {
+            "short": "DB ROW",
+            "tier": "T3",
+            "summary": "3×15+ @ 80"
+          }
+        ]
+      }
+    ],
+    "log": [
+      {
+        "date": "2026-10-15T11:27:00.000Z",
+        "dayId": "B1",
+        "results": [
+          {
+            "lift": "ohp",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 265,
+            "outcome": "success",
+            "note": "10/10 → 270"
+          },
+          {
+            "lift": "deadlift",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 185,
+            "outcome": "success",
+            "note": "24/24 → 195"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "20 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-13T10:18:00.000Z",
+        "dayId": "A1",
+        "results": [
+          {
+            "lift": "squat",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 505,
+            "outcome": "success",
+            "note": "10/10 → 515"
+          },
+          {
+            "lift": "bench",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 165,
+            "outcome": "success",
+            "note": "24/24 → 170"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "18 on last set, need 25"
+          },
+          {
+            "lift": "bicepCurl",
+            "tier": "T3",
+            "scheme": "4×12+",
+            "weight": 230,
+            "outcome": "success",
+            "note": "23 on last set → 235"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-12T10:09:00.000Z",
+        "dayId": "B2",
+        "results": [
+          {
+            "lift": "deadlift",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 540,
+            "outcome": "success",
+            "note": "10/10 → 550"
+          },
+          {
+            "lift": "ohp",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 90,
+            "outcome": "success",
+            "note": "24/24 → 95"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "24 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-08T10:19:00.000Z",
+        "dayId": "A2",
+        "results": [
+          {
+            "lift": "bench",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 320,
+            "outcome": "success",
+            "note": "10/10 → 325"
+          },
+          {
+            "lift": "squat",
+            "tier": "T2",
+            "scheme": "3×10",
+            "weight": 190,
+            "outcome": "stage-down",
+            "note": "27/30 → 3×8 @ 190"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 90,
+            "outcome": "success",
+            "note": "26 on last set → 95"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-06T10:21:00.000Z",
+        "dayId": "B1",
+        "results": [
+          {
+            "lift": "ohp",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 260,
+            "outcome": "success",
+            "note": "10/10 → 265"
+          },
+          {
+            "lift": "deadlift",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 175,
+            "outcome": "success",
+            "note": "24/24 → 185"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 75,
+            "outcome": "success",
+            "note": "27 on last set → 80"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-03T11:15:00.000Z",
+        "dayId": "A1",
+        "results": [
+          {
+            "lift": "squat",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 495,
+            "outcome": "success",
+            "note": "10/10 → 505"
+          },
+          {
+            "lift": "bench",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 160,
+            "outcome": "success",
+            "note": "24/24 → 165"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "18 on last set, need 25"
+          },
+          {
+            "lift": "bicepCurl",
+            "tier": "T3",
+            "scheme": "4×12+",
+            "weight": 225,
+            "outcome": "success",
+            "note": "26 on last set → 230"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-02T11:36:00.000Z",
+        "dayId": "B2",
+        "results": [
+          {
+            "lift": "deadlift",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 530,
+            "outcome": "success",
+            "note": "10/10 → 540"
+          },
+          {
+            "lift": "ohp",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 85,
+            "outcome": "success",
+            "note": "24/24 → 90"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "19 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-10-01T11:14:00.000Z",
+        "dayId": "A2",
+        "results": [
+          {
+            "lift": "bench",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 315,
+            "outcome": "success",
+            "note": "10/10 → 320"
+          },
+          {
+            "lift": "squat",
+            "tier": "T2",
+            "scheme": "3×10",
+            "weight": 185,
+            "outcome": "success",
+            "note": "30/30 → 190"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 85,
+            "outcome": "success",
+            "note": "25 on last set → 90"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-29T11:04:00.000Z",
+        "dayId": "B1",
+        "results": [
+          {
+            "lift": "ohp",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 255,
+            "outcome": "success",
+            "note": "10/10 → 260"
+          },
+          {
+            "lift": "deadlift",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 165,
+            "outcome": "success",
+            "note": "24/24 → 175"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 70,
+            "outcome": "success",
+            "note": "27 on last set → 75"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-28T11:39:00.000Z",
+        "dayId": "A1",
+        "results": [
+          {
+            "lift": "squat",
+            "tier": "T1",
+            "scheme": "6×2+",
+            "weight": 495,
+            "outcome": "stage-down",
+            "note": "10/12 → 10×1+ @ 495"
+          },
+          {
+            "lift": "bench",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 155,
+            "outcome": "success",
+            "note": "24/24 → 160"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "23 on last set, need 25"
+          },
+          {
+            "lift": "bicepCurl",
+            "tier": "T3",
+            "scheme": "4×12+",
+            "weight": 220,
+            "outcome": "success",
+            "note": "21 on last set → 225"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-24T11:04:00.000Z",
+        "dayId": "B2",
+        "results": [
+          {
+            "lift": "deadlift",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 520,
+            "outcome": "success",
+            "note": "10/10 → 530"
+          },
+          {
+            "lift": "ohp",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 80,
+            "outcome": "success",
+            "note": "24/24 → 85"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "24 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-22T10:24:00.000Z",
+        "dayId": "A2",
+        "results": [
+          {
+            "lift": "bench",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 310,
+            "outcome": "success",
+            "note": "10/10 → 315"
+          },
+          {
+            "lift": "squat",
+            "tier": "T2",
+            "scheme": "3×10",
+            "weight": 180,
+            "outcome": "success",
+            "note": "30/30 → 185"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "success",
+            "note": "25 on last set → 85"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-21T10:40:00.000Z",
+        "dayId": "B1",
+        "results": [
+          {
+            "lift": "ohp",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 250,
+            "outcome": "success",
+            "note": "10/10 → 255"
+          },
+          {
+            "lift": "deadlift",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 155,
+            "outcome": "success",
+            "note": "24/24 → 165"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 70,
+            "outcome": "hold",
+            "note": "23 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-18T10:11:00.000Z",
+        "dayId": "A1",
+        "results": [
+          {
+            "lift": "squat",
+            "tier": "T1",
+            "scheme": "6×2+",
+            "weight": 485,
+            "outcome": "success",
+            "note": "12/12 → 495"
+          },
+          {
+            "lift": "bench",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 150,
+            "outcome": "success",
+            "note": "24/24 → 155"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "18 on last set, need 25"
+          },
+          {
+            "lift": "bicepCurl",
+            "tier": "T3",
+            "scheme": "4×12+",
+            "weight": 215,
+            "outcome": "success",
+            "note": "27 on last set → 220"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-17T10:16:00.000Z",
+        "dayId": "B2",
+        "results": [
+          {
+            "lift": "deadlift",
+            "tier": "T1",
+            "scheme": "6×2+",
+            "weight": 520,
+            "outcome": "stage-down",
+            "note": "10/12 → 10×1+ @ 520"
+          },
+          {
+            "lift": "ohp",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 75,
+            "outcome": "success",
+            "note": "24/24 → 80"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 75,
+            "outcome": "success",
+            "note": "25 on last set → 80"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-15T10:05:00.000Z",
+        "dayId": "A2",
+        "results": [
+          {
+            "lift": "bench",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 305,
+            "outcome": "success",
+            "note": "10/10 → 310"
+          },
+          {
+            "lift": "squat",
+            "tier": "T2",
+            "scheme": "3×10",
+            "weight": 175,
+            "outcome": "success",
+            "note": "30/30 → 180"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "21 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-14T11:13:00.000Z",
+        "dayId": "B1",
+        "results": [
+          {
+            "lift": "ohp",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 245,
+            "outcome": "success",
+            "note": "10/10 → 250"
+          },
+          {
+            "lift": "deadlift",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 145,
+            "outcome": "success",
+            "note": "24/24 → 155"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 70,
+            "outcome": "hold",
+            "note": "20 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-10T10:37:00.000Z",
+        "dayId": "A1",
+        "results": [
+          {
+            "lift": "squat",
+            "tier": "T1",
+            "scheme": "6×2+",
+            "weight": 475,
+            "outcome": "success",
+            "note": "12/12 → 485"
+          },
+          {
+            "lift": "bench",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 145,
+            "outcome": "success",
+            "note": "24/24 → 150"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "24 on last set, need 25"
+          },
+          {
+            "lift": "bicepCurl",
+            "tier": "T3",
+            "scheme": "4×12+",
+            "weight": 210,
+            "outcome": "success",
+            "note": "22 on last set → 215"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-08T10:11:00.000Z",
+        "dayId": "B2",
+        "results": [
+          {
+            "lift": "deadlift",
+            "tier": "T1",
+            "scheme": "6×2+",
+            "weight": 510,
+            "outcome": "success",
+            "note": "12/12 → 520"
+          },
+          {
+            "lift": "ohp",
+            "tier": "T2",
+            "scheme": "3×8",
+            "weight": 70,
+            "outcome": "success",
+            "note": "24/24 → 75"
+          },
+          {
+            "lift": "dbRow",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 75,
+            "outcome": "hold",
+            "note": "23 on last set, need 25"
+          }
+        ]
+      },
+      {
+        "date": "2026-09-07T10:45:00.000Z",
+        "dayId": "A2",
+        "results": [
+          {
+            "lift": "bench",
+            "tier": "T1",
+            "scheme": "10×1+",
+            "weight": 300,
+            "outcome": "success",
+            "note": "10/10 → 305"
+          },
+          {
+            "lift": "squat",
+            "tier": "T2",
+            "scheme": "3×10",
+            "weight": 170,
+            "outcome": "success",
+            "note": "30/30 → 175"
+          },
+          {
+            "lift": "latPulldown",
+            "tier": "T3",
+            "scheme": "3×15+",
+            "weight": 80,
+            "outcome": "hold",
+            "note": "19 on last set, need 25"
+          }
+        ]
+      }
+    ],
+    "pushed": false
+  }
+}

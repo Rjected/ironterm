@@ -26,6 +26,22 @@ e.g. `ironterm://connect?server=https%3A%2F%2Fgym.example.com&token=ht_abc…`
 | `POST /auth/app` | Form body `token=ht_…&next=/` → 302 to `next` with a session cookie. Use it to open the full web app inside a WebView already signed in (POST it from the WebView). |
 | `401` | `{ "error": "login required", "auth": "google" }`: the token is missing or revoked. Ask the user to reconnect. |
 
+## App screens
+
+The native apps render each screen from one document. The server builds them from the same derived data as the web UI (`web/shared/appapi.ts`, where the types are the contract). Samples generated from demo data are in [`app/`](app/).
+
+| | |
+|---|---|
+| `GET /api/app/home` | dashboard: snapshot, e1RM table, a year of big-four trends, 26 weeks of volume, watch list, recent PRs |
+| `GET /api/app/gym` | the in-progress session (if any), next session, program days, exercise catalog |
+| `POST /api/app/gym/start` | `{dayIndex?, empty?}` → a new LiveSession, saved server-side. Then `PUT /api/live` as it changes, `POST /api/live/finish` to log it, `DELETE /api/live` to discard. |
+| `GET /api/app/lifts` · `/api/app/lifts/{key}` | lift list; per-lift history, rep PRs, PR wall, stall, projection, personal RPE chart |
+| `GET /api/app/history?cursor&limit&q` · `/api/app/workouts/{id}` | paged workout list (cursor = last id seen); full workout with program results. Edit notes with `PUT /api/workouts/{id}/notes`. |
+| `GET /api/app/calendar?month=YYYY-MM` | 42-day Monday-first grid: done / planned / missed / rest / travel / today |
+| `GET /api/app/program` | slots, upcoming sessions, decision log. Push with `POST /api/routines/push`. |
+| `GET /api/app/body?mode=ready\|load` | coloured front and back figures as standalone SVG, plus the per-muscle list |
+| `GET /api/app/insights` · `/api/app/stats` | projections, strength balance, achievements · weekly totals, cardio |
+
 ## Snapshot (v1)
 
 Type: `web/shared/snapshot.ts`. Sample: [`snapshot.sample.json`](snapshot.sample.json) (demo data).

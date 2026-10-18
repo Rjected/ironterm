@@ -1,0 +1,786 @@
+{
+  "unit": "lb",
+  "programName": "GZCLP 4-Day",
+  "live": null,
+  "next": {
+    "dayName": "Day A2 · Bench",
+    "when": "TOMORROW",
+    "date": "2026-10-16",
+    "reentry": false,
+    "exercises": [
+      {
+        "lift": "bench",
+        "name": "Bench Press",
+        "short": "BENCH",
+        "tier": "T1",
+        "scheme": "10×1+",
+        "summary": "9×1 @ 325, 1×1+ @ 325",
+        "top": 325,
+        "sets": [
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": false
+          },
+          {
+            "reps": 1,
+            "weight": 325,
+            "amrap": true
+          }
+        ]
+      },
+      {
+        "lift": "squat",
+        "name": "Back Squat",
+        "short": "SQUAT",
+        "tier": "T2",
+        "scheme": "3×8",
+        "summary": "3×8 @ 190",
+        "top": 190,
+        "sets": [
+          {
+            "reps": 8,
+            "weight": 190,
+            "amrap": false
+          },
+          {
+            "reps": 8,
+            "weight": 190,
+            "amrap": false
+          },
+          {
+            "reps": 8,
+            "weight": 190,
+            "amrap": false
+          }
+        ]
+      },
+      {
+        "lift": "latPulldown",
+        "name": "Lat Pulldown",
+        "short": "LAT PD",
+        "tier": "T3",
+        "scheme": "3×15+",
+        "summary": "2×15 @ 95, 1×15+ @ 95",
+        "top": 95,
+        "sets": [
+          {
+            "reps": 15,
+            "weight": 95,
+            "amrap": false
+          },
+          {
+            "reps": 15,
+            "weight": 95,
+            "amrap": false
+          },
+          {
+            "reps": 15,
+            "weight": 95,
+            "amrap": true
+          }
+        ]
+      }
+    ]
+  },
+  "days": [
+    {
+      "dayIndex": 0,
+      "dayId": "A1",
+      "dayName": "Day A1 · Squat"
+    },
+    {
+      "dayIndex": 1,
+      "dayId": "B1",
+      "dayName": "Day B1 · OHP"
+    },
+    {
+      "dayIndex": 2,
+      "dayId": "A2",
+      "dayName": "Day A2 · Bench"
+    },
+    {
+      "dayIndex": 3,
+      "dayId": "B2",
+      "dayName": "Day B2 · Deadlift"
+    }
+  ],
+  "catalog": [
+    {
+      "key": "squat",
+      "name": "Back Squat",
+      "kind": "barbell",
+      "hevy": "Squat (Barbell)"
+    },
+    {
+      "key": "bench",
+      "name": "Bench Press",
+      "kind": "barbell",
+      "hevy": "Bench Press (Barbell)"
+    },
+    {
+      "key": "deadlift",
+      "name": "Deadlift",
+      "kind": "barbell",
+      "hevy": "Deadlift (Barbell)"
+    },
+    {
+      "key": "ohp",
+      "name": "Overhead Press",
+      "kind": "barbell",
+      "hevy": "Overhead Press (Barbell)"
+    },
+    {
+      "key": "pauseSquat",
+      "name": "Pause Squat",
+      "kind": "barbell",
+      "hevy": "Pause Squat (Barbell)"
+    },
+    {
+      "key": "frontSquat",
+      "name": "Front Squat",
+      "kind": "barbell",
+      "hevy": "Front Squat"
+    },
+    {
+      "key": "boxSquat",
+      "name": "Box Squat",
+      "kind": "barbell",
+      "hevy": "Box Squat (Barbell)"
+    },
+    {
+      "key": "pinSquat",
+      "name": "Pin Squat",
+      "kind": "barbell",
+      "hevy": "Pin Squat"
+    },
+    {
+      "key": "zercherSquat",
+      "name": "Zercher Squat",
+      "kind": "barbell",
+      "hevy": "Zercher Squat"
+    },
+    {
+      "key": "safetyBarSquat",
+      "name": "Safety Bar Squat",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "hackSquat",
+      "name": "Hack Squat",
+      "kind": "machine",
+      "hevy": "Hack Squat (Machine)"
+    },
+    {
+      "key": "legPress",
+      "name": "Leg Press",
+      "kind": "machine",
+      "hevy": "Leg Press (Machine)"
+    },
+    {
+      "key": "gobletSquat",
+      "name": "Goblet Squat",
+      "kind": "dumbbell",
+      "hevy": "Goblet Squat"
+    },
+    {
+      "key": "bulgarianSplitSquat",
+      "name": "Bulgarian Split Squat",
+      "kind": "dumbbell",
+      "hevy": "Bulgarian Split Squat (Dumbbell)"
+    },
+    {
+      "key": "splitSquat",
+      "name": "Split Squat",
+      "kind": "dumbbell",
+      "hevy": "Split Squat (Dumbbell)"
+    },
+    {
+      "key": "lunge",
+      "name": "Lunge",
+      "kind": "dumbbell",
+      "hevy": "Lunge (Dumbbell)"
+    },
+    {
+      "key": "legExtension",
+      "name": "Leg Extension",
+      "kind": "machine",
+      "hevy": "Leg Extension (Machine)"
+    },
+    {
+      "key": "pendulumSquat",
+      "name": "Pendulum Squat",
+      "kind": "machine",
+      "hevy": "Pendulum Squat (Machine)"
+    },
+    {
+      "key": "beltSquat",
+      "name": "Belt Squat",
+      "kind": "machine",
+      "hevy": "Belt Squat (Machine)"
+    },
+    {
+      "key": "sumoDeadlift",
+      "name": "Sumo Deadlift",
+      "kind": "barbell",
+      "hevy": "Sumo Deadlift"
+    },
+    {
+      "key": "deficitDeadlift",
+      "name": "Deficit Deadlift",
+      "kind": "barbell",
+      "hevy": "Deficit Deadlift (Barbell)"
+    },
+    {
+      "key": "pauseDeadlift",
+      "name": "Pause Deadlift",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "snatchGripDeadlift",
+      "name": "Snatch-Grip Deadlift",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "rackPull",
+      "name": "Rack Pull",
+      "kind": "barbell",
+      "hevy": "Rack Pull"
+    },
+    {
+      "key": "rdl",
+      "name": "Romanian Deadlift",
+      "kind": "barbell",
+      "hevy": "Romanian Deadlift (Barbell)"
+    },
+    {
+      "key": "dbRdl",
+      "name": "Dumbbell RDL",
+      "kind": "dumbbell",
+      "hevy": "Romanian Deadlift (Dumbbell)"
+    },
+    {
+      "key": "stiffLegDeadlift",
+      "name": "Stiff-Leg Deadlift",
+      "kind": "barbell",
+      "hevy": "Straight Leg Deadlift"
+    },
+    {
+      "key": "trapBarDeadlift",
+      "name": "Trap Bar Deadlift",
+      "kind": "barbell",
+      "hevy": "Deadlift (Trap bar)"
+    },
+    {
+      "key": "goodMorning",
+      "name": "Good Morning",
+      "kind": "barbell",
+      "hevy": "Good Morning (Barbell)"
+    },
+    {
+      "key": "hipThrust",
+      "name": "Hip Thrust",
+      "kind": "barbell",
+      "hevy": "Hip Thrust (Barbell)"
+    },
+    {
+      "key": "legCurl",
+      "name": "Leg Curl",
+      "kind": "machine",
+      "hevy": "Lying Leg Curl (Machine)"
+    },
+    {
+      "key": "gluteHamRaise",
+      "name": "Glute Ham Raise",
+      "kind": "bodyweight",
+      "hevy": "Glute Ham Raise"
+    },
+    {
+      "key": "backExtension",
+      "name": "Back Extension",
+      "kind": "bodyweight",
+      "hevy": "Back Extension (Hyperextension)"
+    },
+    {
+      "key": "reverseHyper",
+      "name": "Reverse Hyper",
+      "kind": "machine",
+      "hevy": "Reverse Hyperextension"
+    },
+    {
+      "key": "kbSwing",
+      "name": "Kettlebell Swing",
+      "kind": "dumbbell",
+      "hevy": "Kettlebell Swing"
+    },
+    {
+      "key": "pauseBench",
+      "name": "Paused Bench",
+      "kind": "barbell",
+      "hevy": "Paused Bench (1 Second Pause)"
+    },
+    {
+      "key": "cgBench",
+      "name": "Close-Grip Bench",
+      "kind": "barbell",
+      "hevy": "Bench Press - Close Grip (Barbell)"
+    },
+    {
+      "key": "wideBench",
+      "name": "Wide-Grip Bench",
+      "kind": "barbell",
+      "hevy": "Bench Press - Wide Grip (Barbell)"
+    },
+    {
+      "key": "inclineBench",
+      "name": "Incline Bench Press",
+      "kind": "barbell",
+      "hevy": "Incline Bench Press (Barbell)"
+    },
+    {
+      "key": "declineBench",
+      "name": "Decline Bench Press",
+      "kind": "barbell",
+      "hevy": "Decline Bench Press (Barbell)"
+    },
+    {
+      "key": "feetUpBench",
+      "name": "Feet-Up Bench",
+      "kind": "barbell",
+      "hevy": "Feet Up Bench Press (Barbell)"
+    },
+    {
+      "key": "floorPress",
+      "name": "Floor Press",
+      "kind": "barbell",
+      "hevy": "Floor Press (Barbell)"
+    },
+    {
+      "key": "spotoPress",
+      "name": "Spoto Press",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "boardPress",
+      "name": "Board Press",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "slingshotBench",
+      "name": "Slingshot Bench",
+      "kind": "barbell",
+      "hevy": null
+    },
+    {
+      "key": "dbDeclineBench",
+      "name": "Decline DB Press",
+      "kind": "dumbbell",
+      "hevy": "Decline Bench Press (Dumbbell)"
+    },
+    {
+      "key": "pinPress",
+      "name": "Pin Press",
+      "kind": "barbell",
+      "hevy": "Pin Press"
+    },
+    {
+      "key": "dbBench",
+      "name": "Dumbbell Bench Press",
+      "kind": "dumbbell",
+      "hevy": "Bench Press (Dumbbell)"
+    },
+    {
+      "key": "dbInclineBench",
+      "name": "Incline DB Press",
+      "kind": "dumbbell",
+      "hevy": "Incline Bench Press (Dumbbell)"
+    },
+    {
+      "key": "machineChestPress",
+      "name": "Chest Press (Machine)",
+      "kind": "machine",
+      "hevy": "Chest Press (Machine)"
+    },
+    {
+      "key": "smithBench",
+      "name": "Smith Bench",
+      "kind": "machine",
+      "hevy": "Bench Press (Smith Machine)"
+    },
+    {
+      "key": "dip",
+      "name": "Dip",
+      "kind": "bodyweight",
+      "hevy": "Chest Dip"
+    },
+    {
+      "key": "pushUp",
+      "name": "Push Up",
+      "kind": "bodyweight",
+      "hevy": "Push Up"
+    },
+    {
+      "key": "chestFly",
+      "name": "Chest Fly",
+      "kind": "dumbbell",
+      "hevy": "Chest Fly (Dumbbell)"
+    },
+    {
+      "key": "inclineFly",
+      "name": "Incline Fly",
+      "kind": "dumbbell",
+      "hevy": "Incline Chest Fly (Dumbbell)"
+    },
+    {
+      "key": "pushPress",
+      "name": "Push Press",
+      "kind": "barbell",
+      "hevy": "Push Press"
+    },
+    {
+      "key": "seatedOhp",
+      "name": "Seated Overhead Press",
+      "kind": "barbell",
+      "hevy": "Seated Overhead Press (Barbell)"
+    },
+    {
+      "key": "dbOhp",
+      "name": "Dumbbell Shoulder Press",
+      "kind": "dumbbell",
+      "hevy": "Shoulder Press (Dumbbell)"
+    },
+    {
+      "key": "arnoldPress",
+      "name": "Arnold Press",
+      "kind": "dumbbell",
+      "hevy": "Arnold Press (Dumbbell)"
+    },
+    {
+      "key": "machineShoulderPress",
+      "name": "Shoulder Press (Machine)",
+      "kind": "machine",
+      "hevy": "Seated Shoulder Press (Machine)"
+    },
+    {
+      "key": "lateralRaise",
+      "name": "Lateral Raise",
+      "kind": "dumbbell",
+      "hevy": "Lateral Raise (Dumbbell)"
+    },
+    {
+      "key": "frontRaise",
+      "name": "Front Raise",
+      "kind": "dumbbell",
+      "hevy": "Front Raise (Dumbbell)"
+    },
+    {
+      "key": "rearDeltFly",
+      "name": "Rear Delt Fly",
+      "kind": "dumbbell",
+      "hevy": "Rear Delt Reverse Fly (Dumbbell)"
+    },
+    {
+      "key": "facePull",
+      "name": "Face Pull",
+      "kind": "machine",
+      "hevy": "Face Pull"
+    },
+    {
+      "key": "bandPullApart",
+      "name": "Band Pull-Apart",
+      "kind": "bodyweight",
+      "hevy": "Band Pullaparts"
+    },
+    {
+      "key": "uprightRow",
+      "name": "Upright Row",
+      "kind": "barbell",
+      "hevy": "Upright Row (Barbell)"
+    },
+    {
+      "key": "row",
+      "name": "Barbell Row",
+      "kind": "barbell",
+      "hevy": "Bent Over Row (Barbell)"
+    },
+    {
+      "key": "pendlayRow",
+      "name": "Pendlay Row",
+      "kind": "barbell",
+      "hevy": "Pendlay Row (Barbell)"
+    },
+    {
+      "key": "sealRow",
+      "name": "Seal Row",
+      "kind": "barbell",
+      "hevy": "Seal Row (Barbell)"
+    },
+    {
+      "key": "tBarRow",
+      "name": "T-Bar Row",
+      "kind": "machine",
+      "hevy": "T Bar Row"
+    },
+    {
+      "key": "dbRow",
+      "name": "Dumbbell Row",
+      "kind": "dumbbell",
+      "hevy": "Dumbbell Row"
+    },
+    {
+      "key": "chestSupportedRow",
+      "name": "Chest-Supported Row",
+      "kind": "dumbbell",
+      "hevy": "Chest Supported Incline Row (Dumbbell)"
+    },
+    {
+      "key": "cableRow",
+      "name": "Seated Cable Row",
+      "kind": "machine",
+      "hevy": "Seated Cable Row - V Grip (Cable)"
+    },
+    {
+      "key": "invertedRow",
+      "name": "Inverted Row",
+      "kind": "bodyweight",
+      "hevy": "Inverted Row"
+    },
+    {
+      "key": "latPulldown",
+      "name": "Lat Pulldown",
+      "kind": "machine",
+      "hevy": "Lat Pulldown (Cable)"
+    },
+    {
+      "key": "pullUp",
+      "name": "Pull Up",
+      "kind": "bodyweight",
+      "hevy": "Pull Up"
+    },
+    {
+      "key": "chinUp",
+      "name": "Chin Up",
+      "kind": "bodyweight",
+      "hevy": "Chin Up"
+    },
+    {
+      "key": "straightArmPulldown",
+      "name": "Straight-Arm Pulldown",
+      "kind": "machine",
+      "hevy": "Straight Arm Lat Pulldown (Cable)"
+    },
+    {
+      "key": "pullover",
+      "name": "Pullover",
+      "kind": "dumbbell",
+      "hevy": "Pullover (Dumbbell)"
+    },
+    {
+      "key": "shrug",
+      "name": "Shrug",
+      "kind": "barbell",
+      "hevy": "Shrug (Barbell)"
+    },
+    {
+      "key": "bicepCurl",
+      "name": "Bicep Curl",
+      "kind": "dumbbell",
+      "hevy": "Bicep Curl (Dumbbell)"
+    },
+    {
+      "key": "barbellCurl",
+      "name": "Barbell Curl",
+      "kind": "barbell",
+      "hevy": "Bicep Curl (Barbell)"
+    },
+    {
+      "key": "hammerCurl",
+      "name": "Hammer Curl",
+      "kind": "dumbbell",
+      "hevy": "Hammer Curl (Dumbbell)"
+    },
+    {
+      "key": "reverseCurl",
+      "name": "Reverse Curl",
+      "kind": "barbell",
+      "hevy": "Reverse Curl (Barbell)"
+    },
+    {
+      "key": "inclineCurl",
+      "name": "Incline Curl",
+      "kind": "dumbbell",
+      "hevy": "Seated Incline Curl (Dumbbell)"
+    },
+    {
+      "key": "concentrationCurl",
+      "name": "Concentration Curl",
+      "kind": "dumbbell",
+      "hevy": "Concentration Curl"
+    },
+    {
+      "key": "spiderCurl",
+      "name": "Spider Curl",
+      "kind": "dumbbell",
+      "hevy": "Spider Curl (Dumbbell)"
+    },
+    {
+      "key": "preacherCurl",
+      "name": "Preacher Curl",
+      "kind": "machine",
+      "hevy": "Preacher Curl (Machine)"
+    },
+    {
+      "key": "tricepPushdown",
+      "name": "Triceps Pushdown",
+      "kind": "machine",
+      "hevy": "Triceps Pushdown"
+    },
+    {
+      "key": "overheadTricep",
+      "name": "Overhead Triceps Extension",
+      "kind": "machine",
+      "hevy": "Overhead Triceps Extension (Cable)"
+    },
+    {
+      "key": "tricepKickback",
+      "name": "Triceps Kickback",
+      "kind": "dumbbell",
+      "hevy": "Triceps Kickback (Dumbbell)"
+    },
+    {
+      "key": "skullcrusher",
+      "name": "Skullcrusher",
+      "kind": "barbell",
+      "hevy": "Skullcrusher (Barbell)"
+    },
+    {
+      "key": "jmPress",
+      "name": "JM Press",
+      "kind": "barbell",
+      "hevy": "JM Press (Barbell)"
+    },
+    {
+      "key": "wristCurl",
+      "name": "Wrist Curl",
+      "kind": "barbell",
+      "hevy": "Seated Wrist Curl (Barbell)"
+    },
+    {
+      "key": "calfRaise",
+      "name": "Calf Raise",
+      "kind": "machine",
+      "hevy": "Standing Calf Raise (Machine)"
+    },
+    {
+      "key": "seatedCalfRaise",
+      "name": "Seated Calf Raise",
+      "kind": "machine",
+      "hevy": "Seated Calf Raise"
+    },
+    {
+      "key": "hangingLegRaise",
+      "name": "Hanging Leg Raise",
+      "kind": "bodyweight",
+      "hevy": "Hanging Leg Raise"
+    },
+    {
+      "key": "abWheel",
+      "name": "Ab Wheel",
+      "kind": "bodyweight",
+      "hevy": "Ab Wheel"
+    },
+    {
+      "key": "cableCrunch",
+      "name": "Cable Crunch",
+      "kind": "machine",
+      "hevy": "Cable Crunch"
+    },
+    {
+      "key": "birdDog",
+      "name": "Bird Dog",
+      "kind": "bodyweight",
+      "hevy": "Bird Dog"
+    },
+    {
+      "key": "sidePlank",
+      "name": "Side Plank",
+      "kind": "bodyweight",
+      "hevy": "Side Plank"
+    },
+    {
+      "key": "crunch",
+      "name": "Crunch",
+      "kind": "bodyweight",
+      "hevy": "Crunch"
+    },
+    {
+      "key": "plank",
+      "name": "Plank",
+      "kind": "bodyweight",
+      "hevy": "Plank"
+    },
+    {
+      "key": "sitUp",
+      "name": "Sit Up",
+      "kind": "bodyweight",
+      "hevy": "Sit Up"
+    },
+    {
+      "key": "farmersWalk",
+      "name": "Farmer's Walk",
+      "kind": "dumbbell",
+      "hevy": "Farmers Walk"
+    },
+    {
+      "key": "powerClean",
+      "name": "Power Clean",
+      "kind": "barbell",
+      "hevy": "Power Clean"
+    }
+  ]
+}

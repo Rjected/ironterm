@@ -1,0 +1,437 @@
+{
+  "month": "2026-10",
+  "days": [
+    {
+      "date": "2026-09-28",
+      "inMonth": false,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-09-28",
+          "title": "GZCLP · A1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-09-29",
+      "inMonth": false,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-09-29",
+          "title": "GZCLP · B1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-09-30",
+      "inMonth": false,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-01",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-01",
+          "title": "GZCLP · A2"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-02",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-02",
+          "title": "GZCLP · B2"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-03",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-03",
+          "title": "GZCLP · A1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-04",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-05",
+      "inMonth": true,
+      "status": "missed",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-06",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-06",
+          "title": "GZCLP · B1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-07",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-08",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-08",
+          "title": "GZCLP · A2"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-09",
+      "inMonth": true,
+      "status": "missed",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-10",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-11",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-12",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-12",
+          "title": "GZCLP · B2"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-13",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-13",
+          "title": "GZCLP · A1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-14",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-15",
+      "inMonth": true,
+      "status": "done",
+      "workouts": [
+        {
+          "id": "demo-2026-10-15",
+          "title": "GZCLP · B1"
+        }
+      ],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-16",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-17",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-18",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-19",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B2",
+        "dayName": "Day B2 · Deadlift"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-20",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A1",
+        "dayName": "Day A1 · Squat"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-21",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-22",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B1",
+        "dayName": "Day B1 · OHP"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-23",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-24",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-25",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-26",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B2",
+        "dayName": "Day B2 · Deadlift"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-27",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A1",
+        "dayName": "Day A1 · Squat"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-28",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-10-29",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B1",
+        "dayName": "Day B1 · OHP"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-30",
+      "inMonth": true,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-10-31",
+      "inMonth": true,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-11-01",
+      "inMonth": false,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-11-02",
+      "inMonth": false,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B2",
+        "dayName": "Day B2 · Deadlift"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-11-03",
+      "inMonth": false,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A1",
+        "dayName": "Day A1 · Squat"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-11-04",
+      "inMonth": false,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-11-05",
+      "inMonth": false,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "B1",
+        "dayName": "Day B1 · OHP"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-11-06",
+      "inMonth": false,
+      "status": "planned",
+      "workouts": [],
+      "planned": {
+        "dayId": "A2",
+        "dayName": "Day A2 · Bench"
+      },
+      "trip": null
+    },
+    {
+      "date": "2026-11-07",
+      "inMonth": false,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    },
+    {
+      "date": "2026-11-08",
+      "inMonth": false,
+      "status": "rest",
+      "workouts": [],
+      "planned": null,
+      "trip": null
+    }
+  ],
+  "week": {
+    "planned": 4,
+    "done": 3,
+    "left": 1,
+    "label": "on track · 1 to go"
+  },
+  "trips": []
+}

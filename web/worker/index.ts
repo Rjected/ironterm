@@ -2,6 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
+import { appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
@@ -189,6 +190,34 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     const stored = saved?.id ? saved : await hevy.workout(id).catch(() => next);
     await upsertWorkouts(env.DB, [stored]);
     return json({ ok: true, workout: stored });
+  }
+
+  // ── native app screens (shared/appapi.ts) ──
+  if (path.startsWith("/api/app/")) {
+    const b = await bootstrap(env, authMode);
+    const sub = path.slice(9);
+    const q = url.searchParams;
+    const none = () => json({ error: "not found" }, { status: 404 });
+    if (method === "GET") {
+      if (sub === "home") return json(appHome(b));
+      if (sub === "gym") return json(appGym(b));
+      if (sub === "lifts") return json(appLifts(b));
+      if (sub.startsWith("lifts/")) { const r = appLift(b, decodeURIComponent(sub.slice(6))); return r ? json(r) : none(); }
+      if (sub === "history") return json(appHistory(b, { cursor: q.get("cursor"), limit: Number(q.get("limit") ?? 30), q: q.get("q") ?? undefined }));
+      if (sub.startsWith("workouts/")) { const r = appWorkout(b, decodeURIComponent(sub.slice(9))); return r ? json(r) : none(); }
+      if (sub === "calendar") return json(appCalendar(b, q.get("month") ?? undefined));
+      if (sub === "program") return json(appProgram(b));
+      if (sub === "body") return json(appBody(b, q.get("mode") === "load" ? "load" : "ready"));
+      if (sub === "insights") return json(appInsights(b));
+      if (sub === "stats") return json(appStats(b));
+    }
+    if (sub === "gym/start" && method === "POST") {
+      const body = await req.json<{ dayIndex?: number; empty?: boolean }>().catch(() => ({}));
+      const s = startSession(b, body);
+      await kvPut(env.DB, k(env, "live"), s);
+      return json(s);
+    }
+    return none();
   }
 
   if (path === "/api/tokens" && method === "GET") return json(await listTokens(env.DB));

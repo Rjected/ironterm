@@ -1,0 +1,264 @@
+{
+  "id": "sgdlcva0",
+  "startedAt": "2026-10-15T22:00:00.000Z",
+  "unit": "lb",
+  "programName": "GZCLP 4-Day",
+  "dayId": "A2",
+  "dayName": "Day A2 · Bench",
+  "title": "GZCLP · A2",
+  "exercises": [
+    {
+      "id": "av8jvw7s",
+      "lift": "bench",
+      "slotId": "a2-t1",
+      "tier": "T1",
+      "scheme": "10×1+",
+      "ifSuccess": "10 reps → 330",
+      "ifFail": "miss → retest 5RM",
+      "restSeconds": 180,
+      "sets": [
+        {
+          "type": "warmup",
+          "weight": 45,
+          "reps": 10,
+          "done": false
+        },
+        {
+          "type": "warmup",
+          "weight": 130,
+          "reps": 5,
+          "done": false
+        },
+        {
+          "type": "warmup",
+          "weight": 195,
+          "reps": 3,
+          "done": false
+        },
+        {
+          "type": "warmup",
+          "weight": 260,
+          "reps": 2,
+          "done": false
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": false
+          }
+        },
+        {
+          "type": "failure",
+          "weight": 325,
+          "reps": 1,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 325,
+            "reps": 1,
+            "amrap": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "gp4683ep",
+      "lift": "squat",
+      "slotId": "a2-t2",
+      "tier": "T2",
+      "scheme": "3×8",
+      "ifSuccess": "24 reps → 195",
+      "ifFail": "miss → 3×6 @ 190",
+      "restSeconds": 120,
+      "sets": [
+        {
+          "type": "normal",
+          "weight": 190,
+          "reps": 8,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 190,
+          "reps": 8,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 190,
+          "reps": 8,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 190,
+            "reps": 8,
+            "amrap": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "9xbkszec",
+      "lift": "latPulldown",
+      "slotId": "a2-t3",
+      "tier": "T3",
+      "scheme": "3×15+",
+      "ifSuccess": "25+ on last set → 100",
+      "ifFail": "fewer → stay at 95",
+      "restSeconds": 75,
+      "sets": [
+        {
+          "type": "normal",
+          "weight": 95,
+          "reps": 15,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 95,
+            "reps": 15,
+            "amrap": false
+          }
+        },
+        {
+          "type": "normal",
+          "weight": 95,
+          "reps": 15,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 95,
+            "reps": 15,
+            "amrap": false
+          }
+        },
+        {
+          "type": "failure",
+          "weight": 95,
+          "reps": 15,
+          "rpe": null,
+          "done": false,
+          "target": {
+            "weight": 95,
+            "reps": 15,
+            "amrap": true
+          }
+        }
+      ]
+    }
+  ],
+  "restEndsAt": null
+}

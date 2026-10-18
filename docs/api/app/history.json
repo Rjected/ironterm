@@ -1,0 +1,331 @@
+{
+  "workouts": [
+    {
+      "id": "demo-2026-10-15",
+      "date": "2026-10-15",
+      "start": "2026-10-15T11:27:00.000Z",
+      "title": "GZCLP · B1",
+      "durationMin": 66,
+      "volume": 11355,
+      "sets": 16,
+      "exercises": [
+        "Overhead Press (Barbell)",
+        "Deadlift (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-13",
+      "date": "2026-10-13",
+      "start": "2026-10-13T10:18:00.000Z",
+      "title": "GZCLP · A1",
+      "durationMin": 76,
+      "volume": 28440,
+      "sets": 20,
+      "exercises": [
+        "Squat (Barbell)",
+        "Bench Press (Barbell)",
+        "Lat Pulldown (Cable)",
+        "Bicep Curl (Dumbbell)"
+      ],
+      "programDay": "A1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-12",
+      "date": "2026-10-12",
+      "start": "2026-10-12T10:09:00.000Z",
+      "title": "GZCLP · B2",
+      "durationMin": 63,
+      "volume": 12960,
+      "sets": 16,
+      "exercises": [
+        "Deadlift (Barbell)",
+        "Overhead Press (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-08",
+      "date": "2026-10-08",
+      "start": "2026-10-08T10:19:00.000Z",
+      "title": "GZCLP · A2",
+      "durationMin": 71,
+      "volume": 14649,
+      "sets": 16,
+      "exercises": [
+        "Bench Press (Barbell)",
+        "Squat (Barbell)",
+        "Lat Pulldown (Cable)"
+      ],
+      "programDay": "A2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-06",
+      "date": "2026-10-06",
+      "start": "2026-10-06T10:21:00.000Z",
+      "title": "GZCLP · B1",
+      "durationMin": 72,
+      "volume": 12115,
+      "sets": 16,
+      "exercises": [
+        "Overhead Press (Barbell)",
+        "Deadlift (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-03",
+      "date": "2026-10-03",
+      "start": "2026-10-03T11:15:00.000Z",
+      "title": "GZCLP · A1",
+      "durationMin": 56,
+      "volume": 26580,
+      "sets": 20,
+      "exercises": [
+        "Squat (Barbell)",
+        "Bench Press (Barbell)",
+        "Lat Pulldown (Cable)",
+        "Bicep Curl (Dumbbell)"
+      ],
+      "programDay": "A1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-02",
+      "date": "2026-10-02",
+      "start": "2026-10-02T11:36:00.000Z",
+      "title": "GZCLP · B2",
+      "durationMin": 58,
+      "volume": 12320,
+      "sets": 16,
+      "exercises": [
+        "Deadlift (Barbell)",
+        "Overhead Press (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-10-01",
+      "date": "2026-10-01",
+      "start": "2026-10-01T11:14:00.000Z",
+      "title": "GZCLP · A2",
+      "durationMin": 76,
+      "volume": 14005,
+      "sets": 16,
+      "exercises": [
+        "Bench Press (Barbell)",
+        "Squat (Barbell)",
+        "Lat Pulldown (Cable)"
+      ],
+      "programDay": "A2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-29",
+      "date": "2026-09-29",
+      "start": "2026-09-29T11:04:00.000Z",
+      "title": "GZCLP · B1",
+      "durationMin": 71,
+      "volume": 11265,
+      "sets": 16,
+      "exercises": [
+        "Overhead Press (Barbell)",
+        "Deadlift (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-28",
+      "date": "2026-09-28",
+      "start": "2026-09-28T11:39:00.000Z",
+      "title": "GZCLP · A1",
+      "durationMin": 67,
+      "volume": 25450,
+      "sets": 16,
+      "exercises": [
+        "Squat (Barbell)",
+        "Bench Press (Barbell)",
+        "Lat Pulldown (Cable)",
+        "Bicep Curl (Dumbbell)"
+      ],
+      "programDay": "A1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-24",
+      "date": "2026-09-24",
+      "start": "2026-09-24T11:04:00.000Z",
+      "title": "GZCLP · B2",
+      "durationMin": 64,
+      "volume": 11440,
+      "sets": 16,
+      "exercises": [
+        "Deadlift (Barbell)",
+        "Overhead Press (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-22",
+      "date": "2026-09-22",
+      "start": "2026-09-22T10:24:00.000Z",
+      "title": "GZCLP · A2",
+      "durationMin": 79,
+      "volume": 13520,
+      "sets": 16,
+      "exercises": [
+        "Bench Press (Barbell)",
+        "Squat (Barbell)",
+        "Lat Pulldown (Cable)"
+      ],
+      "programDay": "A2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-21",
+      "date": "2026-09-21",
+      "start": "2026-09-21T10:40:00.000Z",
+      "title": "GZCLP · B1",
+      "durationMin": 71,
+      "volume": 10180,
+      "sets": 16,
+      "exercises": [
+        "Overhead Press (Barbell)",
+        "Deadlift (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-18",
+      "date": "2026-09-18",
+      "start": "2026-09-18T10:11:00.000Z",
+      "title": "GZCLP · A1",
+      "durationMin": 60,
+      "volume": 28745,
+      "sets": 16,
+      "exercises": [
+        "Squat (Barbell)",
+        "Bench Press (Barbell)",
+        "Lat Pulldown (Cable)",
+        "Bicep Curl (Dumbbell)"
+      ],
+      "programDay": "A1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-17",
+      "date": "2026-09-17",
+      "start": "2026-09-17T10:16:00.000Z",
+      "title": "GZCLP · B2",
+      "durationMin": 74,
+      "volume": 11125,
+      "sets": 12,
+      "exercises": [
+        "Deadlift (Barbell)",
+        "Overhead Press (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-15",
+      "date": "2026-09-15",
+      "start": "2026-09-15T10:05:00.000Z",
+      "title": "GZCLP · A2",
+      "durationMin": 71,
+      "volume": 12380,
+      "sets": 16,
+      "exercises": [
+        "Bench Press (Barbell)",
+        "Squat (Barbell)",
+        "Lat Pulldown (Cable)"
+      ],
+      "programDay": "A2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-14",
+      "date": "2026-09-14",
+      "start": "2026-09-14T11:13:00.000Z",
+      "title": "GZCLP · B1",
+      "durationMin": 80,
+      "volume": 9675,
+      "sets": 16,
+      "exercises": [
+        "Overhead Press (Barbell)",
+        "Deadlift (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-10",
+      "date": "2026-09-10",
+      "start": "2026-09-10T10:37:00.000Z",
+      "title": "GZCLP · A1",
+      "durationMin": 77,
+      "volume": 26155,
+      "sets": 16,
+      "exercises": [
+        "Squat (Barbell)",
+        "Bench Press (Barbell)",
+        "Lat Pulldown (Cable)",
+        "Bicep Curl (Dumbbell)"
+      ],
+      "programDay": "A1",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-08",
+      "date": "2026-09-08",
+      "start": "2026-09-08T10:11:00.000Z",
+      "title": "GZCLP · B2",
+      "durationMin": 70,
+      "volume": 13305,
+      "sets": 12,
+      "exercises": [
+        "Deadlift (Barbell)",
+        "Overhead Press (Barbell)",
+        "Dumbbell Row"
+      ],
+      "programDay": "B2",
+      "hasNotes": false
+    },
+    {
+      "id": "demo-2026-09-07",
+      "date": "2026-09-07",
+      "start": "2026-09-07T10:45:00.000Z",
+      "title": "GZCLP · A2",
+      "durationMin": 64,
+      "volume": 12320,
+      "sets": 16,
+      "exercises": [
+        "Bench Press (Barbell)",
+        "Squat (Barbell)",
+        "Lat Pulldown (Cable)"
+      ],
+      "programDay": "A2",
+      "hasNotes": false
+    }
+  ],
+  "next": "demo-2026-09-07",
+  "total": 178
+}
