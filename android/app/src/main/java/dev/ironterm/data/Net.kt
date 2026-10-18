@@ -61,7 +61,7 @@ class ServerClient(
                 res.code == 401 || res.code == 403 -> throw AuthException()
                 !res.isSuccessful -> throw HttpStatusException(res.code, "Server error ${res.code}")
                 else -> try {
-                    SnapshotJson.parse(body).copy(source = Snapshot.SOURCE_SERVER)
+                    SnapshotJson.parse(body).copy(origin = Snapshot.SOURCE_SERVER)
                 } catch (e: Exception) {
                     throw IOException("Server sent an unexpected response (is this a ${dev.ironterm.Brand.NAME} server?)", e)
                 }

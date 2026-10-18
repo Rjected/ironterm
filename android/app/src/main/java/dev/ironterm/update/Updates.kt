@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -60,7 +61,7 @@ object ReleaseParser {
         val r = runCatching { SnapshotJson.json.decodeFromString(Release.serializer(), json) }.getOrNull() ?: return null
         if (r.draft) return null
         val code = versionCode(r.tag) ?: return null
-        val apk = r.assets.firstOrNull { APK.matches(it.name) && it.url.isNotBlank() } ?: return null
+        val apk = r.assets.firstOrNull { APK.matches(it.name) && it.url.toHttpUrlOrNull()?.isHttps == true } ?: return null
         return UpdateInfo(code, r.tag, r.name?.ifBlank { null } ?: r.tag, apk.url, apk.name, apk.size, r.body.orEmpty().trim(), r.htmlUrl)
     }
 
@@ -112,13 +113,18 @@ class UpdateStore(context: Context) {
 }
 
 object ApkDownloader {
-    /** Streams [info]'s APK into the app cache, reporting 0..1 progress (or -1 if size unknown). */
+    /**
+     * Streams [info]'s APK into the app cache, reporting 0..1 progress (or -1 if size unknown).
+     * HTTPS only, redirects included (OkHttp would otherwise follow an https → http redirect).
+     */
     suspend fun download(context: Context, info: UpdateInfo, client: OkHttpClient = Net.client, onProgress: (Float) -> Unit): File =
         withContext(Dispatchers.IO) {
+            val url = info.apkUrl.toHttpUrlOrNull()?.takeIf { it.isHttps } ?: throw IOException("Refusing a non-HTTPS download")
             val dir = File(context.cacheDir, "updates").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
             val out = File(dir, "ironterm-${info.versionCode}.apk")
-            client.newCall(Request.Builder().url(info.apkUrl).build()).execute().use { res ->
+            client.newCall(Request.Builder().url(url).build()).execute().use { res ->
+                if (!res.request.url.isHttps) throw IOException("Refusing a non-HTTPS download (redirected)")
                 if (!res.isSuccessful) throw IOException("Download failed (HTTP ${res.code})")
                 val body = res.body ?: throw IOException("Empty download")
                 val total = body.contentLength().takeIf { it > 0 } ?: info.apkSize

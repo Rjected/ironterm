@@ -42,6 +42,8 @@ data class FinishSummary(
     val workoutId: String? = null,
     val error: String? = null,
     val demo: Boolean = false,
+    /** local mode: stored on the server, which has no Hevy connected */
+    val local: Boolean = false,
     /** saved straight to Hevy (Direct mode) */
     val direct: Boolean = false,
     /** a program day (the server advances the program) */
@@ -64,7 +66,7 @@ data class GymState(
 }
 
 /** A FINISH the server accepted: workout id, demo server, and the server's PR lines (null = it sent none, keep the local estimate). */
-data class Finished(val workoutId: String?, val demo: Boolean = false, val prs: List<String>? = null)
+data class Finished(val workoutId: String?, val demo: Boolean = false, val prs: List<String>? = null, val local: Boolean = false)
 
 /** Sends gym writes. Server mode: the Ironterm API; Direct mode: PUT/DELETE are no-ops and FINISH posts to Hevy. */
 interface GymTransport {
@@ -233,7 +235,7 @@ class GymStore(
                         val r = t.finish(op.session!!)
                         set(persistSummary = true) { st ->
                             st.copy(summary = st.summary?.takeIf { it.sessionId == op.sessionId }
-                                ?.let { it.copy(state = FinishState.SAVED, workoutId = r.workoutId, demo = r.demo, error = null, prs = r.prs ?: it.prs, prsFromServer = r.prs != null) }
+                                ?.let { it.copy(state = FinishState.SAVED, workoutId = r.workoutId, demo = r.demo, local = r.local, error = null, prs = r.prs ?: it.prs, prsFromServer = r.prs != null) }
                                 ?: st.summary)
                         }
                         onFinished()

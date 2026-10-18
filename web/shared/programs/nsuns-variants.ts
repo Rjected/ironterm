@@ -6,12 +6,15 @@
 // unnamed squat-focus tab ("Sheet3") divides back to the 5-day percentages at 5 lb rounding.
 //
 // - 4-day: Bench (volume) / OHP · Squat / Sumo · Bench (heavy) / CG bench · Deadlift / Front squat.
-//   OHP only appears as a T2, so it has no 1+ set and its TM never moves on its own; bump it by hand
-//   (most people raise it whenever bench goes up).
+//   OHP only appears as a T2, so it has no 1+ set. nSuns' rule (his reply in the original r/Fitness
+//   thread, 5icyza: "would you just increase TM by 5 lbs if you can successfully complete all the
+//   reps for that day?" — "Yes exactly"): finish every Monday OHP rep → OHP TM +5 lb (2.5 kg) for
+//   next week. Encoded as total reps at the 70% sets (3+5+7+4+6+8 = 33).
 // - 6-day: the 5-day week plus a Saturday of 8×3 on the focus lift (3rd set "3+") and 6×3 on its
-//   variation. In the sheet those are 65% and 51% of the 1RM, i.e. 72.2% / 56.7% of a 90% TM. The
-//   deadlift-focus tab also swaps Tuesday and Thursday (deadlift Tue + Sat, squat Thu). The 6-day tabs' Monday OHP cells are broken in the sheet (they read the wrong TM), so
-//   Monday OHP uses the 5-day T2 table.
+//   variation. The sheet's formulas are MROUND(TM × 0.725) and MROUND(otherTM × 0.75 × 0.75), i.e.
+//   72.5% and 56.25% of the TM. The deadlift-focus tab also swaps Tuesday and Thursday (deadlift
+//   Tue + Sat, squat Thu). The 6-day tabs' press TM cell reads the wrong 1RM in the sheet (a bug),
+//   so both OHP days use the OHP TM with the 5-day percentages.
 // CAP3 isn't included: the bundle doesn't contain it and its "TM = new e1RM, else +5" rule needs
 // an engine change.
 
@@ -27,9 +30,12 @@ const kg = (lb: number) => Math.round(lb / 2.20462 / 2.5) * 2.5;
 const TMI = { lb: 5, kg: 2.5 };
 const tmIncrement = { bench: TMI, ohp: TMI, squat: TMI, deadlift: TMI };
 
-// Saturday of the 6-day versions: 65% / 51% of 1RM expressed against a 90% TM.
-const SAT_T1: PercentSet[] = Array.from({ length: 8 }, (_, i) => ({ pct: 0.65 / 0.9, reps: 3, amrap: i === 2 }));
-const SAT_T2: PercentSet[] = Array.from({ length: 6 }, () => ({ pct: 0.51 / 0.9, reps: 3 }));
+// Saturday of the 6-day versions (sheet formulas: TM × 0.725 and TM × 0.75 × 0.75).
+const SAT_T1: PercentSet[] = Array.from({ length: 8 }, (_, i) => ({ pct: 0.725, reps: 3, amrap: i === 2 }));
+const SAT_T2: PercentSet[] = Array.from({ length: 6 }, () => ({ pct: 0.5625, reps: 3 }));
+
+/** 4-day OHP: every rep of Monday's T2 done at the 70% sets (33 reps) → +1 increment next week. */
+const OHP_ALL_REPS: SlotDef["progression"] = { kind: "percent", tmLift: "ohp", weeks: [T2_A], tmRule: { type: "totalReps", table: [{ minReps: 0, increments: 0 }, { minReps: 33, increments: 1 }], applyAt: "weekEnd" } };
 
 const day = (id: string, name: string, ...slots: SlotDef[]): DayDef => ({ id, name, slots });
 
@@ -60,9 +66,9 @@ export const nsuns4: ProgramTemplate = {
       sessionsPerWeek: 4,
       tmIncrement,
       maxLabel: "Training max",
-      notes: [...NOTES, "OHP has no 1+ set in the 4-day version, so raise its TM yourself (usually when bench goes up)."],
+      notes: [...NOTES, "OHP has no 1+ set in the 4-day version: finish every rep of Monday's OHP and its TM goes up 5 lb next week (nSuns' own rule)."],
       days: [
-        day("1", "Day 1 · Bench volume / OHP", t1("n4-d1-t1", "bench", T1_BENCH_VOL), t2("n4-d1-t2", "ohp", "ohp", T2_A)),
+        day("1", "Day 1 · Bench volume / OHP", t1("n4-d1-t1", "bench", T1_BENCH_VOL), { id: "n4-d1-t2", lift: "ohp", tier: "T2", progression: OHP_ALL_REPS }),
         day("2", "Day 2 · Squat / Sumo", t1("n4-d2-t1", "squat", T1_531, LOWER), t2("n4-d2-t2", "sumoDeadlift", "deadlift", T2_SUMO)),
         day("3", "Day 3 · Bench / CG bench", t1("n4-d3-t1", "bench", T1_BENCH_HEAVY, UPPER), t2("n4-d3-t2", "cgBench", "bench", T2_BENCHVAR)),
         day("4", "Day 4 · Deadlift / Front squat", t1("n4-d4-t1", "deadlift", T1_DL, LOWER), t2("n4-d4-t2", "frontSquat", "squat", T2_FRONT)),

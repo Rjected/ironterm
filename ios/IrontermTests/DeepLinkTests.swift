@@ -68,4 +68,17 @@ final class DeepLinkTests: XCTestCase {
         m.handle(URL(string: "ironterm://connect?server=https%3A%2F%2Fa.b")!)
         XCTAssertNotNil(m.linkError)
     }
+
+    func testSavedTokenNeverGoesToAnotherHost() {
+        let saved: URL = URL(string: "https://gym.example.com")!
+        let other: URL = URL(string: "https://evil.example.net")!
+        XCTAssertTrue(ConnectLink.mayUseToken("ht_saved", for: saved, savedToken: "ht_saved", savedServer: saved))
+        XCTAssertTrue(ConnectLink.mayUseToken("ht_saved", for: URL(string: "https://GYM.example.com:443")!, savedToken: "ht_saved", savedServer: saved))
+        XCTAssertFalse(ConnectLink.mayUseToken("ht_saved", for: other, savedToken: "ht_saved", savedServer: saved))
+        XCTAssertFalse(ConnectLink.mayUseToken("ht_saved", for: URL(string: "http://gym.example.com")!, savedToken: "ht_saved", savedServer: saved), "no https to http downgrade")
+        XCTAssertFalse(ConnectLink.mayUseToken("ht_saved", for: URL(string: "https://gym.example.com:8443")!, savedToken: "ht_saved", savedServer: saved))
+        XCTAssertTrue(ConnectLink.mayUseToken("ht_new", for: other, savedToken: "ht_saved", savedServer: saved), "a token entered for the new server is fine")
+        XCTAssertTrue(ConnectLink.mayUseToken("ht_new", for: other, savedToken: nil, savedServer: nil))
+        XCTAssertFalse(ConnectLink.mayUseToken("ht_saved", for: other, savedToken: "ht_saved", savedServer: nil))
+    }
 }
