@@ -214,6 +214,9 @@ final class GymStore: ObservableObject {
         let summary = Live.summary(s) { Self.name($0, catalog: gym?.catalog) }
         let api = apiProvider()
         if let api {
+            // A save still queued (or in flight) would PUT the session back after the finish, and the
+            // next load would adopt the finished workout as a running one.
+            await queue.cancelSaves(of: s.id)
             do {
                 let r = try await api.finishLive(s)
                 end()

@@ -94,6 +94,16 @@ final class OfflineQueue: ObservableObject {
 
     func clearFailures() { failures = [] }
 
+    /// Forget pending saves of a session and wait for a flush that may be sending one right now,
+    /// so nothing can re-create it on the server after it was finished.
+    func cancelSaves(of id: String) async {
+        dropPuts(id)
+        save()
+        while let r = running { _ = await r.value }
+        dropPuts(id)
+        save()
+    }
+
     private func dropPuts(_ id: String) {
         ops.removeAll { if case .putLive(let x) = $0 { return x.id == id } else { return false } }
     }
