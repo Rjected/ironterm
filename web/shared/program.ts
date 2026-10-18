@@ -728,9 +728,14 @@ function evalPercent(def: ProgramDef, cfg: ProgramConfig, slot: SlotDef, state: 
   }
   if (rule?.type === "missCut") {
     const check = rule.setIndex != null ? [planned.sets[rule.setIndex]].filter(Boolean) : planned.sets.filter((x) => x.weight > 0 && !x.amrap);
+    // Each prescribed set needs its own logged set (4×6 with a 5 on the last set is a miss).
+    const used = new Set<number>();
     const short = check.filter((ps) => {
       const tol = Math.max(1, ps.weight * 0.03);
-      return !sets.some((x) => x.weight >= ps.weight - tol && x.reps >= ps.reps);
+      const k = sets.findIndex((x, j) => !used.has(j) && x.weight >= ps.weight - tol && x.reps >= ps.reps);
+      if (k < 0) return true;
+      used.add(k);
+      return false;
     });
     if (!short.length) return { tmDelta: 0, res: { ...base, outcome: "success", note: `${sets.length}/${planned.sets.length} sets, all reps made` } };
     const d = -Math.round(tm * rule.pct * 100) / 100;
