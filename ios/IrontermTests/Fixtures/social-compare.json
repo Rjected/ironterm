@@ -1,0 +1,134 @@
+{
+  "friend": {
+    "id": "650b12a8f954",
+    "server": "https://b.test",
+    "handle": "bob",
+    "name": "Bob"
+  },
+  "unit": "lb",
+  "lifts": [
+    {
+      "key": "squat",
+      "name": "Back Squat",
+      "me": 589.2,
+      "them": 659.8,
+      "meBw": 3.1,
+      "themBw": 3.4
+    },
+    {
+      "key": "bench",
+      "name": "Bench Press",
+      "me": 373.3,
+      "them": 418.2,
+      "meBw": 1.96,
+      "themBw": 2.16
+    },
+    {
+      "key": "deadlift",
+      "name": "Deadlift",
+      "me": 594,
+      "them": 653,
+      "meBw": 3.13,
+      "themBw": 3.37
+    },
+    {
+      "key": "ohp",
+      "name": "Overhead Press",
+      "me": 303.3,
+      "them": 339.7,
+      "meBw": 1.6,
+      "themBw": 1.75
+    },
+    {
+      "key": "latPulldown",
+      "name": "Lat Pulldown",
+      "me": 168,
+      "them": 188.1,
+      "meBw": 0.88,
+      "themBw": 0.97
+    },
+    {
+      "key": "dbRow",
+      "name": "Dumbbell Row",
+      "me": 144,
+      "them": 161.4,
+      "meBw": 0.76,
+      "themBw": 0.83
+    },
+    {
+      "key": "bicepCurl",
+      "name": "Bicep Curl",
+      "me": 420,
+      "them": 455,
+      "meBw": 2.21,
+      "themBw": 2.35
+    }
+  ],
+  "weeks": [
+    {
+      "week": "2026-07-27",
+      "me": 4,
+      "them": 3
+    },
+    {
+      "week": "2026-08-03",
+      "me": 3,
+      "them": 2
+    },
+    {
+      "week": "2026-08-10",
+      "me": 4,
+      "them": 2
+    },
+    {
+      "week": "2026-08-17",
+      "me": 4,
+      "them": 3
+    },
+    {
+      "week": "2026-08-24",
+      "me": 4,
+      "them": 3
+    },
+    {
+      "week": "2026-08-31",
+      "me": 4,
+      "them": 2
+    },
+    {
+      "week": "2026-09-07",
+      "me": 3,
+      "them": 2
+    },
+    {
+      "week": "2026-09-14",
+      "me": 4,
+      "them": 3
+    },
+    {
+      "week": "2026-09-21",
+      "me": 3,
+      "them": 2
+    },
+    {
+      "week": "2026-09-28",
+      "me": 5,
+      "them": 3
+    },
+    {
+      "week": "2026-10-05",
+      "me": 2,
+      "them": 2
+    },
+    {
+      "week": "2026-10-12",
+      "me": 4,
+      "them": 2
+    }
+  ],
+  "streak": {
+    "me": 1,
+    "them": 0
+  },
+  "stale": false
+}

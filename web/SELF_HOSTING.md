@@ -50,6 +50,9 @@ pnpm start                      # PORT=8787, DATA_DIR=./data by default
 | `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | Optional WHOOP integration. |
 | `SYNC_MINUTES` | Background sync interval, default 15. `0` turns it off. |
 | `PORT`, `HOST`, `DATA_DIR` | Defaults: 8787, 0.0.0.0, ./data. |
+| `SOCIAL_DIRECTORY` | Optional. Directory for FRIENDS handles, e.g. `https://directory.example.com`. No default; without it friends add each other by server URL. |
+| `SOCIAL_ORIGIN` | Optional. This server's public origin, if requests reach it under another URL (normally it comes from the request and `X-Forwarded-*`). |
+| `SOCIAL_ALLOW_HTTP` | `1` allows `http://` peers. Local testing only. |
 
 **No login configured means local only.** If neither a password nor Google sign-in is set, the server answers only requests from the same machine that didn't come through a proxy. Anything else gets 403. Set a login before exposing it.
 
@@ -103,6 +106,33 @@ Put any reverse proxy in front. It must pass `X-Forwarded-Proto` and `X-Forwarde
 - **Caddy** (gets certificates automatically): `gym.example.com { reverse_proxy localhost:8787 }`
 - **Tailscale**: `tailscale serve --bg 8787` makes it private to your tailnet, with HTTPS.
 - **Cloudflare Tunnel**: `cloudflared tunnel --url http://localhost:8787`. No open ports needed.
+
+## Friends (social)
+
+F11 · FRIENDS connects your server with friends' servers; nothing is shared until you set it up and
+accept someone. User guide and privacy: [docs/social/README.md](../docs/social/README.md); protocol:
+[docs/social/PROTOCOL.md](../docs/social/PROTOCOL.md).
+
+- **Reachable over HTTPS.** Friends' servers fetch `/.well-known/ironterm` and `/social/v1/*` from
+  yours, without your login (every `/social/v1/*` call is signed by their server key). A server only
+  on a private network (Tailscale, localhost) can follow others but can't be read by them.
+- **Login proxies must let those two paths through.** Cloudflare Access: add a Bypass policy for
+  `/.well-known/ironterm` and `/social/*`. On Workers, `assets.run_worker_first` must include them
+  (`wrangler.example.jsonc` does).
+- **The server key** is generated on first use and kept in the database (kv `social:key`). Back it up
+  with the rest: a new key means friends must remove and re-add you.
+
+### Your own directory
+
+The directory is a tiny separate service that stores only handle, display name, server URL, public
+key and the listed flag. Run one for your group, then point every server at it with
+`SOCIAL_DIRECTORY`.
+
+- **Node:** `pnpm build:directory && PORT=8790 DATA_DIR=./data pnpm start:directory` (behind a proxy
+  add `TRUST_PROXY=1` so rate limits see client addresses; `DIRECTORY_ORIGIN` if its public URL
+  differs from the request's).
+- **Cloudflare:** `cp wrangler.directory.example.jsonc wrangler.directory.jsonc`,
+  `wrangler d1 create ironterm-directory`, paste the id, then `pnpm deploy:directory`.
 
 ## Phone apps
 

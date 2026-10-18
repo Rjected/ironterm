@@ -6,7 +6,7 @@ struct AppAPI {
     var token: String
     var session: URLSession = .shared
 
-    private var client: ServerClient { ServerClient(base: base, token: token, session: session) }
+    var client: ServerClient { ServerClient(base: base, token: token, session: session) }
 
     // MARK: screens
 
@@ -101,11 +101,13 @@ struct AppAPI {
         }
     }
 
-    private func perform(_ r: URLRequest) async throws -> Data {
+    /// `forbiddenIsAuth: false` for endpoints where 403 means "not allowed" (e.g. not a friend)
+    /// rather than a revoked token.
+    func perform(_ r: URLRequest, forbiddenIsAuth: Bool = true) async throws -> Data {
         let (data, resp): (Data, URLResponse)
         do { (data, resp) = try await session.data(for: r) } catch { throw ApiError.network(error.localizedDescription) }
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-        if code == 401 || code == 403 { throw ApiError.unauthorized(.server) }
+        if code == 401 || (code == 403 && forbiddenIsAuth) { throw ApiError.unauthorized(.server) }
         guard (200..<300).contains(code) else {
             // the server answers {"error": "..."}: show just the message
             let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]

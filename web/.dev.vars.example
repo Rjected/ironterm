@@ -8,3 +8,6 @@ WEBHOOK_SECRET=change-me-too
 # WHOOP developer app (developer-dashboard.whoop.com); redirect URL = <origin>/api/whoop/callback
 WHOOP_CLIENT_ID=
 WHOOP_CLIENT_SECRET=
+# Friends (docs/social): directory URL (optional), and 1 to allow http:// peers for local testing
+SOCIAL_DIRECTORY=
+SOCIAL_ALLOW_HTTP=

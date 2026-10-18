@@ -18,6 +18,8 @@ struct IrontermApp: App {
                     guard p == .active else { return }
                     // anything queued while offline goes out now
                     Task { await model.gym.queue.flush() }
+                    // the bell and incoming requests
+                    Task { await model.social.refreshNotifications() }
                     // refresh when coming back to the app if the data is older than 5 minutes
                     if model.lastSync.map({ Date().timeIntervalSince($0) > 300 }) ?? true {
                         Task { await model.refresh(); await model.gym.load() }
@@ -47,7 +49,7 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             if !keyboard {
                 Divider1()
-                TabBar(gym: model.gym)
+                TabBar(gym: model.gym, social: model.social)
             }
         }
         .background(T.bg.ignoresSafeArea())
@@ -67,7 +69,7 @@ struct RootView: View {
         switch t {
         case .today: NavigationStack { TodayScreen().withRoutes() }
         case .gym: GymScreen()
-        case .lifts: NavigationStack { LiftsScreen().withRoutes() }
+        case .friends: FriendsRoot()
         case .history: NavigationStack { HistoryScreen().withRoutes() }
         case .more: MoreRoot()
         }
@@ -152,6 +154,7 @@ struct ErrorBanner: View {
 struct TabBar: View {
     @EnvironmentObject var model: AppModel
     @ObservedObject var gym: GymStore
+    @ObservedObject var social: SocialStore
 
     var body: some View {
         HStack(spacing: 0) {
@@ -159,6 +162,7 @@ struct TabBar: View {
                 let on = model.tab == t
                 Button {
                     if on, t == .more { model.morePath = [] } // tap again: back to the MORE menu
+                    if on, t == .friends { model.socialPath = [] }
                     model.tab = t
                 } label: {
                     VStack(spacing: 3) {
@@ -166,6 +170,9 @@ struct TabBar: View {
                             Text(t.key).font(T.mono(8)).foregroundStyle(on ? T.amber : T.faint)
                             if t == .gym, gym.session != nil {
                                 Circle().fill(gym.session?.restEnd.map { $0 > Date() } == true ? T.amber : T.up).frame(width: 5, height: 5)
+                            }
+                            if t == .friends, social.attention {
+                                Circle().fill(T.down).frame(width: 5, height: 5)
                             }
                         }
                         Text(t.title).font(T.mono(11, .bold)).foregroundStyle(on ? T.bg : T.dim)
@@ -177,12 +184,18 @@ struct TabBar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(t.title + (t == .gym && gym.session != nil ? ", session running" : ""))
+                .accessibilityLabel(label(t))
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
         .padding(.horizontal, 4)
         .background(T.panel.ignoresSafeArea(edges: .bottom))
+    }
+
+    func label(_ t: AppModel.Tab) -> String {
+        if t == .gym && gym.session != nil { return t.title + ", session running" }
+        if t == .friends && social.attention { return t.title + ", new activity" }
+        return t.title
     }
 }
 

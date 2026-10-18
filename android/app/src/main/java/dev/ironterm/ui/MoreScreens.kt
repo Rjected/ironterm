@@ -53,12 +53,16 @@ import java.time.YearMonth
 // ═════════════════════════════ MORE ═════════════════════════════
 
 @Composable
-fun MoreScreen(state: UiState, gym: GymUi, onGo: (Route) -> Unit) {
+fun MoreScreen(state: UiState, gym: GymUi, social: SocialUi = SocialUi(), onGo: (Route) -> Unit) {
     val direct = state.mode == SourceMode.DIRECT
     val srv = if (direct) " · needs a server" else ""
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) { Label("More") }
         Line()
+        if (Tabs.LIFTS !in Tabs.bar(state.mode)) { NavRow("LIFTS", "e1RM per lift, charts, rep PRs") { onGo(Route.Lifts) }; Line() }
+        if (Tabs.FRIENDS !in Tabs.bar(state.mode)) {
+            NavRow("FRIENDS", "Friends feed, reactions, compare$srv", right = social.unread.takeIf { it > 0 }?.toString(), rightColor = T.amber) { onGo(Route.Friends) }; Line()
+        }
         NavRow("CALENDAR", "Month grid: done, planned, missed, travel$srv") { onGo(Route.Calendar) }; Line()
         NavRow("PROGRAM", "Slots, next steps, upcoming sessions, decision log$srv") { onGo(Route.Program) }; Line()
         NavRow("BODY", "Muscle readiness and weekly load on the figure$srv") { onGo(Route.Body) }; Line()

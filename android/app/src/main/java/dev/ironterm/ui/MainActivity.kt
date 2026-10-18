@@ -53,6 +53,17 @@ class MainActivity : ComponentActivity() {
                 askNotifications()
                 vm.gymStart(dayIndex, empty)
             }
+
+            // FRIENDS: requests, reactions and comments can arrive as notifications once you're social.
+            override fun socialSetup(handle: String, name: String, listed: Boolean) {
+                askNotifications()
+                vm.socialSetup(handle, name, listed)
+            }
+
+            override fun addFriend(target: String, note: String, share: String) {
+                askNotifications()
+                vm.addFriend(target, note, share)
+            }
         }
     }
 
@@ -100,7 +111,7 @@ class MainActivity : ComponentActivity() {
         if (System.currentTimeMillis() - st.status.lastAttemptAt > RESUME_REFRESH_AFTER_MS) vm.refresh()
         vm.resumeUpdateIfAllowed()
         vm.checkUpdatesIfDue()
-        vm.ensureGymService()
+        vm.ensureGymService();
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

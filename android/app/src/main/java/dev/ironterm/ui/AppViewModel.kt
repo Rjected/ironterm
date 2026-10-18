@@ -268,6 +268,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     private val appCache = AppCache.get(app)
     private val repo = AppRepo.get(app)
+    private val social = SocialController(
+        scope = viewModelScope, mode = { settings.mode }, apiOrNull = { repo.api() }, serverUrl = { settings.serverUrl }, cache = appCache,
+        data = { _data.value }, setData = { f -> _data.update { it.f() } },
+        onAuth = { msg -> reload { copy(status = status.copy(authError = true, lastError = msg, lastAttemptAt = System.currentTimeMillis())) } },
+    )
     private val _data = MutableStateFlow(initialData())
     val data: StateFlow<DataUi> = _data
 
@@ -277,6 +282,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
     private fun initialData(): DataUi {
         if (settings.mode != SourceMode.SERVER) return DataUi()
         return DataUi(
+            social = social.initial(),
             home = repo.cached("home", AppHome.serializer()) ?: Load(),
             lifts = repo.cached("lifts", AppLiftList.serializer()) ?: Load(),
             gym = repo.cached("gym", AppGym.serializer()) ?: Load(),
@@ -423,6 +429,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
     }
 
     override fun toastShown() = setData { copy(toast = null) }
+
+    // ═════════════════════════════ social ═════════════════════════════
+
+    override fun socialLoad(force: Boolean) = social.load(force)
+    override fun socialSection(section: String) = setData { copy(social = social.copy(section = section)) }
+    override fun socialSetup(handle: String, name: String, listed: Boolean) = social.setup(handle, name, listed)
+    override fun feedRefresh() { social.loadFeed(reset = true, fresh = true); social.loadNotifications(true); social.loadFriends(true) }
+    override fun feedMore() = social.loadFeed(reset = false, fresh = false)
+    override fun react(item: dev.ironterm.data.social.FeedItem, emoji: String) = social.react(item, emoji)
+    override fun comment(item: dev.ironterm.data.social.FeedItem, text: String) = social.comment(item, text)
+    override fun directorySearch(q: String) = social.search(q)
+    override fun addFriend(target: String, note: String, share: String) = social.add(target, note, share)
+    override fun acceptFriend(id: String, share: String) = social.accept(id, share)
+    override fun rejectFriend(id: String) = social.reject(id)
+    override fun setShare(id: String, share: String) = social.setShare(id, share)
+    override fun unfriend(id: String) = social.unfriend(id)
+    override fun loadFriend(id: String, force: Boolean) = social.loadFriend(id, force)
+    override fun friendFeedMore(id: String) = social.loadFriendFeed(id, reset = false, fresh = false)
+    override fun loadMine(force: Boolean) { if (force || !_data.value.social.mine.loaded) social.loadMine(reset = true) }
+    override fun mineMore() = social.loadMine(reset = false)
+    override fun loadNotifications(force: Boolean) = social.loadNotifications(force)
+    override fun markNotificationsRead() = social.markRead()
 
     /** A new snapshot arrived (sync / finish): documents derived from history are stale. */
     private fun afterSnapshot() {

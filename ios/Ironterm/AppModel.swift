@@ -4,14 +4,14 @@ import WidgetKit
 @MainActor
 final class AppModel: ObservableObject {
     enum Tab: String, CaseIterable, Identifiable {
-        case today, gym, lifts, history, more
+        case today, gym, friends, history, more
         var id: String { rawValue }
         var title: String { rawValue.uppercased() }
         var key: String {
             switch self {
             case .today: return "F1"
             case .gym: return "F2"
-            case .lifts: return "F3"
+            case .friends: return "F3"
             case .history: return "F4"
             case .more: return "F5"
             }
@@ -20,7 +20,7 @@ final class AppModel: ObservableObject {
             switch self {
             case .today: return "square.grid.3x3.fill"
             case .gym: return "dumbbell.fill"
-            case .lifts: return "chart.line.uptrend.xyaxis"
+            case .friends: return "person.2.fill"
             case .history: return "list.bullet"
             case .more: return "ellipsis"
             }
@@ -29,16 +29,22 @@ final class AppModel: ObservableObject {
 
     /// Screens under MORE.
     enum More: String, CaseIterable, Identifiable, Hashable {
-        case calendar, program, body, insights, stats, setup, gallery
+        case lifts, calendar, program, body, insights, stats, setup, gallery
         var id: String { rawValue }
         var title: String { rawValue.uppercased() }
         /// needs the server's program / analytics (Direct mode shows "needs a server")
-        var serverOnly: Bool { ![.setup, .gallery].contains(self) }
+        var serverOnly: Bool { ![.lifts, .setup, .gallery].contains(self) }
     }
 
     @Published var tab: Tab = .today
     /// navigation path of the MORE tab
     @Published var morePath: [More] = []
+    /// navigation path of the FRIENDS tab
+    @Published var socialPath: [SocialRoute] = []
+    /// FRIENDS tab section (FEED / FRIENDS / MINE)
+    @Published var socialSection: SocialSection = .feed
+    /// the sheet shown over the FRIENDS tab
+    @Published var socialSheet: SocialSheet?
     /// bumped after a sync or a saved workout so screens refetch
     @Published var dataVersion = 0
     @Published var snapshot: Snapshot?
@@ -56,6 +62,9 @@ final class AppModel: ObservableObject {
     var session: URLSession = .shared
     let gym: GymStore
     let prefs: GymPrefs
+    let social: SocialStore
+    /// demo mode's in-memory social backend
+    private var demoSocial: DemoSocial?
 
     init(arguments: [String] = ProcessInfo.processInfo.arguments, store injected: Store? = nil) {
         let args = LaunchArgs(arguments)
@@ -77,6 +86,10 @@ final class AppModel: ObservableObject {
             if args.demoEmpty { snapshot = nil; source = .none; lastSync = nil }
             prefs = GymPrefs(defaults: d)
             gym = GymStore(directory: dir.appendingPathComponent("gym", isDirectory: true), prefs: prefs)
+            social = SocialStore(useCache: false, defaults: d)
+            let mode = DemoSocial.Mode(rawValue: args.demoSocial ?? "") ?? .normal
+            demoSocial = args.demoDirect || args.demoEmpty ? nil : DemoSocial(mode: mode)
+
         } else {
             store = injected ?? .shared
             source = store.source
@@ -85,12 +98,25 @@ final class AppModel: ObservableObject {
             error = store.isConfigured ? store.lastError : nil
             prefs = GymPrefs()
             gym = GymStore(prefs: prefs)
+            social = SocialStore()
         }
         theme = store.theme
         if let t = args.tab { open(t) }
+        if let sc = args.socialScreen { openSocial(sc) }
+        if demo, args.demoSocial == DemoSocial.Mode.offline.rawValue {
+            // what the cache would hold: the last good copy from 3 hours ago
+            let then = Date().addingTimeInterval(-3 * 3600)
+            let sample = DemoSocial.sample(now: then)
+            social.seed(me: SocialMe(enabled: true, handle: "alex", name: "Alex", server: DemoSocial.myServer, directory: nil, listed: true, fingerprint: nil),
+                        friends: sample.friends, feed: FeedPage(items: sample.feed, next: nil), notifications: sample.notes,
+                        mine: FeedPage(items: sample.mine, next: nil))
+            social.fromCache = true
+            social.fetchedAt = then
+        }
         if let link = args.demoLink { pendingLink = link }
         demoServer = args.demoServer.flatMap(URL.init(string:))
         gym.apiProvider = { [weak self] in self?.api }
+        social.serviceProvider = { [weak self] in self?.socialService }
         gym.onWorkoutSaved = { [weak self] in
             guard let self else { return }
             self.dataVersion += 1
@@ -104,10 +130,17 @@ final class AppModel: ObservableObject {
         return AppAPI(base: base, token: token, session: session)
     }
 
+    /// The owner's social API (Server mode, or the in-memory demo).
+    var socialService: SocialService? {
+        if demo { return demoSocial }
+        return api.map { SocialAPI(api: $0) }
+    }
+
     /// Open a tab or a MORE screen by name (launch argument, widget link).
     func open(_ name: String) {
         let n = name.lowercased()
         if let t = Tab(rawValue: n) { tab = t; if t == .more { morePath = [] }; return }
+        if n == "notifications" || n == "feed" { tab = .friends; openSocial(n); return }
         if n == "graph" { tab = .today; return }
         if n == "web" { tab = .more; morePath = [.setup]; return }
         if let m = More(rawValue: n) {
@@ -170,6 +203,8 @@ final class AppModel: ObservableObject {
         source = .server
         snapshot = nil
         AppCache.clear()
+        social.reset()
+        socialPath = []
         await refresh()
         await gym.load()
     }
@@ -183,6 +218,8 @@ final class AppModel: ObservableObject {
         store.source = .direct
         source = .direct
         snapshot = nil
+        social.reset()
+        socialPath = []
         await refresh()
     }
 
@@ -201,6 +238,8 @@ final class AppModel: ObservableObject {
         authFailed = false
         lastSync = nil
         AppCache.clear()
+        social.reset()
+        socialPath = []
         dataVersion += 1
         reloadWidgets()
     }
@@ -254,13 +293,17 @@ final class AppModel: ObservableObject {
 ///   -demoEmpty              not-connected empty state
 ///   -demoLink               show the connect-link confirmation
 ///   -demoServer <origin>    server shown in demo mode
-///   -startTab <tab|screen>  today gym lifts history more, or a MORE screen (calendar … setup, gallery)
+///   -startTab <tab|screen>  today gym friends history more, or a MORE screen (lifts calendar … setup, gallery)
+///   -demoSocial <mode>      FRIENDS demo: normal (default) setup empty error offline
+///   -socialScreen <name>    FRIENDS screen: feed friends mine add notifications profile compare share accept comments
 struct LaunchArgs {
     var demo = false, demoDirect = false, demoEmpty = false
     var demoError: String?
     var demoServer: String?
     var tab: String?
     var demoLink: ConnectLink?
+    var demoSocial: String?
+    var socialScreen: String?
 
     init(_ a: [String]) {
         func value(_ k: String) -> String? {
@@ -273,6 +316,8 @@ struct LaunchArgs {
         demoError = value("-demoError")
         tab = value("-startTab")
         demoServer = value("-demoServer")
+        demoSocial = value("-demoSocial")
+        socialScreen = value("-socialScreen")
         if a.contains("-demoLink"), demo {
             demoLink = ConnectLink(server: URL(string: "https://gym.example.com")!, token: "ht_demo")
         }

@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "handle": "alice",
+  "name": "Alice",
+  "server": "https://a.test",
+  "directory": "https://dir.test",
+  "listed": true,
+  "fingerprint": "d5f8-5aa3-4441-c78b",
+  "directoryConfigured": true,
+  "unread": 0
+}

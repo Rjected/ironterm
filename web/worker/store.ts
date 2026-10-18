@@ -1,15 +1,17 @@
 import type { HevyWorkout } from "../shared/hevy";
 
-let schemaReady: Promise<unknown> | null = null;
+// Per database (a process normally has one; tests run several servers side by side).
+const schemaReady = new WeakMap<object, Promise<unknown>>();
 
 /** Same SQL as migrations/0001_init.sql, so a fresh local D1 works without a migrate step. */
 export function ensureSchema(db: D1Database) {
-  schemaReady ??= db.batch([
+  let p = schemaReady.get(db);
+  if (!p) schemaReady.set(db, (p = db.batch([
     db.prepare("CREATE TABLE IF NOT EXISTS workouts (id TEXT PRIMARY KEY, start_time TEXT NOT NULL, updated_at TEXT, json TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS workouts_start ON workouts(start_time)"),
     db.prepare("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')))"),
-  ]);
-  return schemaReady;
+  ])));
+  return p;
 }
 
 export async function kvGet<T>(db: D1Database, key: string): Promise<T | null> {

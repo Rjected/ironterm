@@ -10,3 +10,4 @@ data/
 # personal Cloudflare config (see wrangler*.example.jsonc)
 wrangler.jsonc
 wrangler.hooks.jsonc
+wrangler.directory.jsonc

@@ -547,8 +547,13 @@ fun StatusSquare(status: String, cell: Dp, label: String? = null) {
 
 /** 53 × 7 grid, horizontally scrollable, opens scrolled to today. Tap a day to select it. */
 @Composable
-fun ContributionGraph(s: Snapshot, theme: ColorTheme, cell: Dp = 13.dp, gap: Dp = 3.dp, selected: String? = null, onSelect: (GraphDay) -> Unit = {}) {
-    val cols = s.graph.days.chunked(7)
+fun ContributionGraph(s: Snapshot, theme: ColorTheme, cell: Dp = 13.dp, gap: Dp = 3.dp, selected: String? = null, onSelect: (GraphDay) -> Unit = {}) =
+    ContributionGraph(s.graph.days, s.today, theme, cell, gap, selected, onSelect)
+
+/** Same grid from plain days (a friend's profile graph: levels only, no values). */
+@Composable
+fun ContributionGraph(days: List<GraphDay>, today: String?, theme: ColorTheme, cell: Dp = 13.dp, gap: Dp = 3.dp, selected: String? = null, onSelect: (GraphDay) -> Unit = {}) {
+    val cols = days.chunked(7)
     val measurer = rememberTextMeasurer()
     val labelStyle = T.style(9.sp, T.faint)
     val scroll = rememberScrollState(Int.MAX_VALUE)
@@ -580,7 +585,7 @@ fun ContributionGraph(s: Snapshot, theme: ColorTheme, cell: Dp = 13.dp, gap: Dp 
                         val o = Offset(ci * step, top + ri * step)
                         drawRoundRect(Color(theme.level(d.level)), o, Size(cs, cs), CornerRadius(2.dp.toPx()))
                         if (d.date == selected) drawRoundRect(T.text, o, Size(cs, cs), CornerRadius(2.dp.toPx()), style = Stroke(2.dp.toPx()))
-                        else if (d.date == s.today) drawRoundRect(T.amber, o, Size(cs, cs), CornerRadius(2.dp.toPx()), style = Stroke(1.5.dp.toPx()))
+                        else if (d.date == today) drawRoundRect(T.amber, o, Size(cs, cs), CornerRadius(2.dp.toPx()), style = Stroke(1.5.dp.toPx()))
                     }
                 }
             }

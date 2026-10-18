@@ -48,7 +48,8 @@ data class Nav(val tab: String = Tabs.TODAY, val stack: List<Route> = emptyList(
         /** Widget / notification deep-link target (MainActivity.EXTRA_TAB) → where to land. */
         fun resolve(target: String?): Nav? = when (target) {
             null -> null
-            in Tabs.bar -> Nav(target)
+            in Tabs.tabs -> Nav(target)
+            Tabs.NOTIFICATIONS -> Nav(Tabs.FRIENDS, listOf(Route.Notifications))
             Tabs.GRAPH -> Nav(Tabs.HISTORY)
             Tabs.SETUP -> Nav(Tabs.MORE, listOf(Route.Setup))
             Tabs.BODY -> Nav(Tabs.MORE, listOf(Route.Body))
@@ -58,6 +59,14 @@ data class Nav(val tab: String = Tabs.TODAY, val stack: List<Route> = emptyList(
             Tabs.STATS -> Nav(Tabs.MORE, listOf(Route.Stats))
             else -> null
         }
+    }
+
+    /** A tab that isn't in [bar] (LIFTS with a server, FRIENDS in Direct mode) opens under MORE. */
+    fun normalize(bar: List<String>): Nav = when {
+        tab in bar -> this
+        tab == Tabs.LIFTS -> Nav(Tabs.MORE, listOf(Route.Lifts) + stack)
+        tab == Tabs.FRIENDS -> Nav(Tabs.MORE, listOf(Route.Friends) + stack)
+        else -> Nav(Tabs.MORE, stack)
     }
 }
 
@@ -77,6 +86,8 @@ fun AppScreen(
     /** clocks tick (false in screenshot tests) */
     ticking: Boolean = true,
 ) {
+    val bar = Tabs.bar(state.mode)
+    @Suppress("NAME_SHADOWING") val nav = nav.normalize(bar)
     val top = nav.top
     if (top != null) BackHandler { onNav(nav.pop()) }
     else if (nav.tab != Tabs.TODAY) BackHandler { onNav(Nav(Tabs.TODAY)) }
@@ -102,13 +113,14 @@ fun AppScreen(
                 nav.tab == Tabs.TODAY -> TodayScreen(state, data, gym, actions, now, onGym = { onNav(Nav(Tabs.GYM)) }, onGo = go, onHistory = { onNav(Nav(Tabs.HISTORY)) })
                 nav.tab == Tabs.GYM -> GymScreen(state, data, gym, actions, now, onSetup = setup, ticking = ticking)
                 nav.tab == Tabs.LIFTS -> LiftsScreen(state, data, actions, onGo = go, onSetup = setup)
+                nav.tab == Tabs.FRIENDS -> FriendsScreen(state, data, actions, now, onGo = go, onSetup = setup)
                 nav.tab == Tabs.HISTORY -> HistoryScreen(state, data, actions, onGo = go, onSetup = setup)
-                else -> MoreScreen(state, gym, onGo = go)
+                else -> MoreScreen(state, gym, data.social, onGo = go)
             }
             Toast(data.toast, actions::toastShown)
         }
         Line()
-        TabBar(nav, gym, onSelect = { onNav(nav.select(it)) })
+        TabBar(nav, bar, gym, data.social, onSelect = { onNav(nav.select(it)) })
     }
 }
 
@@ -127,6 +139,14 @@ private fun RouteScreen(r: Route, state: UiState, data: DataUi, gym: GymUi, acti
             Box(Modifier.weight(1f)) { SetupScreen(state, actions, now, gym.prefs, onGallery = { go(Route.Gallery) }) }
         }
         Route.Gallery -> Unit
+        Route.Lifts -> Column(Modifier.fillMaxSize()) {
+            BackBar("Lifts", back)
+            Box(Modifier.weight(1f)) { LiftsScreen(state, data, actions, onGo = go, onSetup = setup) }
+        }
+        Route.Friends -> FriendsScreen(state, data, actions, now, onGo = go, onSetup = setup, onBack = back)
+        is Route.Friend -> FriendProfileScreen(r.id, state, data, actions, now, back)
+        Route.AddFriend -> AddFriendScreen(data, actions, back)
+        Route.Notifications -> NotificationsScreen(data, actions, now, back, go)
     }
 }
 
@@ -238,13 +258,13 @@ private fun Toast(msg: String?, onShown: () -> Unit) {
     }
 }
 
-private val TAB_GLYPH = mapOf(Tabs.TODAY to "◉", Tabs.GYM to "▲", Tabs.LIFTS to "≡", Tabs.HISTORY to "▦", Tabs.MORE to "⋯")
+private val TAB_GLYPH = mapOf(Tabs.TODAY to "◉", Tabs.GYM to "▲", Tabs.LIFTS to "≡", Tabs.FRIENDS to "@", Tabs.HISTORY to "▦", Tabs.MORE to "⋯")
 
 @Composable
-private fun TabBar(nav: Nav, gym: GymUi, onSelect: (String) -> Unit) {
+private fun TabBar(nav: Nav, bar: List<String>, gym: GymUi, social: SocialUi, onSelect: (String) -> Unit) {
     val haptic = LocalHapticFeedback.current
     Row(Modifier.fillMaxWidth().background(T.bg)) {
-        Tabs.bar.forEach { t ->
+        bar.forEach { t ->
             val sel = t == nav.tab
             Column(
                 Modifier.weight(1f).clickable(role = Role.Tab) { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onSelect(t) }.heightIn(min = 58.dp),
@@ -255,6 +275,7 @@ private fun TabBar(nav: Nav, gym: GymUi, onSelect: (String) -> Unit) {
                 Box(contentAlignment = Alignment.TopEnd) {
                     Mono(TAB_GLYPH[t].orEmpty(), size = 15.sp, color = if (sel) T.amber else T.dim, align = TextAlign.Center)
                     if (t == Tabs.GYM && gym.state.session != null) Box(Modifier.padding(start = 14.dp).size(6.dp).background(T.amber))
+                    if (t == Tabs.FRIENDS && (social.unread > 0 || social.incoming > 0)) Box(Modifier.padding(start = 20.dp).size(6.dp).background(T.down))
                 }
                 Spacer(Modifier.height(3.dp))
                 Mono(t.uppercase(), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), size = 10.sp, color = if (sel) T.amber else T.dim, bold = sel, maxLines = 1, align = TextAlign.Center)

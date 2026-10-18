@@ -15,7 +15,10 @@
     "deploy:hooks": "wrangler deploy --config wrangler.hooks.jsonc",
     "deploy:pages": "cd ../gym-proxy && wrangler pages deploy --project-name hevy-gym --branch main",
     "build:node": "tsc --noEmit -p server && vite build && esbuild server/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server/main.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
-    "start": "node --disable-warning=ExperimentalWarning dist/server/main.mjs"
+    "start": "node --disable-warning=ExperimentalWarning dist/server/main.mjs",
+    "build:directory": "tsc --noEmit -p server && esbuild server/directory.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/directory/main.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
+    "start:directory": "node --disable-warning=ExperimentalWarning dist/directory/main.mjs",
+    "deploy:directory": "wrangler d1 migrations apply ironterm-directory --remote --config wrangler.directory.jsonc && wrangler deploy --config wrangler.directory.jsonc"
   },
   "dependencies": {
     "preact": "10.29.8",

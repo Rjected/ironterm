@@ -1,0 +1,20 @@
+{
+  // The Ironterm social directory (handle → server + public key). Optional: friends can also add
+  // each other by server URL. Copy to wrangler.directory.jsonc (gitignored) and fill in:
+  //   wrangler d1 create ironterm-directory      (paste the id below)
+  //   pnpm deploy:directory
+  // Then point servers at it with SOCIAL_DIRECTORY=https://<this worker's URL>.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ironterm-directory",
+  "main": "directory/worker.ts",
+  "compatibility_date": "2026-09-15",
+  "d1_databases": [
+    { "binding": "DB", "database_name": "ironterm-directory", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "directory/migrations-directory" }
+  ],
+  "vars": {
+    // Optional: the directory's public origin, if requests reach it under another URL.
+    // "DIRECTORY_ORIGIN": "https://directory.example.com"
+  },
+  "workers_dev": true,
+  "preview_urls": false
+}

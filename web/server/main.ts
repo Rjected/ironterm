@@ -50,6 +50,7 @@ const ASSETS = {
 const KEYS = [
   "HEVY_API_KEY", "APP_PASSWORD", "SESSION_SECRET", "WEBHOOK_SECRET", "TIMEZONE", "ALLOWED_EMAILS",
   "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "WHOOP_CLIENT_ID", "WHOOP_CLIENT_SECRET",
+  "SOCIAL_DIRECTORY", "SOCIAL_ALLOW_HTTP", "SOCIAL_ORIGIN",
 ];
 const env: Record<string, unknown> = { DB, ASSETS };
 for (const k of KEYS) if (process.env[k]) env[k] = process.env[k];
@@ -96,7 +97,9 @@ if (!loginConfigured) console.warn("No login configured (APP_PASSWORD or Google)
 
 createServer(async (req, res) => {
   try {
-    if (!loginConfigured && !isLocal(req)) {
+    // Social endpoints answer other servers without a login (every /social/v1/* call is signed).
+    const peer = /^\/(\.well-known\/ironterm|social\/)/.test(req.url ?? "");
+    if (!loginConfigured && !isLocal(req) && !peer) {
       res.writeHead(403, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "No login configured for this server. Set APP_PASSWORD or Google sign-in (see SELF_HOSTING.md)." }));
     }

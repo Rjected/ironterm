@@ -1,0 +1,17 @@
+{
+  "friends": [
+    {
+      "id": "650b12a8f954",
+      "server": "https://b.test",
+      "handle": "bob",
+      "name": "Bob",
+      "status": "friends",
+      "share": "full",
+      "theirShare": "lifts",
+      "since": "2026-10-18T05:13:43.639Z",
+      "lastSeen": "2026-10-18T05:13:44.727Z",
+      "fingerprint": "f260-ac14-5204-b6a5",
+      "note": "Gym buddy from Tuesdays"
+    }
+  ]
+}
