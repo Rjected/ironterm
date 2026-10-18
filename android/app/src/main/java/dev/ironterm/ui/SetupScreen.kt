@@ -35,8 +35,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.ironterm.BuildConfig
-import dev.ironterm.Fmt
 import dev.ironterm.data.Cleartext
+import dev.ironterm.Fmt
 import dev.ironterm.data.SourceMode
 import dev.ironterm.widget.ColorTheme
 
