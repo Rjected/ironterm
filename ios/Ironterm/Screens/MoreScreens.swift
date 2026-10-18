@@ -29,6 +29,7 @@ struct MoreRoot: View {
             case .lifts: LiftsScreen()
             case .calendar: CalendarScreen()
             case .program: ProgramScreen()
+            case .programs: ProgramListScreen()
             case .body: BodyScreen()
             case .insights: InsightsScreen()
             case .stats: StatsScreen()
@@ -45,6 +46,7 @@ extension AppModel.More {
         case .lifts: return "F6"
         case .calendar: return "F7"
         case .program: return "F8"
+        case .programs: return ""
         case .body: return "F9"
         case .insights: return "F10"
         case .stats: return "F11"
@@ -56,6 +58,7 @@ extension AppModel.More {
         switch self {
         case .calendar: return "The training calendar (done, planned, missed, trips)"
         case .program: return "Your program: slots, upcoming sessions and every decision"
+        case .programs: return "The program catalog, each program's rules and workouts, and starting one"
         case .body: return "The per-muscle recovery and load model"
         case .insights: return "Projections, strength balance and achievements"
         case .stats: return "Weekly totals and cardio"
@@ -67,6 +70,7 @@ extension AppModel.More {
         case .lifts: return "Every lift · e1RM charts · PRs · projections"
         case .calendar: return "Month grid · done / planned / missed"
         case .program: return "Slots · upcoming · decision log · push to Hevy"
+        case .programs: return "Browse every program · rules · workouts · start"
         case .body: return "Muscle map · readiness · weekly load"
         case .insights: return "Projections · balance · achievements"
         case .stats: return "Weekly volume · sessions · cardio"
@@ -79,6 +83,7 @@ extension AppModel.More {
         case .lifts: return "chart.line.uptrend.xyaxis"
         case .calendar: return "calendar"
         case .program: return "list.number"
+        case .programs: return "books.vertical"
         case .body: return "figure.arms.open"
         case .insights: return "sparkles"
         case .stats: return "chart.bar.fill"
@@ -306,8 +311,10 @@ struct ProgramScreen: View {
         RemoteGate(remote: remote, path: "/api/app/program") { doc in
             if let p = doc.program { content(p) } else {
                 Panel(title: "PROGRAM", detail: "NONE") {
-                    Text("No program is set up. Choose one in the web app: SETUP → Advanced setup (web).").font(T.mono(11)).foregroundStyle(T.dim)
-                    TermButton(title: "OPEN SETUP") { model.showSetup() }.frame(width: 160)
+                    Text("No program is set up. Browse the catalog, read how each one works, and start one.").font(T.mono(11)).foregroundStyle(T.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                    TermButton(title: "BROWSE PROGRAMS", style: .primary) { model.morePath.append(AppModel.More.programs) }
+                        .accessibilityIdentifier("browse-programs")
                 }
             }
         }
@@ -341,6 +348,8 @@ struct ProgramScreen: View {
                     if let r = p.reentry { Badge(text: "RE-ENTRY \(r.done)/\(r.total)") }
                 }
             }
+            TermButton(title: "BROWSE PROGRAMS") { model.morePath.append(AppModel.More.programs) }
+                .accessibilityIdentifier("browse-programs")
             Panel(title: "HEVY ROUTINES", detail: p.pushed ? "PUSHED" : "NOT PUSHED") {
                 Text("Push the upcoming sessions to Hevy as routines, with exact weights, to log them in the Hevy app instead.")
                     .font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)

@@ -161,7 +161,7 @@ struct TabBar: View {
             ForEach(AppModel.Tab.allCases) { t in
                 let on = model.tab == t
                 Button {
-                    if on, t == .more { model.morePath = [] } // tap again: back to the MORE menu
+                    if on, t == .more { model.setMore([]) } // tap again: back to the MORE menu
                     if on, t == .friends { model.socialPath = [] }
                     model.tab = t
                 } label: {

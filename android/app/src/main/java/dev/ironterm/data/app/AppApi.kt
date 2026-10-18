@@ -79,6 +79,14 @@ class AppApi(
     suspend fun workout(id: String) = get("/api/app/workouts/${enc(id)}", AppWorkout.serializer())
     suspend fun calendar(month: String?) = get("/api/app/calendar" + (month?.let { "?month=${enc(it)}" } ?: ""), AppCalendar.serializer())
     suspend fun program() = get("/api/app/program", AppProgram.serializer())
+    suspend fun programs() = get("/api/app/programs", ProgramCatalog.serializer())
+    /** [options]: `opt.<key>=<value>` query parameters (empty = the template's / running config's defaults). */
+    suspend fun programDetail(id: String, options: Map<String, String> = emptyMap()): ProgramDetail {
+        val qs = options.toSortedMap().entries.joinToString("&") { "opt.${enc(it.key)}=${enc(it.value)}" }
+        return get("/api/app/programs/${enc(id)}" + (if (qs.isEmpty()) "" else "?$qs"), ProgramDetailSerializer)
+    }
+    suspend fun startProgram(id: String, body: ProgramStartBody): ProgramStartResult =
+        call("POST", "/api/app/programs/${enc(id)}/start", AppJson.json.encodeToString(ProgramStartBody.serializer(), body), ProgramStartResult.serializer())!!
     suspend fun body(mode: String) = get("/api/app/body?mode=${enc(mode)}", AppBody.serializer())
     suspend fun insights() = get("/api/app/insights", AppInsights.serializer())
     suspend fun stats() = get("/api/app/stats", AppStats.serializer())

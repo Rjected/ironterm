@@ -15,6 +15,8 @@ sealed interface RefreshResult {
     data class Ok(val snapshot: Snapshot) : RefreshResult
     data class Failed(val message: String, val auth: Boolean) : RefreshResult
     data object NotConfigured : RefreshResult
+    /** The user connected to another source while this ran: nothing was written. */
+    data object Superseded : RefreshResult
 }
 
 /**
@@ -31,10 +33,16 @@ class Refresher(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     companion object {
-        private val lock = Mutex()
+        /** One sync at a time per source; a sync to an old server never blocks one to the new server. */
+        private val locks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
     }
 
-    suspend fun refresh(forceFull: Boolean = false): RefreshResult = lock.withLock {
+    suspend fun refresh(forceFull: Boolean = false): RefreshResult {
+        val key = settings.sourceKey
+        return locks.getOrPut(key) { Mutex() }.withLock { refreshLocked(key, forceFull) }
+    }
+
+    private suspend fun refreshLocked(key: String, forceFull: Boolean): RefreshResult {
         val now = clock()
         val result = try {
             when (settings.mode) {
@@ -51,6 +59,8 @@ class Refresher(
                 }
                 SourceMode.NONE -> RefreshResult.NotConfigured
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // cancelled (e.g. the user connected elsewhere): record nothing
         } catch (e: AuthException) {
             RefreshResult.Failed(e.message ?: AuthException.AUTH_MESSAGE, auth = true)
         } catch (e: UnknownHostException) {
@@ -60,6 +70,8 @@ class Refresher(
         } catch (e: Exception) {
             RefreshResult.Failed(e.message ?: e.javaClass.simpleName, auth = false)
         }
+        // Connected to another source meanwhile: this result belongs to the old one, drop it.
+        if (settings.sourceKey != key) return RefreshResult.Superseded
         val prev = store.status()
         when (result) {
             is RefreshResult.Ok -> {
@@ -67,9 +79,9 @@ class Refresher(
                 store.writeStatus(SyncStatus(lastSuccessAt = now, lastAttemptAt = now))
             }
             is RefreshResult.Failed -> store.writeStatus(prev.copy(lastAttemptAt = now, lastError = result.message, authError = result.auth))
-            RefreshResult.NotConfigured -> Unit
+            RefreshResult.NotConfigured, RefreshResult.Superseded -> Unit
         }
-        result
+        return result
     }
 
     private suspend fun buildDirect(apiKey: String, forceFull: Boolean): Snapshot {

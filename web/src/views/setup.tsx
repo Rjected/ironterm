@@ -1,26 +1,50 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { LIFTS } from "../../shared/lifts";
-import { allSlots, schemeLabel, usesStartWeight, type ProgramConfig, type SlotDef } from "../../shared/program";
+import { allSlots, type ProgramConfig } from "../../shared/program";
 import { buildProgram, defaultConfig, getTemplate } from "../../shared/programs";
+import { DOW } from "../../shared/recovery";
+import { trainingDays } from "../../shared/schedule";
 import { api, type Bootstrap, type Settings } from "../api";
-import { Panel, Seg, Tier, ago } from "../ui";
-import { ProgramBrowser, ProgramPreview } from "./browser";
+import type { Nav } from "../app";
+import { Panel, Seg, ago } from "../ui";
+import { ProgramBrowser, ProgramPage, SetupEditor } from "./browser";
 import { Picker } from "../components/picker";
 import { AppsPanel } from "./apps";
 import { ImportPanel } from "./import";
 
-// First session matching the GZCLP sheet's starting weights (squat 185 × 5×3+) in Hevy.
+const narrow = () => typeof matchMedia !== "undefined" && matchMedia("(max-width: 699px)").matches;
+// list scroll position on phones, restored when you come back from a program page
+let listScroll = 0;
 
-export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
+export function Setup(props: { b: Bootstrap; program?: string; nav: Nav; onSaved: (msg: string) => void }) {
   const { b } = props;
   const [s, setS] = useState<Settings>(b.settings);
   const [cfg, setCfg] = useState<ProgramConfig>(() => b.program ?? defaultConfig("gzclp", b.settings.unit, `${b.today}T00:00:00Z`));
   const [templates, setTemplates] = useState<{ id: string; title: string }[]>([]);
   const [dirty, setDirty] = useState(false);
+  const [phone, setPhone] = useState(narrow());
+  // desktop: the program shown on the right (phones use the #set/programs/<id> route)
+  const [picked, setPicked] = useState<string | null>(props.program ?? b.program?.templateId ?? null);
   const def = buildProgram(cfg);
-  const tpl = getTemplate(cfg.templateId);
   const live = b.mode === "live";
   const local = b.mode === "local";
+  const openId = phone ? props.program ?? null : props.program ?? picked;
+
+  useEffect(() => { setCfg(b.program ?? defaultConfig("gzclp", b.settings.unit, `${b.today}T00:00:00Z`)); setS(b.settings); setDirty(false); }, [b]);
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 699px)");
+    const f = () => setPhone(mq.matches);
+    mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, []);
+  useEffect(() => { if (props.program) setPicked(props.program); }, [props.program]);
+  // back on the list (phones): put the scroll position back
+  const wasOpen = useRef(!!props.program);
+  useLayoutEffect(() => {
+    if (phone && wasOpen.current && !props.program) document.querySelector(".main")?.scrollTo({ top: listScroll });
+    wasOpen.current = !!props.program;
+  }, [props.program, phone]);
+
   const startFresh = async () => {
     if (!confirm("Start fresh without Hevy? The demo data goes away and Ironterm keeps your own log: import a Strong export or log sessions in GYM.")) return;
     await api.setMode("local");
@@ -30,109 +54,78 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
   useEffect(() => { if (live) api.templates().then(setTemplates).catch(() => {}); }, [live]);
 
   const edit = (f: (c: ProgramConfig) => ProgramConfig) => { setCfg(f); setDirty(true); };
-  const pick = (id: string) => edit((c) => ({ ...defaultConfig(id, c.unit, c.startDate), liftMap: c.liftMap }));
-  const num = (v: string) => (v === "" ? 0 : Number(v));
+
+  const pick = (id: string) => {
+    if (phone) {
+      listScroll = document.querySelector(".main")?.scrollTop ?? 0;
+      openedHere.current = true;
+      location.hash = `#set/programs/${encodeURIComponent(id)}`;
+      document.querySelector(".main")?.scrollTo({ top: 0 });
+    } else {
+      setPicked(id);
+      history.replaceState(null, "", `#set/programs/${encodeURIComponent(id)}`);
+    }
+  };
+  // opened from the list in this tab: go back in history (so the browser's back and ours agree)
+  const openedHere = useRef(false);
+  const back = () => {
+    if (openedHere.current) history.back();
+    else props.nav({ view: "set" });
+  };
 
   const save = async () => {
     await api.saveSettings(s);
-    await api.saveProgram(cfg);
+    if (b.program) await api.saveProgram(cfg);
     setDirty(false);
-    props.onSaved("Saved. Program replayed from " + cfg.startDate.slice(0, 10));
+    props.onSaved(b.program ? "Saved. Program replayed from " + cfg.startDate.slice(0, 10) : "Saved");
   };
 
   const slots = def ? allSlots(def) : [];
-  const stageSlots = slots.filter(usesStartWeight);
-  // the day a (possibly shared) slot first appears on
-  const firstDay = (x: SlotDef) => def?.days.find((d) => d.slots.some((y) => y.id === x.id))?.id ?? "";
-  const tmLifts = [...new Set(slots.flatMap((x) => (x.progression.kind === "percent" ? [x.progression.tmLift] : [])))];
   const usedLifts = [...new Set(slots.map((x) => x.lift))];
   const origin = typeof location !== "undefined" ? location.origin : "";
+  const days = trainingDays(s.trainingDays, def);
+  const per = def ? Math.round(def.sessionsPerWeek) : 0;
+
+  const editor = (close: () => void) => (
+    <div class="pp-start">
+      <h5>EDIT SETUP{dirty ? " *" : ""}</h5>
+      <SetupEditor cfg={cfg} setCfg={edit} onUnit={(u) => setS({ ...s, unit: u })} />
+      <div class="field">
+        <label>TRAINING DAYS <span class="faint">· {days.length} picked{days.length !== per ? ` · program has ${per} a week` : ""}</span></label>
+        <div class="chips dow" role="group" aria-label="Training days">
+          {DOW.map((n, i) => (
+            <button class={days.includes(i) ? "on" : ""} aria-pressed={days.includes(i)} onClick={() => { setS({ ...s, trainingDays: days.includes(i) ? days.filter((x) => x !== i) : [...days, i].sort() }); setDirty(true); }}>{n}</button>
+          ))}
+        </div>
+      </div>
+      <div class="pp-acts">
+        <button class={`btn ${dirty ? "pri" : ""}`} id="save-setup" onClick={async () => { await save(); close(); }}><em>⏎</em>SAVE{dirty ? " *" : ""}</button>
+        <button class="btn" onClick={() => { setCfg(b.program ?? cfg); setS(b.settings); setDirty(false); close(); }}>CANCEL</button>
+      </div>
+    </div>
+  );
+
+  const page = openId ? (
+    <ProgramPage key={openId} id={openId} b={b} onBack={phone ? back : undefined} onSaved={props.onSaved} editor={b.program?.templateId === openId ? editor : undefined} />
+  ) : <div class="empty">Pick a program to see its rules and workouts.</div>;
+
+  // phones: a program is its own full-screen page
+  if (phone && props.program) return <div class="grid"><section class="pn span-12 pp-full">{page}</section></div>;
 
   return (
     <div class="grid">
-      <Panel n="1" title="PROGRAMS" span={12} sub={tpl ? `selected: ${tpl.name}${b.program?.templateId === tpl.id ? " (active)" : ""}` : undefined} act={
-        <button class={`btn ${dirty ? "pri" : ""}`} onClick={save}><em>⏎</em>{b.program?.templateId === cfg.templateId ? "SAVE" : "MAKE ACTIVE"}{dirty ? " *" : ""}</button>
-      }>
-        <ProgramBrowser selected={cfg.templateId} unit={cfg.unit} onPick={pick} />
-      </Panel>
-
-      {tpl && (
-        <Panel n="2" title={`${tpl.name.toUpperCase()} · SETUP`} span={12} sub={`${tpl.author} · source: ${tpl.source}`}>
-        {(
-          <div class="form" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", maxWidth: "none" }}>
-            {tpl.options.map((o) => (
-              <div class="field">
-                <label for={`opt-${o.key}`}>{o.label.toUpperCase()}</label>
-                <Picker id={`opt-${o.key}`} label={o.label} value={String(cfg.options[o.key] ?? o.default)} options={o.choices.map((ch) => ({ value: String(ch.value), label: ch.label }))}
-                  onChange={(v) => edit((c) => ({ ...c, options: { ...c.options, [o.key]: v } }))} />
-              </div>
-            ))}
-            <div class="field">
-              <label for="start">PROGRAM START</label>
-              <input class="inp" id="start" type="date" value={cfg.startDate.slice(0, 10)} onInput={(e) => edit((c) => ({ ...c, startDate: (e.target as HTMLInputElement).value + "T00:00:00Z" }))} />
-            </div>
-            <div class="field">
-              <label>UNITS</label>
-              <Seg value={cfg.unit} options={[["lb", "LB"], ["kg", "KG"]]} onChange={(u) => { edit((c) => ({ ...c, unit: u })); setS({ ...s, unit: u }); }} />
-            </div>
+      <Panel n="1" title="PROGRAMS" span={12} sub={b.program ? `active: ${getTemplate(b.program.templateId)?.name ?? b.program.templateId}` : "no active program"}>
+        {phone ? (
+          <ProgramBrowser selected={null} active={b.program?.templateId ?? null} onPick={pick} />
+        ) : (
+          <div class="psplit">
+            <div class="psplit-list"><ProgramBrowser selected={openId} active={b.program?.templateId ?? null} onPick={pick} /></div>
+            <div class="psplit-page">{page}</div>
           </div>
         )}
-        <p class="note">Workouts before the start date are ignored for the program but still count in stats. Starting values are where you begin on that date.</p>
-          <ProgramPreview template={tpl} options={cfg.options} unit={cfg.unit} />
-        </Panel>
-      )}
+      </Panel>
 
-      {stageSlots.length > 0 && def && (
-        <Panel n="3" title="STARTING WEIGHTS" span={tmLifts.length ? 7 : 12} sub={`${cfg.unit} · weight you'll use on day one`}>
-          <div class="tbl-wrap">
-            <table class="t">
-              <thead><tr><th>DAY</th><th class="l">TIER</th><th class="l">LIFT</th><th>WEIGHT</th><th>SCHEME</th><th>+INC</th></tr></thead>
-              <tbody>
-                {stageSlots.map((x) => {
-                  const p = x.progression;
-                  return (
-                    <tr>
-                      <td class="dim">{firstDay(x)}</td>
-                      <td class="l"><Tier t={x.tier} /></td>
-                      <td class="l">{LIFTS[x.lift]?.name}</td>
-                      <td><input class="inp num" id={`w-${x.id}`} inputMode="decimal" value={cfg.startWeights[x.id] ?? ""} onInput={(e) => edit((c) => ({ ...c, startWeights: { ...c.startWeights, [x.id]: num((e.target as HTMLInputElement).value) } }))} /></td>
-                      <td>
-                        {p.kind === "stages" && p.stages.length > 1 ? (
-                          <Picker id={`st-${x.id}`} label="Starting stage" value={String(cfg.startStages?.[x.id] ?? 0)} options={p.stages.map((st, k) => ({ value: String(k), label: schemeLabel(st) }))}
-                            onChange={(v) => edit((c) => ({ ...c, startStages: { ...c.startStages, [x.id]: Number(v) } }))} />
-                        ) : <span class="dim">{p.kind === "stages" ? schemeLabel(p.stages[0]) : p.kind === "double" ? `${p.sets}×${p.reps[0]}–${p.reps[1]}` : p.kind === "fixed" ? `${p.sets}×${p.reps}` : ""}</span>}
-                      </td>
-                      <td>{p.kind === "stages" || p.kind === "double" ? <input class="inp num" id={`i-${x.id}`} style={{ maxWidth: "70px" }} inputMode="decimal" placeholder={String(cfg.unit === "lb" ? p.increment.lb : p.increment.kg)} value={cfg.increments?.[x.id] ?? ""} onInput={(e) => {
-                        const v = (e.target as HTMLInputElement).value;
-                        edit((c) => { const inc = { ...c.increments }; if (v === "") delete inc[x.id]; else inc[x.id] = num(v); return { ...c, increments: inc }; });
-                      }} /> : <span class="faint">—</span>}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      )}
-
-      {tmLifts.length > 0 && (
-        <Panel n="4" title={(def?.maxLabel ?? "Training max").toUpperCase() + "ES"} span={stageSlots.length ? 5 : 12} sub={`${cfg.unit} · ${def?.maxLabel ? "what the percentages are of" : "usually 90% of your 1RM"}`}>
-          <div class="tbl-wrap">
-            <table class="t">
-              <tbody>
-                {tmLifts.map((l) => (
-                  <tr>
-                    <td>{LIFTS[l]?.name}</td>
-                    <td><input class="inp num" id={`tm-${l}`} inputMode="decimal" value={cfg.trainingMaxes[l] ?? ""} onInput={(e) => edit((c) => ({ ...c, trainingMaxes: { ...c.trainingMaxes, [l]: num((e.target as HTMLInputElement).value) } }))} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      )}
-
-      <Panel n="5" title="LIFT MAPPING" span={6} sub={live ? "which Hevy exercise counts as each lift" : "logged exercise names that count as each lift"}>
+      <Panel n="2" title="LIFT MAPPING" span={6} act={<button class={`btn ${dirty ? "pri" : ""}`} onClick={save}><em>⏎</em>SAVE{dirty ? " *" : ""}</button>} sub={live ? "which Hevy exercise counts as each lift" : "logged exercise names that count as each lift"}>
         <div class="tbl-wrap">
           <table class="t">
             <tbody>
@@ -153,7 +146,7 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
         </div>
       </Panel>
 
-      <Panel n="6" title="SETTINGS" span={6}>
+      <Panel n="3" title="SETTINGS" span={6} act={<button class={`btn ${dirty ? "pri" : ""}`} onClick={save}><em>⏎</em>SAVE{dirty ? " *" : ""}</button>}>
         <div class="form">
           <div class="field">
             <label for="tz">TIME ZONE</label>
@@ -168,7 +161,7 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
         </div>
       </Panel>
 
-      <Panel n="7" title="CONNECTION" span={12}>
+      <Panel n="4" title="CONNECTION" span={12}>
         <div class="form" style={{ maxWidth: "none", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <div class="field">
             <label>MODE</label>
@@ -202,9 +195,9 @@ export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
         </div>
       </Panel>
 
-      <ImportPanel n="8" unit={s.unit} onDone={props.onSaved} />
+      <ImportPanel n="5" unit={s.unit} onDone={props.onSaved} />
 
-      <AppsPanel n="9" />
+      <AppsPanel n="6" />
     </div>
   );
 }

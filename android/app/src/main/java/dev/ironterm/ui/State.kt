@@ -23,6 +23,9 @@ sealed interface Route {
     data class Workout(val id: String) : Route
     data object Calendar : Route
     data object Program : Route
+    /** program catalog (BROWSE PROGRAMS) and one program's page */
+    data object Programs : Route
+    data class ProgramPage(val id: String) : Route
     data object Body : Route
     data object Insights : Route
     data object Stats : Route
@@ -60,6 +63,12 @@ data class DataUi(
     val workout: Map<String, Load<AppWorkout>> = emptyMap(),
     val calendar: Map<String, Load<AppCalendar>> = emptyMap(),
     val program: Load<AppProgram> = Load(),
+    val programs: Load<dev.ironterm.data.app.ProgramCatalog> = Load(),
+    /** keyed by ProgramBrowse.detailKey(id, options) */
+    val programDetail: Map<String, Load<dev.ironterm.data.app.ProgramDetail>> = emptyMap(),
+    val startingProgram: Boolean = false,
+    /** POST start failed: shown in the start sheet */
+    val startError: String? = null,
     val body: Map<String, Load<AppBody>> = emptyMap(),
     val insights: Load<AppInsights> = Load(),
     val stats: Load<AppStats> = Load(),
@@ -154,6 +163,11 @@ interface AppActions {
     fun historyDay(date: String?) {}
     fun saveNotes(id: String, edit: NotesEdit) {}
     fun pushRoutines() {}
+    fun loadPrograms(force: Boolean = false) {}
+    fun loadProgramDetail(id: String, options: Map<String, String> = emptyMap(), force: Boolean = false) {}
+    /** POST start; [onDone] runs after the server switched (the UI then shows PROGRAM). */
+    fun startProgram(id: String, body: dev.ironterm.data.app.ProgramStartBody, onDone: () -> Unit = {}) {}
+    fun clearStartError() {}
     fun toastShown() {}
 
     // gym

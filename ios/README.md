@@ -102,14 +102,24 @@ Bottom bar: **TODAY · GYM · FRIENDS · HISTORY · MORE** (LIFTS is the first e
   **EDIT NOTES** (`PUT /api/workouts/{id}/notes`).
 - `F5 MORE`
   - **CALENDAR** month grid (done / planned / missed / travel) with a day sheet.
-  - **PROGRAM** slots with what happens next, upcoming sessions, decision log, **PUSH TO HEVY**.
+  - **PROGRAM** slots with what happens next, upcoming sessions, decision log, **PUSH TO HEVY**, and
+    **BROWSE PROGRAMS**.
+  - **PROGRAMS** ([docs/api/programs.md](../docs/api/programs.md)) every program grouped by category, with
+    search and DAYS / LEVEL filters; the running one is marked ● ACTIVE. A program page has a header and
+    **ABOUT** (summary, options that refetch the page with `opt.<key>=`, notes, source), **RULES** (overview,
+    rotation and each tier's rule, generated from the definition the engine runs) and **WORKOUTS** (week
+    chips, day cards with tier, scheme, top weight, each set when they differ, ▲ / ▼, and where the weights
+    come from). **START THIS PROGRAM** opens a sheet: training days and starting weights / maxes (prefilled,
+    ± steppers), then a confirm page ("This replaces … Your past workouts are kept.") that POSTs and returns
+    to PROGRAM. Cached for offline like every screen; Direct mode shows "needs a server".
+    Screenshots: `docs/screens/ios/programs-*.png`.
   - **BODY** front and back muscle maps (readiness or weekly load) drawn natively from the server's
     SVG with a small SVG path renderer (`Ironterm/Body/SVG.swift`, no WebView), plus the muscle list.
   - **INSIGHTS** projections, strength balance, achievements.
   - **STATS** totals, 53-week graph, weekly volume / sessions / sets.
   - **SETUP** source, credentials, QR, test, sync, **gym preferences** (rest alert, Live Activity,
     haptics, keep screen on, auto-advance, bar weights), graph theme, widget gallery, and
-    **Advanced setup (web)**: program choice and lift mapping open the web app in Safari
+    **Advanced setup (web)**: detailed program setup and lift mapping open the web app in Safari
     (SFSafariViewController), the only web surface.
 
 Credentials are stored in the Keychain (access group = the App Group, so the widgets can read
@@ -178,11 +188,13 @@ xcodebuild … test
   `POST /api/tokens {"name":"sim"}`, then `xcrun simctl openurl booted "ironterm://connect?server=http%3A%2F%2F127.0.0.1%3A8791&token=…"`.
   The no-login demo server only answers requests to 127.0.0.1 / localhost.
 - `Tools/mock_server.py` is a minimal stand-in for the snapshot endpoint: `/api/snapshot` and `/api/sync` require
-  `Bearer ht_test_good` (anything else is 401).
+  `Bearer ht_test_good` (anything else is 401). It also serves `/api/app/<name>` from `docs/api/app/<name>.json`
+  (or `$MOCK_APP_DIR`; `/` becomes `-`, so `/api/app/programs/gzclp` → `programs-gzclp.json`) and answers
+  `POST /api/app/programs/<id>/start`.
   Connect to it with `ironterm://connect?server=http%3A%2F%2F127.0.0.1%3A8787&token=ht_test_good`.
 - Launch arguments for screenshots (no network, no stored data touched): `-demoFixture`,
   `-demoDirect`, `-demoEmpty`, `-demoError 401`, `-demoLink`, `-demoServer <origin>`,
-  `-startTab today|gym|friends|history|more|lifts|calendar|program|body|insights|stats|setup|gallery`.
+  `-startTab today|gym|friends|history|more|lifts|calendar|program|programs|body|insights|stats|setup|gallery`.
   FRIENDS uses an in-memory demo backend: `-demoSocial setup|empty|error|offline` and
   `-socialScreen feed|friends|mine|add|accept|notifications|setup|profile|compare|share|comments`
   (screenshots: `docs/screens/ios/social-*.png`; `social-live-*.png` are from two real local servers).

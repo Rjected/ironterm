@@ -43,6 +43,7 @@ function parseHash(): Route {
   const view = (VIEWS.find((x) => x.v === v)?.v ?? "dash") as View;
   if (view === "lifts") return { view, lift: a };
   if (view === "friends") return { view, tab: a || undefined, id: b || undefined };
+  if (view === "set" && a === "programs") return { view, tab: a, id: b ? decodeURIComponent(b) : undefined };
   if (view === "hist") return a?.match(/^\d{4}-\d\d-\d\d$/) ? { view, date: a } : { view, workout: a };
   return { view };
 }
@@ -253,7 +254,7 @@ export function App() {
         {route.view === "prog" && <Program d={d} cfg={b.program} mode={b.mode} nav={nav} onPush={doPush} busy={busy} />}
         {route.view === "lifts" && <Lifts d={d} lift={route.lift} nav={nav} />}
         {route.view === "hist" && <History d={d} mode={b.mode} date={route.date} workout={route.workout} nav={nav} onSaved={(m) => { say(m); load(); }} />}
-        {route.view === "set" && <Setup b={b} onSaved={(m) => { say(m); load(); }} />}
+        {route.view === "set" && <Setup b={b} program={route.tab === "programs" ? route.id : undefined} nav={nav} onSaved={(m) => { say(m); load(); }} />}
         {route.view === "friends" && <Friends key={`${route.tab ?? ""}/${route.id ?? ""}`} tab={route.tab} id={route.id} nav={nav} say={say} onUnread={setUnread} />}
       </main>
 

@@ -270,8 +270,9 @@ table.t td.wrap { white-space: normal; }
 }
 .inp:focus { border-color: var(--amber); }
 .inp.num { text-align: right; max-width: 110px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.card { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px; background: none; text-align: left; cursor: pointer; display: grid; gap: 6px; align-content: start; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); min-width: 0; }
+/* buttons size to their content by default; a long word or nowrap line would push past the column */
+.card { border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px; background: none; text-align: left; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; align-content: start; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .card:hover { background: var(--raise); }
 .card.on { box-shadow: inset 0 0 0 1px var(--amber); }
 .card h4 { margin: 0; color: var(--hi); font-weight: 400; font-size: 15px; }

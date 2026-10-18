@@ -6,6 +6,7 @@ import type { LiveSession } from "../shared/live";
 import type { WhoopData } from "../shared/whoop";
 import type { Trip } from "../shared/travel";
 import type { PlannedSession } from "../shared/program";
+import type { AppProgram, AppProgramList, ProgramDetail, StartBody } from "../shared/appapi";
 import type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author } from "../worker/social/types";
 
 export type { Settings };
@@ -79,7 +80,12 @@ export const api = {
   setMode: (mode: "local" | "demo") => call<{ mode: Bootstrap["mode"] }>("/api/mode", { method: "PUT", body: JSON.stringify({ mode }) }),
   importStrong: (body: { csv: string; unit?: "kg" | "lb"; preview?: boolean }) => call<StrongImportResult>("/api/import/strong", { method: "POST", body: JSON.stringify(body) }),
   templates: () => call<{ id: string; title: string; equipment?: string }[]>("/api/templates"),
+  programs: () => call<AppProgramList>("/api/app/programs"),
+  programDetail: (id: string, opts: Record<string, string> = {}) =>
+    call<ProgramDetail>(`/api/app/programs/${encodeURIComponent(id)}${Object.keys(opts).length ? "?" + Object.entries(opts).map(([k, v]) => `opt.${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&") : ""}`),
+  startProgram: (id: string, body: StartBody) => call<{ ok: true; program: AppProgram }>(`/api/app/programs/${encodeURIComponent(id)}/start`, { method: "POST", body: JSON.stringify(body) }),
 };
+export type { ProgramDetail };
 
 // ── social (docs/social/PROTOCOL.md §6) ──
 export type { Compare, FeedItem, Friend, Notification, Share, SocialMe, SocialProfile, Author };

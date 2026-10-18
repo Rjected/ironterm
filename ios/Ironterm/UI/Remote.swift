@@ -91,7 +91,7 @@ struct RemoteGate<Doc: Codable & Equatable & Sendable, Content: View>: View {
                 .refreshable { await remote.load(model.api, path: path) }
             } else if model.api == nil {
                 EmptyState(title: "NOT CONNECTED", message: "Connect your \(Brand.name) server in SETUP.", button: "OPEN SETUP") { model.showSetup() }
-            } else if let e = remote.error {
+            } else if let e = remote.error, !remote.loading { // a retry shows the spinner
                 EmptyState(title: "COULDN'T LOAD", message: e, button: "RETRY") { Task { await remote.load(model.api, path: path) } }
             } else {
                 VStack(spacing: 10) {

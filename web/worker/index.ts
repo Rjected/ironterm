@@ -2,7 +2,7 @@ import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
 import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
-import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appStats, appWorkout, startSession } from "../shared/appapi";
+import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
 import { bearer, checkToken, createToken, listTokens, revokeToken } from "./tokens";
 import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, type GoogleConfig } from "./google";
@@ -297,6 +297,25 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       if (sub === "body") return json(appBody(b, q.get("mode") === "load" ? "load" : "ready"));
       if (sub === "insights") return json(appInsights(b));
       if (sub === "stats") return json(appStats(b));
+      if (sub === "programs") return json(appPrograms(b));
+      if (sub.startsWith("programs/") && !sub.slice(9).includes("/")) {
+        const opt: Record<string, string> = {};
+        for (const [key, v] of q) if (key.startsWith("opt.")) opt[key.slice(4)] = v;
+        const r = appProgramDetail(b, decodeURIComponent(sub.slice(9)), opt);
+        return "error" in r ? json({ error: r.error }, { status: r.status }) : json(r);
+      }
+    }
+    const startM = sub.match(/^programs\/([^/]+)\/start$/);
+    if (startM && method === "POST") {
+      const raw = await req.text();
+      let body: unknown = null;
+      try { body = raw.trim() ? JSON.parse(raw) : null; } catch { return json({ error: "body must be JSON" }, { status: 400 }); }
+      const r = startProgram(b, decodeURIComponent(startM[1]), body);
+      if ("error" in r) return json({ error: r.error }, { status: r.status });
+      // same as PUT /api/program (+ the training days, if given)
+      await kvPut(env.DB, k(m, "program"), r.cfg);
+      if (r.trainingDays) await kvPut(env.DB, k(m, "settings"), { ...(await settings(env, m)), trainingDays: r.trainingDays });
+      return json({ ok: true, program: appProgram(await bootstrap(env, authMode, m)) });
     }
     if (sub === "gym/start" && method === "POST") {
       const body = await req.json<{ dayIndex?: number; empty?: boolean }>().catch(() => ({}));

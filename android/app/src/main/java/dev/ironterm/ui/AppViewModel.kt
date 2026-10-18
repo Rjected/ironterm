@@ -176,11 +176,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     override fun refresh() = refresh(afterConnect = false)
 
+    private val sync = dev.ironterm.data.SyncRunner(viewModelScope) { refresher }
+
+    /**
+     * [afterConnect]: the user just connected (deep link, QR, SAVE & CONNECT). Any sync still running
+     * against the previous source is cancelled and a fresh one starts at once; otherwise a sync that
+     * is already running is left alone.
+     */
     private fun refresh(afterConnect: Boolean) {
-        if (!settings.isConfigured || _state.value.loading) return
+        if (!settings.isConfigured) return
+        if (!afterConnect && (_state.value.loading || sync.running)) return
         _state.update { it.copy(loading = true) }
-        viewModelScope.launch {
-            val r = refresher.refresh()
+        val onDone: suspend (RefreshResult) -> Unit = { r ->
             Widgets.updateAll(getApplication())
             if (r is RefreshResult.Ok) afterSnapshot()
             reload {
@@ -188,10 +195,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
                     !afterConnect -> copy(loading = false)
                     r is RefreshResult.Ok -> copy(loading = false, notice = null, noticeError = false, goToday = true)
                     r is RefreshResult.Failed -> copy(loading = false, notice = "Couldn't connect: ${r.message}", noticeError = true)
-                    else -> copy(loading = false)
+                    else -> copy(loading = false, notice = null, noticeError = false)
                 }
             }
         }
+        if (afterConnect) sync.restart(onDone) else sync.start(onDone)
     }
 
     /** MainActivity switches to TODAY once, after a successful connect. */
@@ -239,10 +247,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
     }
 
     private fun afterConnect() {
+        // Nothing from the previous source may land now: screen loads in flight are dropped (generation),
+        // its snapshot, sync error and cached documents are cleared, and its sync is cancelled by refresh().
+        generation++
+        historyJob?.cancel()
         store.clear() // never show the previous source's data under the new one
         appCache.clear()
         _data.value = DataUi()
-        reload { copy(snapshot = null, testResult = null) }
+        reload { copy(snapshot = null, testResult = null, loading = false, noticeError = false) }
         SyncWorker.schedulePeriodic(getApplication())
         refresh(afterConnect = true)
     }
@@ -274,6 +286,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         onAuth = { msg -> reload { copy(status = status.copy(authError = true, lastError = msg, lastAttemptAt = System.currentTimeMillis())) } },
     )
     private val _data = MutableStateFlow(initialData())
+    /** bumped on every connect; screen loads started before it are dropped */
+    private var generation = 0
     val data: StateFlow<DataUi> = _data
 
     private fun setData(f: DataUi.() -> DataUi) = _data.update { it.f() }
@@ -287,6 +301,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
             lifts = repo.cached("lifts", AppLiftList.serializer()) ?: Load(),
             gym = repo.cached("gym", AppGym.serializer()) ?: Load(),
             program = repo.cached("program", AppProgram.serializer()) ?: Load(),
+            programs = repo.cached("programs", ProgramCatalog.serializer()) ?: Load(),
         )
     }
 
@@ -305,8 +320,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         val cur = _data.value.get()
         if (cur.loading) return
         setData { put(cur.copy(loading = true)) }
+        val g = generation
         viewModelScope.launch {
             val r = try { block(force) } catch (e: Exception) { Load(data = cur.data, savedAt = cur.savedAt, error = friendly(e)) }
+            if (g != generation) return@launch // connected elsewhere meanwhile: this is the old source's answer
             setData { put(r) }
             if (r.auth) reload { copy(status = status.copy(authError = true, lastError = r.error, lastAttemptAt = System.currentTimeMillis())) }
         }
@@ -427,6 +444,52 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
             load(Screens.PROGRAM, force = true)
         }
     }
+
+    // ── program browser ──
+
+    override fun loadPrograms(force: Boolean) = run({ programs }, { copy(programs = it) }, force) { f ->
+        repo.load("programs", ProgramCatalog.serializer(), f, 30 * 60_000L, null) { it.programs() }
+    }
+
+    override fun loadProgramDetail(id: String, options: Map<String, String>, force: Boolean) {
+        val key = ProgramBrowse.detailKey(id, options)
+        run({ programDetail[key] ?: Load() }, { copy(programDetail = programDetail + (key to it)) }, force) { f ->
+            repo.load("programdetail_$key", ProgramDetailSerializer, f, 10 * 60_000L, null) { it.programDetail(id, options) }
+        }
+    }
+
+    override fun startProgram(id: String, body: ProgramStartBody, onDone: () -> Unit) {
+        if (_data.value.startingProgram) return
+        val api = repo.api() ?: run { setData { copy(startError = "Starting a program needs the server.") }; return }
+        setData { copy(startingProgram = true, startError = null) }
+        viewModelScope.launch {
+            try {
+                val r = api.startProgram(id, body)
+                // every cached document derived from the program (details, catalog ACTIVE mark, gym, home) is stale
+                appCache.invalidateAfterWorkout()
+                appCache.write("program", AppProgram.serializer(), r.program)
+                val name = r.program.program?.name
+                setData {
+                    copy(
+                        startingProgram = false, program = Load.of(r.program, System.currentTimeMillis()),
+                        programs = programs.data?.let { programs.copy(data = it.copy(active = r.program.program?.templateId?.ifBlank { null } ?: id)) } ?: programs,
+                        programDetail = emptyMap(),
+                        toast = "Started ${name ?: "the program"}",
+                    )
+                }
+                onDone()
+                load(Screens.PROGRAM, force = true)
+                load(Screens.GYM, force = true)
+                load(Screens.HOME, force = true)
+                refresh()
+            } catch (e: Exception) {
+                setData { copy(startingProgram = false, startError = "Couldn't start: ${friendly(e)}") }
+                if (e.isAuth()) reload { copy(status = status.copy(authError = true, lastError = friendly(e), lastAttemptAt = System.currentTimeMillis())) }
+            }
+        }
+    }
+
+    override fun clearStartError() = setData { copy(startError = null) }
 
     override fun toastShown() = setData { copy(toast = null) }
 
