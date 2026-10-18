@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/brand/icon.svg" alt="" width="96">
+
 # IRONTERM
 
 **A Bloomberg-terminal for your lifting.** A web app, Android and iOS apps, and home-screen widgets for people who log their training in [Hevy](https://hevy.com).
