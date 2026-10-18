@@ -1,6 +1,6 @@
 import { demoData } from "../shared/demo";
 import type { ProgramConfig } from "../shared/program";
-import { clearCookie, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
+import { clearCookie, csrfBlock, isAuthed, safeEqual, sessionCookie, verifyAccess } from "./auth";
 import { snapshot } from "../shared/snapshot";
 import { finishPRs, appBody, appCalendar, appGym, appHistory, appHome, appInsights, appLift, appLifts, appProgram, appProgramDetail, appPrograms, appStats, appWorkout, startProgram, startSession } from "../shared/appapi";
 import type { Bootstrap } from "../src/api";
@@ -142,6 +142,12 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
   // token (workers.dev), or the optional password session. Off localhost, no login configured
   // means no data.
   const url = new URL(req.url);
+  // Cookie-authenticated writes must come from our own pages (auth.ts). /auth/app is exempt: it
+  // carries its own app token, and a native web view's form post may have no usable Origin.
+  if (path !== "/auth/app") {
+    const why = csrfBlock(req, [url.origin, socialOrigin(env, url)]);
+    if (why) return json({ error: `Blocked ${why}.` }, { status: 403 });
+  }
   const allowed = (env.ALLOWED_EMAILS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   const google: GoogleConfig | null = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.SESSION_SECRET && allowed.length
     ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET, sessionSecret: env.SESSION_SECRET, allowed }
