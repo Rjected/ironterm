@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.ironterm.BuildConfig
 import dev.ironterm.Fmt
+import dev.ironterm.data.Cleartext
 import dev.ironterm.data.SourceMode
 import dev.ironterm.widget.ColorTheme
 
@@ -75,6 +76,10 @@ fun SetupScreen(state: UiState, actions: AppActions, now: Long, prefs: GymPrefs 
                 TButton("▣ Scan QR", modifier = Modifier.fillMaxWidth(), onClick = actions::scanQr)
                 Spacer(Modifier.height(12.dp))
                 Field("Server URL", url, { url = it }, placeholder = "https://gym.example.com", keyboard = KeyboardType.Uri)
+                Cleartext.warning(url)?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Mono(it, size = 10.sp, color = T.down)
+                }
                 Spacer(Modifier.height(12.dp))
                 Field("App token", token, { token = it }, placeholder = "ht_…", secret = true)
                 Spacer(Modifier.height(8.dp))

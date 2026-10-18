@@ -15,13 +15,13 @@
     <!-- Held only for the length of a rest, so the rest-over alert fires with the screen off. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- usesCleartextTraffic: self-hosted servers on a LAN are often plain http. -->
+    <!-- network_security_config: cleartext allowed (self-hosted servers on a LAN are often plain http), system CAs only. -->
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.Terminal">
 
         <!-- Ask Play services to fetch the code-scanner module at install time. -->
