@@ -15,7 +15,7 @@ import { Seg, Tier } from "../ui";
 import "../programs.css";
 
 const CATS: [ProgramCategory | "all", string][] = [
-  ["all", "ALL"], ["gzcl", "GZCL"], ["novice", "NOVICE"], ["strength", "STRENGTH"], ["powerlifting", "PL"], ["hypertrophy", "HYPERTROPHY"], ["peaking", "PEAKING"],
+  ["all", "ALL"], ["gzcl", "GZCL"], ["novice", "NOVICE"], ["strength", "STRENGTH"], ["powerlifting", "PL"], ["hypertrophy", "HYPERTROPHY"], ["peaking", "PEAKING"], ["comeback", "COMEBACK"],
 ];
 
 const meta = (t: Pick<ProgramTemplate, "daysPerWeek" | "weeks" | "level">) =>
