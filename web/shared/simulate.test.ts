@@ -4,13 +4,14 @@ import { TEMPLATES } from "./programs";
 import { standardPct } from "./rpe";
 import { compare, estimateE1rm, maxReps, simulate, startingConfig, tmFraction } from "./simulate";
 
-const DAN = { squat: 216, bench: 204, deadlift: 270, ohp: 107 };
+// a typical intermediate lifter
+const LIFTER = { squat: 216, bench: 204, deadlift: 270, ohp: 107 };
 const START = "2026-01-05";
 const rm = (n: number) => standardPct(n, 10);
 
 describe("startingConfig: maxes carried over by each program's convention", () => {
   it("GZCLP: T1 = 85% of 5RM, T2 ≈ 65% of e1RM, T3 from a related lift", () => {
-    const c = startingConfig("gzclp", {}, DAN, "lb", START);
+    const c = startingConfig("gzclp", {}, LIFTER, "lb", START);
     expect(c.startWeights["a1-t1"]).toBe(Math.round((0.85 * rm(5) * 216) / 5) * 5);
     expect(c.startWeights["a1-t1"] / 216).toBeCloseTo(0.73, 1);
     expect(c.startWeights["a2-t2"] / 216).toBeGreaterThan(0.6);
@@ -19,11 +20,11 @@ describe("startingConfig: maxes carried over by each program's convention", () =
     expect(c.increments).toEqual({ "a2-t2": 5 }); // template increments kept
   });
   it("nSuns / 5/3/1 TMs are 90%, SBS 'Max' and Candito '1RM' are 100%, Juggernaut 90%", () => {
-    expect(startingConfig("nsuns5", {}, DAN, "lb", START).trainingMaxes).toMatchObject({ squat: 195, bench: 185, deadlift: 245, ohp: 95 });
-    expect(startingConfig("531", {}, DAN, "lb", START).trainingMaxes.bench).toBe(185);
-    expect(startingConfig("sbsRtf", {}, DAN, "lb", START).trainingMaxes).toMatchObject({ squat: 215, bench: 205, deadlift: 270, ohp: 105 });
-    expect(startingConfig("candito6", {}, DAN, "lb", START).trainingMaxes.squat).toBe(215);
-    expect(startingConfig("juggernaut", {}, DAN, "lb", START).trainingMaxes.squat).toBe(195);
+    expect(startingConfig("nsuns5", {}, LIFTER, "lb", START).trainingMaxes).toMatchObject({ squat: 195, bench: 185, deadlift: 245, ohp: 95 });
+    expect(startingConfig("531", {}, LIFTER, "lb", START).trainingMaxes.bench).toBe(185);
+    expect(startingConfig("sbsRtf", {}, LIFTER, "lb", START).trainingMaxes).toMatchObject({ squat: 215, bench: 205, deadlift: 270, ohp: 105 });
+    expect(startingConfig("candito6", {}, LIFTER, "lb", START).trainingMaxes.squat).toBe(215);
+    expect(startingConfig("juggernaut", {}, LIFTER, "lb", START).trainingMaxes.squat).toBe(195);
   });
   it("RM-labelled maxes use that RM; Rippler splits T1 2RM / T2 5RM", () => {
     expect(tmFraction("5RM", "MAIN", 5)).toBeCloseTo(rm(5));
@@ -33,14 +34,14 @@ describe("startingConfig: maxes carried over by each program's convention", () =
     expect(tmFraction("Training max (90% of 1RM)", "MAIN", 5)).toBe(0.9);
     expect(tmFraction("Working weight", "T1", 5)).toBeCloseTo(rm(7));
     expect(tmFraction("Goal 1RM", "MAIN", 1)).toBeCloseTo(1.05);
-    const madcow = startingConfig("madcow", {}, DAN, "lb", START).trainingMaxes;
+    const madcow = startingConfig("madcow", {}, LIFTER, "lb", START).trainingMaxes;
     expect(madcow.squat).toBe(Math.round((rm(5) * 216) / 5) * 5);
   });
   it("fills missing lifts from ratios; explicit accessory e1RMs win", () => {
-    expect(estimateE1rm("frontSquat", DAN)).toBeCloseTo(0.8 * 216);
-    expect(estimateE1rm("frontSquat", { ...DAN, frontSquat: 190 })).toBe(190);
+    expect(estimateE1rm("frontSquat", LIFTER)).toBeCloseTo(0.8 * 216);
+    expect(estimateE1rm("frontSquat", { ...LIFTER, frontSquat: 190 })).toBe(190);
     expect(estimateE1rm("deadlift", { squat: 200 })).toBeCloseTo(240);
-    expect(estimateE1rm("pullUp", DAN)).toBe(0);
+    expect(estimateE1rm("pullUp", LIFTER)).toBe(0);
   });
   it("rep capacity is monotone and sane", () => {
     expect(maxReps(1)).toBe(1);
@@ -55,24 +56,24 @@ describe("startingConfig: maxes carried over by each program's convention", () =
 
 describe("simulate", () => {
   it("is deterministic for a seed", () => {
-    const a = simulate("gzclp", {}, DAN, "lb", 6, { runs: 30, seed: 7 });
-    const b = simulate("gzclp", {}, DAN, "lb", 6, { runs: 30, seed: 7 });
-    const c = simulate("gzclp", {}, DAN, "lb", 6, { runs: 30, seed: 8 });
+    const a = simulate("gzclp", {}, LIFTER, "lb", 6, { runs: 30, seed: 7 });
+    const b = simulate("gzclp", {}, LIFTER, "lb", 6, { runs: 30, seed: 7 });
+    const c = simulate("gzclp", {}, LIFTER, "lb", 6, { runs: 30, seed: 8 });
     expect(a).toEqual(b);
     expect(c.lifts.squat.trajectory[6]).not.toEqual(a.lifts.squat.trajectory[6]);
   });
 
   it("bands are ordered and start at your e1RM", () => {
-    const r = simulate("nsuns5", {}, DAN, "lb", 8, { runs: 60 });
+    const r = simulate("nsuns5", {}, LIFTER, "lb", 8, { runs: 60 });
     for (const l of BIG_FOUR) {
       const p = r.lifts[l];
       expect(p.trajectory).toHaveLength(9);
-      expect(p.trajectory[0].p50).toBe(DAN[l]);
+      expect(p.trajectory[0].p50).toBe(LIFTER[l]);
       for (const b of p.trajectory) {
         expect(b.p10).toBeLessThanOrEqual(b.p50);
         expect(b.p50).toBeLessThanOrEqual(b.p90);
       }
-      expect(p.trajectory[8].p50).toBeGreaterThan(DAN[l]);
+      expect(p.trajectory[8].p50).toBeGreaterThan(LIFTER[l]);
     }
     expect(r.endState.trainingMaxes.squat.p50).toBeGreaterThan(195);
     expect(r.lifts.bench.sessionsPerWeek).toBe(2);
@@ -91,16 +92,16 @@ describe("simulate", () => {
   });
 
   it("program dose matters: a lift the program never trains doesn't grow", () => {
-    const r = simulate("russian-squat", {}, DAN, "lb", 6, { runs: 30 });
+    const r = simulate("russian-squat", {}, LIFTER, "lb", 6, { runs: 30 });
     expect(r.lifts.squat.gain.p50).toBeGreaterThan(0);
     expect(r.lifts.bench.gain.p90).toBe(0);
   });
 
   it("GZCLP stages down, resets and retests once the lifter's capacity plateaus", () => {
-    const flat = simulate("gzclp", {}, DAN, "lb", 16, { runs: 40, growthScale: 0 });
-    const grow = simulate("gzclp", {}, DAN, "lb", 16, { runs: 40 });
+    const flat = simulate("gzclp", {}, LIFTER, "lb", 16, { runs: 40, growthScale: 0 });
+    const grow = simulate("gzclp", {}, LIFTER, "lb", 16, { runs: 40 });
     for (const l of BIG_FOUR) {
-      expect(flat.lifts[l].trajectory[16].p50).toBe(DAN[l]);
+      expect(flat.lifts[l].trajectory[16].p50).toBe(LIFTER[l]);
       expect(flat.lifts[l].outcomes["stage-down"] ?? 0).toBeGreaterThan(1);
       expect(flat.lifts[l].resets).toBeGreaterThan(0.5);
     }
@@ -114,7 +115,7 @@ describe("simulate", () => {
 
   it("every template runs 4 weeks without throwing", () => {
     for (const t of TEMPLATES) {
-      const r = simulate(t.id, {}, DAN, "lb", 4, { runs: 3 });
+      const r = simulate(t.id, {}, LIFTER, "lb", 4, { runs: 3 });
       for (const l of BIG_FOUR) {
         expect(Number.isFinite(r.lifts[l].trajectory[4].p50), `${t.id} ${l}`).toBe(true);
         expect(r.lifts[l].trajectory[4].p50, `${t.id} ${l}`).toBeGreaterThan(0);
@@ -130,9 +131,9 @@ describe("simulate", () => {
 
   it("is fast: 12 weeks × 200 runs", () => {
     for (const id of ["gzclp", "nsuns5", "sbsRtf"]) {
-      simulate(id, {}, DAN, "lb", 2, { runs: 5 }); // warm up the JIT
+      simulate(id, {}, LIFTER, "lb", 2, { runs: 5 }); // warm up the JIT
       const t = performance.now();
-      simulate(id, {}, DAN, "lb", 12, { runs: 200 });
+      simulate(id, {}, LIFTER, "lb", 12, { runs: 200 });
       expect(performance.now() - t, id).toBeLessThan(1000); // ~150–250 ms on a laptop
     }
   });
@@ -140,11 +141,11 @@ describe("simulate", () => {
 
 describe("compare", () => {
   it("summarizes the big four side by side", () => {
-    const rows = compare(["gzclp", "nsuns5", "sbsRtf"], DAN, "lb", 6, { runs: 30 });
+    const rows = compare(["gzclp", "nsuns5", "sbsRtf"], LIFTER, "lb", 6, { runs: 30 });
     expect(rows.map((r) => r.templateId)).toEqual(["gzclp", "nsuns5", "sbsRtf"]);
     for (const r of rows) {
       for (const l of BIG_FOUR) {
-        expect(r.lifts[l].start).toBe(DAN[l]);
+        expect(r.lifts[l].start).toBe(LIFTER[l]);
         expect(r.lifts[l].end.p50).toBeCloseTo(r.lifts[l].start + r.lifts[l].gain.p50, 0);
       }
       expect(r.totalGain).toBeGreaterThan(0);

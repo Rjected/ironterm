@@ -264,7 +264,7 @@ export const gzclMethod: ProgramTemplate = {
 
 // ───────────────────────── VDIP ─────────────────────────
 //
-// Volume-Dependent Intensity Progression. Sources: Cody's VDIP tab in Dan's Drive ("GZCL Free
+// Volume-Dependent Intensity Progression. Sources: Cody's VDIP tab ("GZCL Free
 // Compendium November 27th Update.xlsx") and his blog post (2016/11). Every set is a max-rep set
 // (MRS) left 1–2 reps short of failure, and next week's weight depends on the session's total reps:
 //   T1 3 MRS: 15+ → +10 lb · 10–14 → +5 · under 10 → drop 5–10% (we use 5%)
@@ -294,7 +294,7 @@ export const gzclVdip: ProgramTemplate = {
   id: "gzcl-vdip",
   name: "VDIP",
   author: "Cody Lefever (GZCL)",
-  source: "Dan's Drive: GZCL Free Compendium November 27th Update.xlsx (VDIP tab); Cody's blog post 'Volume-Dependent Intensity Progression' (2016)",
+  source: "GZCL Free Compendium November 27th Update.xlsx (VDIP tab); Cody's blog post 'Volume-Dependent Intensity Progression' (2016)",
   summary: "Every set is a max-rep set at one weight. Your total reps decide next week's weight: more volume earns more load. Expect 4–6 weeks of progress before a deload and retest.",
   category: "gzcl",
   level: "advanced",

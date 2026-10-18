@@ -2,7 +2,7 @@
 // Phrak's GSLP, the r/Fitness Basic Beginner Routine, Ice Cream Fitness 5×5, Fierce 5, AllPro's
 // Simple Beginner Routine, Madcow 5×5, Bill Starr 5×5 and the Texas Method.
 //
-// Sources (none of these are in Dan's Drive, so they come from published write-ups and memory):
+// Sources (no source spreadsheets, so they come from published write-ups and memory):
 //   StrongLifts    stronglifts.com (Mehdi): A squat/bench/row 5×5, B squat/OHP 5×5 + deadlift 1×5.
 //                  +5 lb a session (+10 deadlift). Fail the same weight 3 sessions running → -10%.
 //   Starting Str.  Rippetoe, Starting Strength 3rd ed. novice progression, phases 1–3 (phase 3

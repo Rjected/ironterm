@@ -9,12 +9,11 @@ import { Picker } from "../components/picker";
 import { AppsPanel } from "./apps";
 
 // First session matching the GZCLP sheet's starting weights (squat 185 × 5×3+) in Hevy.
-const SHEET_START = "2026-07-06";
 
 export function Setup(props: { b: Bootstrap; onSaved: (msg: string) => void }) {
   const { b } = props;
   const [s, setS] = useState<Settings>(b.settings);
-  const [cfg, setCfg] = useState<ProgramConfig>(() => b.program ?? defaultConfig("gzclp", b.settings.unit, `${SHEET_START}T00:00:00Z`));
+  const [cfg, setCfg] = useState<ProgramConfig>(() => b.program ?? defaultConfig("gzclp", b.settings.unit, `${b.today}T00:00:00Z`));
   const [templates, setTemplates] = useState<{ id: string; title: string }[]>([]);
   const [dirty, setDirty] = useState(false);
   const def = buildProgram(cfg);

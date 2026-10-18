@@ -3,7 +3,7 @@ import type { HevyWorkout } from "../hevy";
 import { LIFTS } from "../lifts";
 import { allSlots, applyWorkout, initialState, planDay, replay, type ProgramConfig, type ProgramDef, type ProgramState, type ProgramTemplate } from "../program";
 import { toKg } from "../units";
-import { candito6, clarence14, complete16 } from "./drive-blocks";
+import { candito6, clarence14, complete16 } from "./sheet-blocks";
 
 const W = (id: string, date: string, ex: [string, [number, number][]][]): HevyWorkout => ({
   id, title: id, start_time: `${date}T12:00:00Z`, end_time: `${date}T13:00:00Z`,
@@ -47,7 +47,7 @@ const uniqueIds = (def: ProgramDef) => {
   expect(new Set(def.days.map((d) => d.id)).size).toBe(def.days.length);
 };
 
-describe("Candito 6 Week (vs Dan's sheet: 1RMs B185 S250 D295 lb)", () => {
+describe("Candito 6 Week (vs the source sheet: 1RMs B185 S250 D295 lb)", () => {
   const { cfg, def } = setup(candito6, { squat: 250, bench: 185, deadlift: 295 });
 
   it("builds 22 sessions over 6 weeks", () => {
@@ -126,7 +126,7 @@ describe("Candito 6 Week (vs Dan's sheet: 1RMs B185 S250 D295 lb)", () => {
   });
 });
 
-describe("Clarence0 14 Week (vs Dan's sheet)", () => {
+describe("Clarence0 14 Week (vs the source sheet)", () => {
   const { cfg, def } = setup(clarence14);
 
   it("builds 53 sessions over 14 weeks with RPE-only main work", () => {
@@ -159,7 +159,7 @@ describe("Clarence0 14 Week (vs Dan's sheet)", () => {
   });
 });
 
-describe("Complete 16 Week / Calgary Barbell (vs Dan's sheet: maxes S255 B185 D315)", () => {
+describe("Complete 16 Week / Calgary Barbell (vs the source sheet: maxes S255 B185 D315)", () => {
   const { cfg, def } = setup(complete16, { squat: 255, bench: 185, deadlift: 315, ohp: 135 });
 
   it("builds 64 sessions over 16 weeks", () => {
