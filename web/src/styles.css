@@ -181,7 +181,9 @@ a { color: inherit; }
 .kpi label { font-size: var(--fs-s); color: var(--dim); letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .v { font-size: var(--fs-l); color: var(--hi); line-height: 1.15; white-space: nowrap; }
 .kpi .v small { font-size: var(--fs-s); color: var(--dim); margin-left: 4px; }
-.kpi .d { font-size: var(--fs-s); color: var(--dim); white-space: nowrap; display: flex; gap: 8px; align-items: center; }
+.kpi .d { font-size: var(--fs-s); color: var(--dim); white-space: nowrap; display: flex; gap: 8px; align-items: center; overflow: hidden; }
+/* text in a KPI subtitle ends in … instead of running into the next tile */
+.kpi .d > .ell { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .kpi svg { margin-top: 4px; }
 .up { color: var(--up); } .down { color: var(--down); } .am { color: var(--amber); } .dim { color: var(--dim); } .faint { color: var(--faint); } .hi { color: var(--hi); }
 
