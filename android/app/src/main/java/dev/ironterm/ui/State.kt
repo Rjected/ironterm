@@ -81,6 +81,8 @@ data class DataUi(
     val savingNotes: Boolean = false,
     val pushing: Boolean = false,
     val starting: Boolean = false,
+    /** POST /api/app/program/skip in flight */
+    val skipping: Boolean = false,
     /** one-shot message (snackbar) */
     val toast: String? = null,
     val social: SocialUi = SocialUi(),
@@ -177,6 +179,8 @@ interface AppActions {
     fun clearStartError() {}
     /** POST swap: [to] instead of [lift] everywhere in the program (null = as written). */
     fun swapLift(lift: String, to: String?) {}
+    /** POST skip: skip the program's next session [dayId], or ([undo]) bring the last skip back. Needs the server. */
+    fun skipWorkout(dayId: String?, undo: Boolean = false) {}
     fun toastShown() {}
 
     // gym

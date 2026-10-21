@@ -89,7 +89,19 @@ data class AppGym(
     val plan: dev.ironterm.gym.PlannedSession? = null,
     val days: List<GymDay> = emptyList(),
     val catalog: List<CatalogItem> = emptyList(),
+    /** the program's last session was skipped (POST /api/app/program/skip): it can still be undone */
+    val skipped: SkippedDay? = null,
 )
+
+@Serializable
+data class SkippedDay(val dayId: String = "", val dayName: String = "", val date: String = "")
+
+/** POST /api/app/program/skip: {dayId} skips the program's next session, {undo: true} brings the last skip back. */
+@Serializable
+data class SkipBody(val dayId: String? = null, val undo: Boolean? = null)
+
+@Serializable
+data class SkipResult(val ok: Boolean = false, val message: String = "", val gym: AppGym? = null, val program: AppProgram? = null)
 
 @Serializable
 data class GymDay(@Serializable(LenientInt::class) val dayIndex: Int = 0, val dayId: String = "", val dayName: String = "")

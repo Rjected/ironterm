@@ -83,7 +83,11 @@ fun GymWidgetContent(s: LiveSession?, nowMs: Long) {
                 Text("Tap to finish", style = mono(9.sp, WC.dim), maxLines = 1)
                 return@Column
             }
-            val label = Live.setLabel(ex, cur.set).let { if (it == "W") "WARMUP" else "SET $it/${ex.sets.count { x -> x.type != SetType.WARMUP }}" }
+            val label = when {
+                set.type == SetType.WARMUP -> "WARMUP"
+                (ex.totalReps ?: 0) > 0 -> "${Live.repsDone(ex)}/${ex.totalReps} REPS"
+                else -> Live.workingPosition(ex, cur.set)?.let { (n, of) -> "SET $n/$of" } ?: ""
+            }
             val load = when {
                 ex.isCardio -> set.durationSec?.let { "${(it / 60).toInt()} MIN" } ?: ""
                 set.weight != null && set.weight != 0.0 -> "${Fmt.w(set.weight)}×${set.reps ?: "?"}"

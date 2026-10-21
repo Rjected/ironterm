@@ -262,6 +262,8 @@ class AppApiTest {
                     p == "/api/live/finish" -> MockResponse().setBody("""{"workout":{"id":"w1","title":"x"},"demo":true,"duplicate":true,"prs":[{"lift":"squat","short":"SQUAT","kind":"rep","reps":5,"weight":185,"prev":175},{"lift":"bench","short":"BENCH","kind":"e1rm","reps":1,"weight":225,"prev":null}]}""")
                     p.endsWith("/notes") -> MockResponse().setBody("""{"ok":true}""")
                     p == "/api/routines/push" -> MockResponse().setResponseCode(400).setBody("""{"error":"Demo mode: add HEVY_API_KEY to push routines."}""")
+                    p == "/api/app/program/skip" -> if (bodies.last().contains("A1")) MockResponse().setResponseCode(409).setBody("""{"error":"the next session is A2, not A1"}""")
+                        else MockResponse().setBody("""{"ok":true,"message":"Skipped A2","gym":{"unit":"lb","skipped":{"dayId":"A2","dayName":"Day A2 · Bench","date":"2026-10-21T12:00:00.000Z"}},"program":{"program":{"name":"GZCLP","templateId":"gzclp"}}}""")
                     p == "/api/templates" -> MockResponse().setBody("""[{"id":"t1","title":"Treadmill","equipment":"none"}]""")
                     else -> MockResponse().setResponseCode(404).setBody("""{"error":"not found"}""")
                 }
@@ -320,6 +322,24 @@ class AppApiTest {
         a.saveNotes("w 1", NotesEdit("new note", listOf("ok", null)))
         assertEquals("/api/workouts/w%201/notes", seen.last().requestUrl!!.encodedPath)
         assertEquals("""{"description":"new note","exercises":["ok",null]}""", bodies.last())
+    }
+
+    @Test fun skipWorkout() = runBlocking {
+        val a = api()
+        val r = a.skipWorkout("A2")
+        assertEquals("POST", seen.last().method)
+        assertEquals("/api/app/program/skip", seen.last().requestUrl!!.encodedPath)
+        assertEquals("""{"dayId":"A2"}""", bodies.last())
+        assertEquals("Skipped A2", r.message)
+        assertEquals("A2", r.gym?.skipped?.dayId)
+        assertEquals("gzclp", r.program?.program?.templateId)
+        a.skipWorkout(null, undo = true)
+        assertEquals("""{"undo":true}""", bodies.last())
+        // a stale day: 409 with the server's words
+        try { a.skipWorkout("A1"); throw AssertionError() } catch (e: ApiException) {
+            assertEquals(409, e.code)
+            assertEquals("the next session is A2, not A1", e.message)
+        }
     }
 
     @Test fun errors() = runBlocking {

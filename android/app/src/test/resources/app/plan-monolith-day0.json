@@ -1,0 +1,209 @@
+{
+ "dayIndex": 0,
+ "dayId": "1",
+ "dayName": "Monday · Squat / Press",
+ "week": 0,
+ "weekName": "Week 1",
+ "exercises": [
+  {
+   "slotId": "mo1-sq",
+   "lift": "squat",
+   "tier": "MAIN",
+   "restSeconds": 180,
+   "scheme": "7 sets",
+   "sets": [
+    {
+     "weight": 155,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.7
+    },
+    {
+     "weight": 175,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.8
+    },
+    {
+     "weight": 200,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    },
+    {
+     "weight": 200,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    },
+    {
+     "weight": 200,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    },
+    {
+     "weight": 200,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    },
+    {
+     "weight": 200,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    }
+   ],
+   "note": "Training max 220"
+  },
+  {
+   "slotId": "mo1-ohp",
+   "lift": "ohp",
+   "tier": "MAIN",
+   "restSeconds": 180,
+   "scheme": "4 sets · 5+",
+   "sets": [
+    {
+     "weight": 65,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.7
+    },
+    {
+     "weight": 75,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.8
+    },
+    {
+     "weight": 85,
+     "reps": 5,
+     "amrap": false,
+     "pct": 0.9
+    },
+    {
+     "weight": 65,
+     "reps": 5,
+     "amrap": true,
+     "pct": 0.7
+    }
+   ],
+   "note": "Training max 95"
+  },
+  {
+   "slotId": "mo1-chin",
+   "lift": "chinUp",
+   "tier": "ACC",
+   "restSeconds": 75,
+   "scheme": "100 reps",
+   "sets": [
+    {
+     "weight": 0,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "amrap": false
+    }
+   ],
+   "note": "100 total reps",
+   "totalReps": 100
+  },
+  {
+   "slotId": "mo1-fp",
+   "lift": "facePull",
+   "tier": "ACC",
+   "restSeconds": 75,
+   "scheme": "100 reps",
+   "sets": [
+    {
+     "weight": 22.5,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 22.5,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 22.5,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 22.5,
+     "reps": 20,
+     "amrap": false
+    },
+    {
+     "weight": 22.5,
+     "reps": 20,
+     "amrap": false
+    }
+   ],
+   "note": "100 total reps (or band pull-aparts)",
+   "totalReps": 100
+  },
+  {
+   "slotId": "mo1-dip",
+   "lift": "dip",
+   "tier": "ACC",
+   "restSeconds": 75,
+   "scheme": "100–200 reps",
+   "sets": [
+    {
+     "weight": 0,
+     "reps": 20,
+     "repsMax": 40,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "repsMax": 40,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "repsMax": 40,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "repsMax": 40,
+     "amrap": false
+    },
+    {
+     "weight": 0,
+     "reps": 20,
+     "repsMax": 40,
+     "amrap": false
+    }
+   ],
+   "note": "100–200 total reps",
+   "totalReps": 100,
+   "totalRepsMax": 200
+  }
+ ]
+}

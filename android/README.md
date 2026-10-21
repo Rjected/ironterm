@@ -214,6 +214,10 @@ Release build inputs (all optional; without them `assembleRelease` gives an unsi
   set in lb and kg (barbell, dumbbell, machine), an empty session with cardio and drop sets, the
   Hevy body, warmup ramps, session titles and `sessionFromPlan`; plus rest cap, rest controls,
   plates, summary and JSON round trip.
+- `LiveTotalsTest`: rep totals ("100 total reps") and skips, mirroring `web/shared/totals-skips.test.ts`
+  on Building the Monolith's day 1 (`app/plan-monolith-day0.json`, the TS engine's plan), plus five
+  scenarios replayed against golden output of `live.ts` (`totals_golden.json`): sets of 5 to 100,
+  4×23 then 8, an early finish, an edited set, and skipping / bringing back / skipping the rest.
 - `GymStoreTest`: disk persistence, debounced coalesced PUTs, offline → online retries, process
   death (a fresh store on the same files), FINISH queued offline then uploaded, a refused FINISH,
   DISCARD, revoked token, adopting a server session, and the pure outbox rules.
