@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { LIFTS } from "../../shared/lifts";
 import {
-  addExercise, addSet, completeSet, current, emptySession, mapEx, progress, sessionFromPlan, updateSet,
+  addExercise, addSet, completeSet, current, emptySession, mapEx, progress, repsDone, sessionFromPlan, skipExercise, skipSet, updateSet,
   type LiveExercise, type LiveSession, type LiveSet,
 } from "../../shared/live";
 import { isScheduled, weekIndex } from "../../shared/program";
@@ -88,7 +88,7 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
     if (s?.restEndsAt && restLeft <= 0 && fired.current !== s.restEndsAt) { fired.current = s.restEndsAt; beep(); }
   }, [restLeft <= 0, s?.restEndsAt]);
 
-  if (!s) return <StartScreen b={b} d={d} onStart={start} />;
+  if (!s) return <StartScreen b={b} d={d} onStart={start} onSaved={props.onSaved} onReload={props.onReload} />;
 
   const cur = current(s);
   const prog = progress(s);
@@ -166,6 +166,8 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
             onDone={(i) => update((x) => completeSet(x, ex.id, i))}
             onUndo={(i) => update((x) => updateSet(x, ex.id, i, { done: false, doneAt: undefined }))}
             onAddSet={() => update((x) => addSet(x, ex.id))}
+            onSkip={(i, on) => update((x) => skipSet(x, ex.id, i, on))}
+            onSkipRest={() => update((x) => skipExercise(x, ex.id))}
             onRemoveSet={(i) => update((x) => mapEx(x, ex.id, (e) => ({ ...e, sets: e.sets.filter((_, k) => k !== i) })))}
             onRemove={() => update((x) => ({ ...x, exercises: x.exercises.filter((e) => e.id !== ex.id) }))}
             onNote={(v) => update((x) => mapEx(x, ex.id, (e) => ({ ...e, userNote: v })))}
@@ -180,9 +182,24 @@ export function Gym(props: { b: Bootstrap; d: Derived; onSaved: (msg: string) =>
   );
 }
 
-function StartScreen(props: { b: Bootstrap; d: Derived; onStart: (s: LiveSession) => void }) {
+function StartScreen(props: { b: Bootstrap; d: Derived; onStart: (s: LiveSession) => void; onSaved: (msg: string) => void; onReload: () => void }) {
   const { b, d } = props;
   const [day, setDay] = useState<number | null>(null);
+  const [skipping, setSkipping] = useState(false);
+  const last = d.state?.log[d.state.log.length - 1];
+  const skip = async (body: { dayId: string } | { undo: true }) => {
+    setSkipping(true);
+    try {
+      const r = await api.skipWorkout(body);
+      props.onSaved(r.message);
+      setDay(null);
+      props.onReload();
+    } catch (e) {
+      props.onSaved(`Couldn't skip: ${(e as Error).message}`);
+    } finally {
+      setSkipping(false);
+    }
+  };
   const def = d.def, state = d.state, cfg = b.program;
   const week = def && state ? weekIndex(def, state.rotations) : 0;
   const plan = def && state && cfg ? d.plan(day ?? state.dayIndex) : null;
@@ -208,6 +225,15 @@ function StartScreen(props: { b: Bootstrap; d: Derived; onStart: (s: LiveSession
             <div class="faint">TODAY · {def.name}{plan.weekName ? ` · ${plan.weekName}` : ""}</div>
             <div class="gym-day">{plan.dayId} <span class="dim">{plan.dayName.split("·")[1]?.trim()}</span></div>
             <button class="btn pri big-btn" onClick={() => props.onStart(sessionFromPlan(plan, cfg!.unit, def.name))}>START {plan.dayId}</button>
+            {(day == null || day === state!.dayIndex) && !state!.complete && (
+              <button class="btn" id="skip-workout" disabled={skipping}
+                onClick={() => { if (confirm(`Skip ${plan.dayId}? The program moves on to the next day; nothing is logged and no weights change.`)) skip({ dayId: plan.dayId }); }}>
+                SKIP {plan.dayId}
+              </button>
+            )}
+            {last?.skipped && (
+              <div class="dim">Skipped {last.dayId} · <button class="linkish" id="undo-skip" disabled={skipping} onClick={() => skip({ undo: true })}>UNDO</button></div>
+            )}
             <div class="seg" style={{ flexWrap: "wrap" }}>
               {def.days.map((dd, i) => ({ dd, i })).filter(({ dd }) => isScheduled(dd, week)).map(({ dd, i }) => (
                 <button class={i === (day ?? state!.dayIndex) ? "on" : ""} onClick={() => setDay(i)}>{dd.id}{i === state!.dayIndex ? "•" : ""}</button>
@@ -250,28 +276,40 @@ function ExerciseCard(props: {
   ex: LiveExercise; unit: "lb" | "kg"; open: boolean; currentSet: number;
   onOpen: () => void; onSet: (i: number, p: Partial<LiveSet>) => void; onDone: (i: number) => void; onUndo: (i: number) => void;
   onAddSet: () => void; onRemoveSet: (i: number) => void; onRemove: () => void; onNote: (v: string) => void;
+  onSkip: (i: number, on: boolean) => void; onSkipRest: () => void;
 }) {
   const { ex, unit } = props;
   const lift = LIFTS[ex.lift];
   const name = ex.title ?? lift?.name ?? ex.lift;
-  const done = ex.sets.filter((x) => x.done).length;
+  const counted = ex.sets.filter((x) => !x.skipped);
+  const done = counted.filter((x) => x.done).length;
+  const reps = ex.totalReps ? repsDone(ex) : 0;
+  const complete = ex.totalReps ? reps >= ex.totalReps : counted.length > 0 && done === counted.length;
+  const left = ex.sets.some((x) => !x.done && !x.skipped);
   const step = loadStep(lift?.kind ?? "barbell", unit);
   const curW = props.currentSet >= 0 ? ex.sets[props.currentSet].weight : null;
   const p = (lift?.kind ?? "barbell") === "barbell" && curW ? plates(curW, unit) : [];
   return (
-    <section class={`gx ${props.open ? "open" : ""} ${done === ex.sets.length ? "complete" : ""}`}>
+    <section class={`gx ${props.open ? "open" : ""} ${complete ? "complete" : ""}`}>
       <button class="gx-h" onClick={props.onOpen}>
         {ex.tier && <Tier t={ex.tier} />}
         <span class="gx-name">{name}</span>
         <span class="dim">{ex.scheme ?? ""}</span>
         {ex.userNote && !props.open && <span class="gx-has-note" title={ex.userNote}>✎</span>}
-        <span class="gx-count">{done}/{ex.sets.length}</span>
+        <span class="gx-count">{ex.totalReps ? `${reps}/${ex.totalReps}${ex.totalRepsMax ? `–${ex.totalRepsMax}` : ""} reps` : `${done}/${counted.length}`}{!left && !complete ? " · skipped" : ""}</span>
       </button>
       {props.open && (
         <div class="gx-b">
           {ex.note && <div class="next">{ex.note}</div>}
           {(ex.ifSuccess || ex.ifFail) && <div class="next">{ex.ifSuccess && <span><b>▲</b> {ex.ifSuccess}</span>}{ex.ifFail && <span><i>▼</i> {ex.ifFail}</span>}</div>}
-          {ex.sets.map((x, i) => (
+          {ex.totalReps && <div class="next">{reps >= ex.totalReps ? `${reps} reps: total reached` : left ? `${ex.totalReps - reps} reps to go · sets are added as you go` : `skipped at ${reps} of ${ex.totalReps} reps · + SET to keep going`}</div>}
+          {ex.sets.map((x, i) => x.skipped ? (
+            <div class="gs skipped">
+              <span class="gs-i"><b>{x.type === "warmup" ? "W" : ex.sets.slice(0, i + 1).filter((y) => y.type !== "warmup").length}</b></span>
+              <span class="dim gs-skipped">SKIPPED</span>
+              <button class="btn" aria-label="bring back set" onClick={() => props.onSkip(i, false)}>UNDO</button>
+            </div>
+          ) : (
             <div class={`gs ${x.done ? "done" : ""} ${i === props.currentSet ? "cur" : ""} ${x.type}`}>
               <span class="gs-i">
                 <b>{x.type === "warmup" ? "W" : ex.sets.slice(0, i + 1).filter((y) => y.type !== "warmup").length}</b>
@@ -290,6 +328,7 @@ function ExerciseCard(props: {
               )}
               <button class="gs-ok" aria-label={x.done ? "undo set" : "complete set"} onClick={() => (x.done ? props.onUndo(i) : props.onDone(i))}>{x.done ? "✓" : "○"}</button>
               {!x.done && !x.target && <button class="gs-x" aria-label="remove set" onClick={() => props.onRemoveSet(i)}>×</button>}
+              {!x.done && x.target && <button class="gs-x" aria-label="skip set" title="skip this set" onClick={() => props.onSkip(i, true)}>⤼</button>}
             </div>
           ))}
           {p.length > 0 && <div class="plates">PLATES/SIDE {p.map((v) => fmt(v)).join(" · ")}</div>}
@@ -297,6 +336,7 @@ function ExerciseCard(props: {
             value={ex.userNote ?? ""} onInput={(e) => props.onNote((e.target as HTMLInputElement).value)} />
           <div class="row">
             <button class="btn" onClick={props.onAddSet}>+ SET</button>
+            {left && <button class="btn" onClick={props.onSkipRest}>SKIP REST</button>}
             {!ex.slotId && <button class="btn danger" onClick={props.onRemove}>REMOVE</button>}
           </div>
         </div>

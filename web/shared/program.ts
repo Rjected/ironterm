@@ -132,6 +132,10 @@ export type Progression =
       amrapLast?: boolean;
       /** "60s", "to failure", "bodyweight"… */
       note?: string;
+      /** a rep total to reach in as many sets as it takes ("100 total reps"); read from `note` when unset */
+      totalReps?: number;
+      /** the top of a range ("100–200 total reps") */
+      totalRepsMax?: number;
     };
 
 export interface SlotDef {
@@ -215,6 +219,10 @@ export interface ProgramConfig {
 
 export interface Adjustment {
   date: string;
+  /** a skipped session: the program moves on to the next day without logging anything */
+  skip?: boolean;
+  /** the day that was skipped (for the log) */
+  dayId?: string;
   slotId?: string;
   weight?: number;
   stage?: number;
@@ -305,6 +313,8 @@ export interface LogEntry {
   dayId: string;
   week: number;
   results: SlotResult[];
+  /** a skipped session (skipSession): no results */
+  skipped?: boolean;
 }
 
 export interface ProgramState {
@@ -358,6 +368,9 @@ export interface PlannedExercise {
   /** what happens next, e.g. "Hit 15 reps → 190 next time" */
   ifSuccess?: string;
   ifFail?: string;
+  /** reach this many reps across the sets, in as many sets as it takes (Monolith's "100 total reps") */
+  totalReps?: number;
+  totalRepsMax?: number;
 }
 
 export interface PlannedSession {
@@ -452,6 +465,18 @@ function setsLabel(sets: PlannedSet[]): string {
   return `${sets.length} sets${amraps.length ? " · " + amraps.map((s) => `${s.reps}+`).join(" ") : ""}`;
 }
 
+/**
+ * A rep total written in a slot's note: "100 total reps", "100–200 total reps", "50 total reps in as
+ * few sets as possible". A range starting at 0 ("0–50 total reps (optional)") is no target.
+ */
+export function totalFromNote(note: string | undefined): { lo: number; hi?: number } | null {
+  const m = note?.match(/(\d+)\s*(?:[–-]\s*(\d+))?\s+(?:total reps|reps total)/i);
+  if (!m) return null;
+  const lo = Number(m[1]), hi = m[2] ? Number(m[2]) : undefined;
+  if (!(lo > 0)) return null;
+  return hi && hi > lo ? { lo, hi } : { lo };
+}
+
 export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState, dayIndex = state.dayIndex): PlannedSession {
   const day = def.days[dayIndex];
   const week = weekIndex(def, state.rotations);
@@ -506,7 +531,11 @@ export function planDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramState
 
     if (p.kind === "fixed") {
       const sets = Array.from({ length: p.sets }, (_, k) => ({ weight: s.weight, reps: p.reps, repsMax: p.repsMax, amrap: !!p.amrapLast && k === p.sets - 1 }));
-      return { ...base, scheme: setsLabel(sets), sets, note: [p.note, slot.note].filter(Boolean).join(" · ") || undefined };
+      const total = p.totalReps != null ? { lo: p.totalReps, hi: p.totalRepsMax } : totalFromNote(p.note);
+      return {
+        ...base, scheme: total ? `${total.lo}${total.hi ? `–${total.hi}` : ""} reps` : setsLabel(sets), sets, note: [p.note, slot.note].filter(Boolean).join(" · ") || undefined,
+        ...(total ? { totalReps: total.lo, ...(total.hi ? { totalRepsMax: total.hi } : {}) } : {}),
+      };
     }
 
     const tm = state.tms[p.tmLift] ?? 0;
@@ -895,6 +924,16 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
     results.push({ ...r.res, scheme: r.res.scheme || planned.scheme });
   }
 
+  const entry: LogEntry = { workoutId: w.id, date: w.start_time, dayId: day.id, week: plan.week, results };
+  return moveOn(def, cfg, state, dayIndex, slots, tms, pending, pendingNext, entry);
+}
+
+/**
+ * After session `dayIndex` (done or skipped): go to the next scheduled day, and at a week boundary
+ * apply the TM changes that were waiting for it and any once-per-cycle bumps.
+ */
+function moveOn(def: ProgramDef, cfg: ProgramConfig, state: ProgramState, dayIndex: number, slots: ProgramState["slots"], tms: Record<string, number>,
+  pending: Record<string, number>, pendingNext: Record<string, number>, entry: LogEntry): ProgramState {
   const next = firstScheduled(def, dayIndex + 1, state.rotations);
   if (next.rotations > state.rotations) {
     for (const [lift, d] of Object.entries(pending)) tms[lift] = (tms[lift] ?? 0) + d;
@@ -912,9 +951,21 @@ export function applyWorkout(def: ProgramDef, cfg: ProgramConfig, state: Program
       if (at ? at.includes((r - 1) % weeks) : r % every === 0) for (const [lift, w8] of Object.entries(def.cycle.tmIncrease)) if (tms[lift] != null) tms[lift] += inc(w8, cfg.unit);
     }
   }
-  const entry: LogEntry = { workoutId: w.id, date: w.start_time, dayId: day.id, week: plan.week, results };
   const complete = !!def.cycle?.finite && next.rotations >= def.cycle.weeks;
   return { dayIndex: next.dayIndex, rotations: next.rotations, slots, tms, log: [...state.log, entry], complete, pendingTm: pending, ...(Object.keys(pendingNext).length ? { pendingTmNext: pendingNext } : {}) };
+}
+
+/**
+ * Skip the next session: the program moves on to the following day as if it were done, but no
+ * weight, stage or failure count changes. Logged with `skipped: true` and no results.
+ */
+export function skipSession(def: ProgramDef, cfg: ProgramConfig, state: ProgramState, date: string): ProgramState {
+  if (state.complete) return state;
+  const plan = planDay(def, cfg, state, state.dayIndex);
+  const entry: LogEntry = { workoutId: `skip:${date}`, date, dayId: plan.dayId, week: plan.week, results: [], skipped: true };
+  const moved = moveOn(def, cfg, state, state.dayIndex, { ...state.slots }, { ...state.tms }, { ...state.pendingTm }, { ...state.pendingTmNext }, entry);
+  // a skip isn't a session: a re-entry ramp you're on carries on unchanged
+  return state.reentry ? { ...moved, reentry: state.reentry } : moved;
 }
 
 /** Which program day a Hevy workout was, or -1 if it isn't a program session. */
@@ -953,6 +1004,17 @@ export function matchDay(def: ProgramDef, cfg: ProgramConfig, state: ProgramStat
     if (score > bestScore) { best = i; bestScore = score; }
   }
   return best;
+}
+
+/** Adjustments in date order: skips move the program on, the rest are corrections. */
+function applyDue(def: ProgramDef, cfg: ProgramConfig, state: ProgramState, due: Adjustment[]): ProgramState {
+  let st = state, fixes: Adjustment[] = [];
+  for (const a of due) {
+    if (!a.skip) { fixes.push(a); continue; }
+    if (fixes.length) { st = applyAdjustments(st, fixes); fixes = []; }
+    st = skipSession(def, cfg, st, a.date);
+  }
+  return fixes.length ? applyAdjustments(st, fixes) : st;
 }
 
 function applyAdjustments(state: ProgramState, adj: Adjustment[]): ProgramState {
@@ -1099,7 +1161,8 @@ export function replay(def: ProgramDef, cfg: ProgramConfig, workouts: HevyWorkou
     if (state.complete) break;
     const due: Adjustment[] = [];
     while (ai < adj.length && adj[ai].date <= w.start_time) due.push(adj[ai++]);
-    if (due.length) state = applyAdjustments(state, due);
+    if (due.length) state = applyDue(def, cfg, state, due);
+    if (state.complete) break;
     const d = matchDay(def, cfg, state, w);
     if (d < 0) continue;
     // Gaps are measured between program sessions; hotel-gym or other workouts don't reset them.
@@ -1117,7 +1180,7 @@ export function replay(def: ProgramDef, cfg: ProgramConfig, workouts: HevyWorkou
     state = next;
     lastSession = w.start_time;
   }
-  if (ai < adj.length) state = applyAdjustments(state, adj.slice(ai));
+  if (ai < adj.length) state = applyDue(def, cfg, state, adj.slice(ai));
   // Still on a break: the next session starts a ramp.
   if (opts.today && lastSession && Number.isFinite(minGap)) {
     const r = startRamp(def, state, daysBetween(lastSession.slice(0, 10), opts.today), minGap);
