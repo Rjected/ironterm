@@ -91,8 +91,17 @@ struct StartView: View {
     @EnvironmentObject var model: AppModel
     @ObservedObject var gym: GymStore
     @State private var day: Int?
+    /// the day SKIP was tapped for, while its confirmation is up
+    @State private var confirmSkip: String?
 
     var nextIndex: Int? { gym.gym?.days.first { $0.dayName == gym.gym?.next?.dayName }?.dayIndex }
+
+    /// the next session's day id (what POST /api/app/program/skip expects)
+    func nextDayId(_ g: AppGym) -> String? {
+        if let p = g.plan { return p.dayId }
+        guard let i = nextIndex else { return nil }
+        return g.days.first { $0.dayIndex == i }?.dayId
+    }
 
     var body: some View {
         ScrollView {
@@ -106,6 +115,8 @@ struct StartView: View {
                             .font(T.mono(11)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                // the program's last session was skipped but there's no next one to show (it finished)
+                if gym.gym?.next == nil, let sk = gym.gym?.skipped { skippedLine(sk) }
                 Panel(title: "FREE SESSION") {
                     TermButton(title: gym.busy ? "STARTING…" : "START EMPTY WORKOUT", disabled: gym.busy) { Task { await gym.start(dayIndex: nil, empty: true) } }
                         .accessibilityIdentifier("start-empty")
@@ -116,6 +127,32 @@ struct StartView: View {
             .padding(14)
         }
         .refreshable { await gym.load() }
+        .alert("Skip \(confirmSkip ?? "")?", isPresented: Binding(get: { confirmSkip != nil }, set: { if !$0 { confirmSkip = nil } })) {
+            Button("Skip \(confirmSkip ?? "")", role: .destructive) {
+                guard let id = confirmSkip else { return }
+                confirmSkip = nil
+                Task { if await gym.skipWorkout(dayId: id) != nil { day = nil } }
+            }
+            Button("Cancel", role: .cancel) { confirmSkip = nil }
+        } message: {
+            Text("The program moves on to the next day. Nothing is logged and no weights change. You can undo it.")
+        }
+    }
+
+    /// "Skipped A1 · UNDO" while the program's last session is a skip
+    func skippedLine(_ sk: AppGym.Skipped) -> some View {
+        HStack(spacing: 6) {
+            Text("Skipped \(sk.dayId) ·").font(T.mono(11)).foregroundStyle(T.dim)
+            Button { Task { if await gym.skipWorkout(dayId: nil) != nil { day = nil } } } label: {
+                Text("UNDO").font(T.mono(11, .heavy)).foregroundStyle(T.amber).underline()
+                    .padding(.vertical, 4).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(gym.busy)
+            .accessibilityLabel("Undo skipping \(sk.dayId)")
+            .accessibilityHint("Brings \(sk.dayId) back as the next session")
+            .accessibilityIdentifier("undo-skip")
+        }
     }
 
     func programHero(_ g: AppGym, _ n: Snapshot.NextSession) -> some View {
@@ -140,6 +177,13 @@ struct StartView: View {
                 .buttonStyle(.plain)
                 .disabled(gym.busy)
                 .accessibilityIdentifier("start-next")
+                if isNext, let skipId = nextDayId(g) {
+                    TermButton(title: "SKIP \(skipId)", disabled: gym.busy) { confirmSkip = skipId }
+                        .accessibilityLabel("Skip \(skipId)")
+                        .accessibilityHint("Asks first. The program moves on to the next day; nothing is logged.")
+                        .accessibilityIdentifier("skip-workout")
+                }
+                if let sk = g.skipped { skippedLine(sk) }
                 if g.days.count > 1 {
                     Cap("OR PICK ANOTHER DAY", T.faint, size: 8)
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -285,7 +329,8 @@ struct ActiveSessionView: View {
             Live.updateSet(s, exId: t.exId, t.set) { x in
                 switch t.field {
                 case .weight: x.weight = v
-                case .reps: x.reps = v.map { Int($0.rounded()) }
+                // reps you set are yours: the set stops following a rep total's pace
+                case .reps: x.reps = v.map { Int($0.rounded()) }; x.auto = nil
                 case .rpe: x.rpe = v
                 case .minutes: x.durationSec = v.map { $0 * 60 }
                 case .distance: x.distanceM = v.map { $0 * (s.unit == "lb" ? 1609.344 : 1000) }

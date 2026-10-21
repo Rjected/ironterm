@@ -37,9 +37,19 @@ struct AppGym: Codable, Equatable {
     var plan: PlannedSession?
     var days: [ProgramDay]
     var catalog: [CatalogItem]
+    /// the program's last session was skipped (POST /api/app/program/skip): it can still be undone
+    var skipped: Skipped?
 
+    struct Skipped: Codable, Equatable { var dayId: String; var dayName: String; var date: String }
     struct ProgramDay: Codable, Equatable, Identifiable { var dayIndex: Int; var dayId: String; var dayName: String; var id: Int { dayIndex } }
     struct CatalogItem: Codable, Equatable, Identifiable { var key: String; var name: String; var kind: String; var hevy: String?; var id: String { key } }
+}
+
+/// POST /api/app/program/skip: the gym document after the skip (the program document is ignored:
+/// its screen reloads).
+struct SkipResult: Decodable, Equatable {
+    var message: String
+    var gym: AppGym
 }
 
 struct AppLiftList: Codable, Equatable {

@@ -116,12 +116,13 @@ final class GymStoreTests: XCTestCase {
     var puts: [LiveSession] = []
     var finishes: [LiveSession] = []
     var deletes = 0
+    var skips: [[String: Any]] = []
     var finishBody = #"{"workout":{"id":"w-1"},"demo":true,"prs":[{"lift":"bench","short":"BENCH","kind":"rep","reps":1,"weight":325,"prev":320}]}"#
 
     override func setUp() {
         StubProtocol.requests = []
         online = true
-        puts = []; finishes = []; deletes = 0
+        puts = []; finishes = []; deletes = 0; skips = []
         let gymJSON = try! LiveTests.fixture("gym")
         let startJSON = try! LiveTests.fixture("gym-start")
         StubProtocol.handler = { [unowned self] r in
@@ -138,6 +139,14 @@ final class GymStoreTests: XCTestCase {
             case ("POST", "/api/app/gym/start"): return (200, startJSON)
             case ("PUT", "/api/live"): self.puts.append(try! JSONDecoder().decode(LiveSession.self, from: body)); return (200, Data(#"{"ok":true}"#.utf8))
             case ("DELETE", "/api/live"): self.deletes += 1; return (200, Data(#"{"ok":true}"#.utf8))
+            case ("POST", "/api/app/program/skip"):
+                let b = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] ?? [:]
+                self.skips.append(b)
+                if let id = b["dayId"] as? String, id != "A2" { return (409, Data(#"{"error":"the next session is A2, not \#(id)"}"#.utf8)) }
+                var g = try! JSONSerialization.jsonObject(with: gymJSON) as! [String: Any]
+                g["skipped"] = b["undo"] as? Bool == true ? NSNull() : ["dayId": "A2", "dayName": "Day A2 · Bench", "date": "2026-10-21T12:00:00.000Z"]
+                let r: [String: Any] = ["ok": true, "message": b["undo"] != nil ? "A2 is back" : "Skipped A2", "gym": g, "program": [:]]
+                return (200, try! JSONSerialization.data(withJSONObject: r))
             case ("POST", "/api/live/finish"):
                 self.finishes.append(try! JSONDecoder().decode(LiveSession.self, from: body))
                 return (200, Data(self.finishBody.utf8))
@@ -252,6 +261,41 @@ final class GymStoreTests: XCTestCase {
         await g.discard()
         XCTAssertNil(g.session)
         XCTAssertEqual(deletes, 1)
+    }
+
+    func testSkipWorkoutAndUndo() async throws {
+        let g = store()
+        await g.load()
+        XCTAssertNil(g.gym?.skipped, "older gym documents have no skipped field")
+        var saved = 0
+        g.onWorkoutSaved = { saved += 1 }
+        let msg = await g.skipWorkout(dayId: "A2")
+        XCTAssertEqual(msg, "Skipped A2")
+        XCTAssertEqual(skips.last?["dayId"] as? String, "A2")
+        XCTAssertNil(skips.last?["undo"])
+        XCTAssertEqual(g.gym?.skipped, AppGym.Skipped(dayId: "A2", dayName: "Day A2 · Bench", date: "2026-10-21T12:00:00.000Z"))
+        XCTAssertEqual(saved, 1, "the other screens reload")
+        XCTAssertNil(g.error)
+        // the cached gym document has it too
+        let cached = try JSONDecoder().decode(AppGym.self, from: Data(contentsOf: g.queue.file!.deletingLastPathComponent().appendingPathComponent("gym.json")))
+        XCTAssertEqual(cached.skipped?.dayId, "A2")
+        // undo
+        let undo = await g.skipWorkout(dayId: nil)
+        XCTAssertEqual(undo, "A2 is back")
+        XCTAssertEqual(skips.last?["undo"] as? Bool, true)
+        XCTAssertNil(g.gym?.skipped)
+        // a stale day: the server's words
+        let stale = await g.skipWorkout(dayId: "A1")
+        XCTAssertNil(stale)
+        XCTAssertEqual(g.error, "Couldn't skip: the next session is A2, not A1")
+        XCTAssertNil(g.gym?.skipped)
+        // offline
+        g.error = nil
+        online = false
+        let off = await g.skipWorkout(dayId: "A2")
+        XCTAssertNil(off)
+        XCTAssertNotNil(g.error)
+        XCTAssertNil(g.session, "skipping never starts a session")
     }
 
     func testAdoptsNewerSessionFromServer() throws {

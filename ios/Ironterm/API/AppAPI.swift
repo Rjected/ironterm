@@ -33,6 +33,13 @@ struct AppAPI {
         return try await send("/api/app/gym/start", method: "POST", json: try JSONSerialization.data(withJSONObject: body))
     }
 
+    /// Skip the program's next session (`dayId`, so a double tap or a stale screen can't skip two),
+    /// or bring back the last skip (`dayId == nil`).
+    func skipWorkout(dayId: String?) async throws -> SkipResult {
+        let body: [String: Any] = dayId.map { ["dayId": $0] } ?? ["undo": true]
+        return try await send("/api/app/program/skip", method: "POST", json: try JSONSerialization.data(withJSONObject: body))
+    }
+
     func putLive(_ s: LiveSession) async throws {
         let _: OK = try await send("/api/live", method: "PUT", json: try JSONEncoder().encode(s))
     }

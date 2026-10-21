@@ -26,14 +26,21 @@ struct LiveSet: Codable, Equatable, Hashable {
     var done: Bool
     var doneAt: String?
     var target: LiveTarget?
+    /// skipped on purpose: not done, not saved, not counted (nil = not skipped; false is never stored)
+    var skipped: Bool?
+    /// reps were set by the app (a rep-total exercise following your pace), not by you
+    var auto: Bool?
 
     init(type: String = "normal", weight: Double? = nil, reps: Int? = nil, rpe: Double? = nil, durationSec: Double? = nil,
-         distanceM: Double? = nil, done: Bool = false, doneAt: String? = nil, target: LiveTarget? = nil) {
+         distanceM: Double? = nil, done: Bool = false, doneAt: String? = nil, target: LiveTarget? = nil,
+         skipped: Bool? = nil, auto: Bool? = nil) {
         self.type = type; self.weight = weight; self.reps = reps; self.rpe = rpe; self.durationSec = durationSec
         self.distanceM = distanceM; self.done = done; self.doneAt = doneAt; self.target = target
+        self.skipped = skipped == true ? true : nil
+        self.auto = auto == true ? true : nil
     }
 
-    enum CodingKeys: String, CodingKey { case type, weight, reps, rpe, durationSec, distanceM, done, doneAt, target }
+    enum CodingKeys: String, CodingKey { case type, weight, reps, rpe, durationSec, distanceM, done, doneAt, target, skipped, auto }
 
     // Lenient: the web stepper can store a fractional rep count; never fail the whole session on it.
     init(from decoder: Decoder) throws {
@@ -49,9 +56,16 @@ struct LiveSet: Codable, Equatable, Hashable {
         done = (try? c.decode(Bool.self, forKey: .done)) ?? false
         doneAt = try? c.decodeIfPresent(String.self, forKey: .doneAt)
         target = try? c.decodeIfPresent(LiveTarget.self, forKey: .target)
+        // sessions saved before rep totals and skips have neither field; `false` is the same as absent
+        skipped = (try? c.decodeIfPresent(Bool.self, forKey: .skipped)) == true ? true : nil
+        auto = (try? c.decodeIfPresent(Bool.self, forKey: .auto)) == true ? true : nil
     }
 
     var isWarmup: Bool { type == "warmup" }
+    var isSkipped: Bool { skipped == true }
+    var isAuto: Bool { auto == true }
+    /// still to do: not done and not skipped
+    var isOpen: Bool { !done && !isSkipped }
 }
 
 struct LiveExercise: Codable, Equatable, Hashable, Identifiable {
@@ -71,9 +85,15 @@ struct LiveExercise: Codable, Equatable, Hashable, Identifiable {
     var ifFail: String?
     var restSeconds: Double
     var cardio: Bool?
+    /// reach this many working reps in as many sets as it takes ("100 total reps"); sets are added as you go
+    var totalReps: Int?
+    /// the top of a range ("100–200 total reps")
+    var totalRepsMax: Int?
     var sets: [LiveSet]
 
     var isCardio: Bool { cardio == true }
+    /// the rep total to chase, if this exercise has one
+    var repTotal: Int? { (totalReps ?? 0) > 0 ? totalReps : nil }
 }
 
 struct LiveSession: Codable, Equatable, Hashable, Identifiable {
@@ -111,6 +131,9 @@ struct PlannedSession: Codable, Equatable {
         var note: String?
         var ifSuccess: String?
         var ifFail: String?
+        /// reach this many reps across the sets, in as many sets as it takes (Monolith's "100 total reps")
+        var totalReps: Int?
+        var totalRepsMax: Int?
     }
 
     struct PlannedSet: Codable, Equatable {
@@ -204,8 +227,11 @@ enum Live {
                         target: LiveTarget(weight: s.weight, reps: s.reps, repsMax: s.repsMax, amrap: s.amrap, rpe: s.rpe,
                                            ofTop: s.ofTop == true ? s.pct : nil))
             }
+            let total: Int? = (ex.totalReps ?? 0) > 0 ? ex.totalReps : nil
+            let totalMax: Int? = total != nil && (ex.totalRepsMax ?? 0) != 0 ? ex.totalRepsMax : nil
             return LiveExercise(id: uid(), lift: ex.lift, slotId: ex.slotId, tier: ex.tier, scheme: ex.scheme, note: ex.note,
                                 ifSuccess: ex.ifSuccess, ifFail: ex.ifFail, restSeconds: ex.restSeconds,
+                                totalReps: total, totalRepsMax: totalMax,
                                 sets: (heavy && top > 0 ? warmups(top: top, unit: unit) : []) + work)
         }
         let first = programName.split(separator: " ").first.map(String.init) ?? programName
@@ -233,7 +259,7 @@ enum Live {
         return out
     }
 
-    /// Copy the last set (weight/reps) as a new undone set.
+    /// Copy the last set (weight/reps) as a new undone set (never a skipped one).
     static func addSet(_ s: LiveSession, exId: String) -> LiveSession {
         mapEx(s, exId) { ex in
             var ex = ex
@@ -242,6 +268,7 @@ enum Live {
                 next.done = false
                 next.doneAt = nil
                 next.target = nil
+                next.skipped = nil
                 ex.sets.append(next)
             } else {
                 ex.sets.append(LiveSet(type: "normal", weight: nil, reps: 5, done: false))
@@ -256,12 +283,112 @@ enum Live {
         return out
     }
 
+    /// Change a set. Reps you change are yours: the app stops pacing that set (`auto` is cleared unless
+    /// the patch sets it). `setReps` clears it even when the number stays the same.
     static func updateSet(_ s: LiveSession, exId: String, _ i: Int, _ patch: (inout LiveSet) -> Void) -> LiveSession {
         mapEx(s, exId) { ex in
             var ex = ex
-            if ex.sets.indices.contains(i) { patch(&ex.sets[i]) }
+            if ex.sets.indices.contains(i) {
+                let before = ex.sets[i]
+                patch(&ex.sets[i])
+                if ex.sets[i].reps != before.reps && ex.sets[i].auto == before.auto { ex.sets[i].auto = nil }
+                // false is stored as absent
+                if ex.sets[i].skipped == false { ex.sets[i].skipped = nil }
+                if ex.sets[i].auto == false { ex.sets[i].auto = nil }
+            }
             return ex
         }
+    }
+
+    /// Reps typed or stepped by you (the web's updateSet with {reps}): the set stops following your pace.
+    static func setReps(_ s: LiveSession, exId: String, _ i: Int, _ reps: Int?) -> LiveSession {
+        updateSet(s, exId: exId, i) { $0.reps = reps; $0.auto = nil }
+    }
+
+    /// Working reps done so far (warm-ups and skipped sets don't count).
+    static func repsDone(_ ex: LiveExercise) -> Int {
+        ex.sets.reduce(0) { (n: Int, x: LiveSet) -> Int in
+            x.done && !x.isSkipped && !x.isWarmup ? n + (x.reps ?? 0) : n
+        }
+    }
+
+    /// Done: a rep-total exercise once the total is reached; otherwise at least one work set done
+    /// and nothing left open (warm-ups alone don't count).
+    static func isComplete(_ ex: LiveExercise) -> Bool {
+        if let total = ex.repTotal { return repsDone(ex) >= total }
+        let workDone: Bool = ex.sets.contains { $0.done && !$0.isWarmup && !$0.isSkipped }
+        return workDone && !ex.sets.contains { $0.isOpen }
+    }
+
+    /// Nothing left to do but not complete: the rest was skipped (the header says " · skipped").
+    static func isSkippedOut(_ ex: LiveExercise) -> Bool {
+        !isComplete(ex) && !ex.sets.contains { $0.isOpen }
+    }
+
+    /// Skip a set (or bring it back): skipped sets aren't done, saved or counted.
+    static func skipSet(_ s: LiveSession, exId: String, _ i: Int, skipped: Bool = true) -> LiveSession {
+        updateSet(s, exId: exId, i) { x in
+            if skipped {
+                x.skipped = true
+                x.done = false
+                x.doneAt = nil
+            } else {
+                x.skipped = nil
+            }
+        }
+    }
+
+    /// Skip every set of an exercise that isn't done yet.
+    static func skipExercise(_ s: LiveSession, exId: String) -> LiveSession {
+        mapEx(s, exId) { ex in
+            var ex = ex
+            for k in ex.sets.indices where !ex.sets[k].done {
+                ex.sets[k].skipped = true
+                ex.sets[k].doneAt = nil
+            }
+            return ex
+        }
+    }
+
+    /// A rep-total exercise ("100 total reps") after set `i`: the sets still planned follow the reps
+    /// you actually do (sets of 5 instead of 20), one more set is added while you're short (never more
+    /// than what's left), and once the total is reached any planned sets left over are skipped.
+    static func chaseTotal(_ ex: LiveExercise, _ i: Int) -> LiveExercise {
+        guard let total = ex.repTotal, !ex.isCardio, ex.sets.indices.contains(i) else { return ex }
+        let set: LiveSet = ex.sets[i]
+        if set.isWarmup || !set.done { return ex }
+        let left: Int = total - repsDone(ex)
+        let pace: Int? = (set.reps ?? 0) > 0 ? set.reps : nil
+        var out = ex
+        for k in out.sets.indices where k > i {
+            let x: LiveSet = out.sets[k]
+            if x.done || x.isSkipped || x.isWarmup { continue }
+            if left <= 0 {
+                out.sets[k].skipped = true
+                continue
+            }
+            // a planned set you haven't touched takes your pace (and never more than what's left)
+            let matchesTarget: Bool = x.target.map { x.reps == $0.reps } ?? false
+            if let pace, x.isAuto || matchesTarget {
+                out.sets[k].reps = min(pace, left)
+                out.sets[k].auto = true
+            }
+        }
+        let planned: Int = out.sets.reduce(0) { (n: Int, x: LiveSet) -> Int in
+            x.isOpen && !x.isWarmup ? n + (x.reps ?? 0) : n
+        }
+        if left > 0 && planned < left {
+            let base: Int = pace ?? set.target?.reps ?? 10
+            let reps: Int = min(base, left - planned)
+            if reps > 0 {
+                var target: LiveTarget? = set.target
+                target?.reps = reps
+                target?.repsMax = nil
+                target?.amrap = false
+                out.sets.append(LiveSet(type: "normal", weight: set.weight, reps: reps, rpe: nil, done: false, target: target, auto: true))
+            }
+        }
+        return out
     }
 
     static func removeSet(_ s: LiveSession, exId: String, _ i: Int) -> LiveSession {
@@ -281,7 +408,8 @@ enum Live {
     /// Mark a set done and start the rest timer. Back-off sets keyed to today's top set get their load filled in.
     static func completeSet(_ s: LiveSession, exId: String, _ i: Int, now: Date = Date(), kind: (String) -> String = LiftLibrary.kind) -> LiveSession {
         let stamp = iso(now)
-        var next = updateSet(s, exId: exId, i) { $0.done = true; $0.doneAt = stamp }
+        var next = updateSet(s, exId: exId, i) { $0.done = true; $0.doneAt = stamp; $0.skipped = nil }
+        next = mapEx(next, exId) { chaseTotal($0, i) }
         guard let ex = next.exercises.first(where: { $0.id == exId }), ex.sets.indices.contains(i) else { return next }
         let set = ex.sets[i]
         // A finished top set sets the load for "% of top" back-offs.
@@ -301,7 +429,7 @@ enum Live {
             }
         }
         let rest = set.type == "warmup" ? min(60, ex.restSeconds) : ex.restSeconds
-        let more = next.exercises.first(where: { $0.id == exId })?.sets.contains { !$0.done } ?? false
+        let more = next.exercises.first(where: { $0.id == exId })?.sets.contains { $0.isOpen } ?? false
         next.restEndsAt = rest != 0 && (more || hasNextExercise(next, exId)) ? iso(now.addingTimeInterval(rest)) : nil
         next.restFor = exId
         return next
@@ -309,7 +437,7 @@ enum Live {
 
     static func hasNextExercise(_ s: LiveSession, _ exId: String) -> Bool {
         guard let i = s.exercises.firstIndex(where: { $0.id == exId }) else { return false }
-        return s.exercises[(i + 1)...].contains { $0.sets.contains { !$0.done } }
+        return s.exercises[(i + 1)...].contains { $0.sets.contains { $0.isOpen } }
     }
 
     struct Cursor: Equatable { var exId: String; var set: Int }
@@ -317,7 +445,7 @@ enum Live {
     /// The exercise and set to do next.
     static func current(_ s: LiveSession) -> Cursor? {
         for e in s.exercises {
-            if let k = e.sets.firstIndex(where: { !$0.done }) { return Cursor(exId: e.id, set: k) }
+            if let k = e.sets.firstIndex(where: { $0.isOpen }) { return Cursor(exId: e.id, set: k) }
         }
         return nil
     }
@@ -325,7 +453,7 @@ enum Live {
     struct Progress: Equatable { var done: Int; var total: Int }
 
     static func progress(_ s: LiveSession) -> Progress {
-        let all = s.exercises.flatMap { $0.sets.filter { $0.type != "warmup" } }
+        let all: [LiveSet] = s.exercises.flatMap { $0.sets.filter { $0.type != "warmup" && !$0.isSkipped } }
         return Progress(done: all.filter(\.done).count, total: all.count)
     }
 
