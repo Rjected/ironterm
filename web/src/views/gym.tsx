@@ -284,7 +284,10 @@ function ExerciseCard(props: {
   const counted = ex.sets.filter((x) => !x.skipped);
   const done = counted.filter((x) => x.done).length;
   const reps = ex.totalReps ? repsDone(ex) : 0;
-  const complete = ex.totalReps ? reps >= ex.totalReps : counted.length > 0 && done === counted.length;
+  // complete: the total reached, or every set not skipped is done with at least one working set
+  // among them (done warm-ups with the work sets skipped is a skipped exercise, not a finished one)
+  const workDone = counted.some((x) => x.done && x.type !== "warmup");
+  const complete = ex.totalReps ? reps >= ex.totalReps : workDone && done === counted.length;
   const left = ex.sets.some((x) => !x.done && !x.skipped);
   const step = loadStep(lift?.kind ?? "barbell", unit);
   const curW = props.currentSet >= 0 ? ex.sets[props.currentSet].weight : null;
@@ -336,7 +339,7 @@ function ExerciseCard(props: {
             value={ex.userNote ?? ""} onInput={(e) => props.onNote((e.target as HTMLInputElement).value)} />
           <div class="row">
             <button class="btn" onClick={props.onAddSet}>+ SET</button>
-            {left && <button class="btn" onClick={props.onSkipRest}>SKIP REST</button>}
+            {left && <button class="btn" aria-label={`skip the rest of ${name}`} onClick={props.onSkipRest}>SKIP EXERCISE</button>}
             {!ex.slotId && <button class="btn danger" onClick={props.onRemove}>REMOVE</button>}
           </div>
         </div>
