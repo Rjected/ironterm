@@ -570,8 +570,8 @@ private fun ExerciseCard(
                 TButton(if (noteOpen) "✎ Hide note" else "✎ Note", Modifier.heightIn(min = 44.dp)) { noteOpen = !noteOpen }
                 if (left) {
                     TButton(
-                        "Skip rest",
-                        Modifier.heightIn(min = 44.dp).semantics { contentDescription = "Skip the remaining sets of ${ex.displayName}" },
+                        "Skip exercise",
+                        Modifier.heightIn(min = 44.dp).semantics { contentDescription = "Skip exercise: skip the remaining sets of ${ex.displayName}" },
                     ) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); focus = null; actions.gym { Live.skipExercise(it, ex.id) } }
                 }
                 if (ex.slotId.isNullOrEmpty()) {
