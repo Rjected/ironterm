@@ -296,13 +296,13 @@ function ExerciseCard(props: {
         <span class="gx-name">{name}</span>
         <span class="dim">{ex.scheme ?? ""}</span>
         {ex.userNote && !props.open && <span class="gx-has-note" title={ex.userNote}>✎</span>}
-        <span class="gx-count">{ex.totalReps ? `${reps}/${ex.totalReps}${ex.totalRepsMax ? `–${ex.totalRepsMax}` : ""} reps` : `${done}/${counted.length}`}</span>
+        <span class="gx-count">{ex.totalReps ? `${reps}/${ex.totalReps}${ex.totalRepsMax ? `–${ex.totalRepsMax}` : ""} reps` : `${done}/${counted.length}`}{!left && !complete ? " · skipped" : ""}</span>
       </button>
       {props.open && (
         <div class="gx-b">
           {ex.note && <div class="next">{ex.note}</div>}
           {(ex.ifSuccess || ex.ifFail) && <div class="next">{ex.ifSuccess && <span><b>▲</b> {ex.ifSuccess}</span>}{ex.ifFail && <span><i>▼</i> {ex.ifFail}</span>}</div>}
-          {ex.totalReps && <div class="next">{reps >= ex.totalReps ? `${reps} reps: total reached` : `${ex.totalReps - reps} reps to go · sets are added as you go`}</div>}
+          {ex.totalReps && <div class="next">{reps >= ex.totalReps ? `${reps} reps: total reached` : left ? `${ex.totalReps - reps} reps to go · sets are added as you go` : `skipped at ${reps} of ${ex.totalReps} reps · + SET to keep going`}</div>}
           {ex.sets.map((x, i) => x.skipped ? (
             <div class="gs skipped">
               <span class="gs-i"><b>{x.type === "warmup" ? "W" : ex.sets.slice(0, i + 1).filter((y) => y.type !== "warmup").length}</b></span>
