@@ -87,15 +87,58 @@ class DirectAppTest {
         val t0 = Live.parseMs(s.startedAt)!!
         var c = RestTimerService.content(s, t0)
         assertEquals("Back Squat · Warmup · 45 lb × 10", c.text)
+        assertEquals("WARMUP · BACK SQUAT", c.title)
         assertTrue(!c.resting && !c.countDown && c.hasNext)
+        assertEquals(RestTimerService.NotifState.WORKING, c.state)
+        assertEquals("workout clock", t0, c.whenMs)
         s = Live.completeSet(s, id, 0, t0 + 1000)
         c = RestTimerService.content(s, t0 + 2000)
         assertTrue(c.resting && c.countDown)
         assertEquals("REST", c.title)
+        assertEquals("rest left", c.subText)
         assertEquals("Next: Back Squat · Set 1/2 · 225 lb × 5", c.text)
         assertEquals(Live.parseMs(s.restEndsAt), c.whenMs)
+        // warm-up rest is capped at 60 s: 1 s in
+        assertEquals(60, c.progressMax)
+        assertEquals(1, c.progress)
+        c = RestTimerService.content(s, t0 + 31_000)
+        assertEquals(30, c.progress)
+        // rest over, set not done: SET n/N · LIFT and the overtime counts up from the end of the rest
         c = RestTimerService.content(s, t0 + 120_000)
-        assertTrue("rest over → GO", c.title.startsWith("GO"))
+        assertEquals(RestTimerService.NotifState.OVERTIME, c.state)
+        assertEquals("SET 1/2 · BACK SQUAT", c.title)
+        assertEquals("Go: Back Squat · Set 1/2 · 225 lb × 5", c.text)
+        assertEquals("overtime", c.subText)
+        assertTrue(!c.countDown && c.hasNext)
+        assertEquals(Live.parseMs(s.restEndsAt), c.whenMs)
+        assertEquals("Rest over" to "Go: Back Squat · Set 1/2 · 225 lb × 5", RestTimerService.restOver(s))
+        // OK on the rest bar: plain working state again
+        c = RestTimerService.content(Live.skipRest(s), t0 + 120_000)
+        assertEquals(RestTimerService.NotifState.WORKING, c.state)
+        assertEquals("0/2 sets", c.subText)
+        // all done
+        s = Live.completeSet(Live.completeSet(s, id, 1, t0 + 130_000), id, 2, t0 + 300_000)
+        c = RestTimerService.content(s, t0 + 300_000)
+        assertEquals(RestTimerService.NotifState.DONE, c.state)
+        assertTrue(!c.hasNext)
+    }
+
+    @Test fun notificationSkipsSkippedSetsAndShowsRepTotals() {
+        var s = Live.addExercise(Live.emptySession("lb", "2026-01-02T15:00:00.000Z"), "squat")
+        val id = s.exercises[0].id
+        s = Live.mapEx(s, id) { it.copy(sets = List(4) { LiveSet(SetType.NORMAL, 225.0, 5) }) }
+        s = Live.skipSet(s, id, 0)
+        val t0 = Live.parseMs(s.startedAt)!!
+        var c = RestTimerService.content(s, t0)
+        assertEquals("a skipped set isn't counted", "SET 1/3 · BACK SQUAT", c.title)
+        assertEquals("0/3 sets", c.subText)
+        // rep total: reps instead of set numbers
+        var t = Live.addExercise(Live.emptySession("lb", "2026-01-02T15:00:00.000Z"), "chinUp")
+        val cid = t.exercises[0].id
+        t = Live.mapEx(t, cid) { it.copy(totalReps = 100, sets = List(5) { LiveSet(SetType.NORMAL, null, 20, target = dev.ironterm.gym.LiveTarget(0.0, 20)) }) }
+        t = Live.completeSet(Live.setReps(t, cid, 0, 15), cid, 0, t0)
+        c = RestTimerService.content(t, t0 + 1000)
+        assertEquals("Next: Chin Up · 15/100 reps · 15 reps", c.text)
     }
 
     @Test fun restAlertRespectsSilentMode() {

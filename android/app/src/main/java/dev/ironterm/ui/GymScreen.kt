@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -136,6 +137,31 @@ private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSet
                 }
                 Spacer(Modifier.height(14.dp))
                 BigButton(if (data.starting) "STARTING…" else "▲ START ${chosenDay?.dayId ?: ""}".trim(), enabled = !data.starting) { actions.gymStart(chosen, empty = false) }
+                // Skip a workout: only the program's next day (the server refuses any other with a 409).
+                var confirmSkip by rememberSaveable { mutableStateOf(false) }
+                if (nextDay != null && chosen == nextDay.dayIndex) {
+                    Spacer(Modifier.height(8.dp))
+                    TButton(
+                        if (data.skipping) "SKIPPING…" else "SKIP ${dayLabel(nextDay.dayId)}",
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { contentDescription = "Skip workout ${nextDay.dayName}" },
+                        enabled = !data.skipping,
+                    ) { confirmSkip = true }
+                }
+                g.skipped?.let { sk ->
+                    Spacer(Modifier.height(8.dp))
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Mono("Skipped ${sk.dayName.ifBlank { dayLabel(sk.dayId) }}", Modifier.weight(1f), size = 11.sp, color = T.dim, maxLines = 1)
+                        Box(
+                            Modifier.clickable(enabled = !data.skipping) { actions.skipWorkout(null, undo = true) }
+                                .heightIn(min = 44.dp).padding(horizontal = 12.dp)
+                                .semantics { contentDescription = "Undo skip of ${sk.dayName.ifBlank { sk.dayId }}" },
+                            contentAlignment = Alignment.Center,
+                        ) { Mono("UNDO", size = 12.sp, color = T.amber, bold = true) }
+                    }
+                }
+                if (confirmSkip && nextDay != null) {
+                    SkipWorkoutDialog(dayLabel(nextDay.dayId), nextDay.dayName, onConfirm = { confirmSkip = false; actions.skipWorkout(nextDay.dayId) }, onCancel = { confirmSkip = false })
+                }
                 Spacer(Modifier.height(12.dp))
                 Mono("OR PICK ANOTHER DAY", size = 9.sp, color = T.faint)
                 Spacer(Modifier.height(6.dp))
@@ -198,6 +224,29 @@ private fun StartScreen(state: UiState, data: DataUi, actions: AppActions, onSet
                     if (state.snapshot?.isLocal == true) " Finished workouts are stored on your server: no Hevy needed." else " Logging in Hevy instead works too: it syncs in either way.",
                 size = 10.sp, color = T.faint,
             )
+        }
+    }
+}
+
+/** "A2" stays "A2"; a bare number ("1" in Building the Monolith) reads "DAY 1". */
+private fun dayLabel(dayId: String): String = if (dayId.isNotEmpty() && dayId.all { it.isDigit() }) "DAY $dayId" else dayId
+
+@Composable
+private fun SkipWorkoutDialog(dayId: String, dayName: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    Dialog(onDismissRequest = onCancel) {
+        Column(Modifier.fillMaxWidth().border(1.dp, T.amber).background(T.bg).padding(16.dp)) {
+            Mono("SKIP $dayId?", size = 15.sp, color = T.amber, bold = true)
+            if (dayName.isNotBlank() && dayName != dayId) {
+                Spacer(Modifier.height(4.dp))
+                Mono(dayName, size = 11.sp, color = T.dim, maxLines = 2)
+            }
+            Spacer(Modifier.height(10.dp))
+            Mono("The program moves on to the next day; nothing is logged and no weights change. You can undo it until your next session.", size = 12.sp, color = T.text)
+            Spacer(Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TButton("Cancel", modifier = Modifier.weight(1f).heightIn(min = 48.dp), onClick = onCancel)
+                TButton("Skip $dayId", modifier = Modifier.weight(1f).heightIn(min = 48.dp), primary = true, onClick = onConfirm)
+            }
         }
     }
 }
@@ -395,7 +444,7 @@ private fun LiveScreen(s: LiveSession, state: UiState, data: DataUi, gym: GymUi,
                     Live.updateSet(x, k.exId, k.set) { set ->
                         when (k.field) {
                             "weight" -> set.copy(weight = v)
-                            "reps" -> set.copy(reps = v?.let { Live.jsRound(it).toInt() })
+                            "reps" -> set.copy(reps = v?.let { Live.jsRound(it).toInt() }, auto = null) // typed: yours, no longer paced
                             "min" -> set.copy(durationSec = v?.let { it * 60 })
                             else -> set.copy(distanceM = v?.let { it * if (s.unit == "lb") 1609.344 else 1000.0 })
                         }
@@ -460,10 +509,12 @@ private fun ExerciseCard(
     ex: LiveExercise, unit: String, open: Boolean, currentSet: Int, onOpen: () -> Unit,
     actions: AppActions, onKeypad: (KeypadTarget) -> Unit,
 ) {
-    val done = ex.sets.count { it.done }
-    val complete = done == ex.sets.size && ex.sets.isNotEmpty()
+    val complete = Live.isComplete(ex)
+    val skippedOut = Live.isSkippedOut(ex)
+    val left = ex.sets.any { it.isOpen }
     var focus by remember(ex.id) { mutableStateOf<Int?>(null) }
-    val f = (focus?.takeIf { it < ex.sets.size }) ?: currentSet.takeIf { it >= 0 } ?: ex.sets.indexOfFirst { !it.done }.takeIf { it >= 0 }
+    // a skipped set has no editor: its row brings it back
+    val f = (focus?.takeIf { it < ex.sets.size && !ex.sets[it].isSkipped }) ?: currentSet.takeIf { it >= 0 } ?: ex.sets.indexOfFirst { it.isOpen }.takeIf { it >= 0 }
     var noteOpen by remember(ex.id) { mutableStateOf(!ex.userNote.isNullOrEmpty()) }
     var confirmRemove by remember(ex.id) { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -476,7 +527,7 @@ private fun ExerciseCard(
                 val sub = listOfNotNull(ex.scheme, if (!open && !ex.userNote.isNullOrEmpty()) "✎ note" else null).joinToString(" · ")
                 if (sub.isNotEmpty()) Mono(sub, size = 10.sp, color = T.dim, maxLines = 1)
             }
-            Mono("$done/${ex.sets.size}", size = 12.sp, color = if (complete) T.up else if (currentSet >= 0) T.amber else T.dim, bold = true)
+            Mono(Live.countLabel(ex).uppercase(), size = 12.sp, color = if (complete) T.up else if (currentSet >= 0) T.amber else T.dim, bold = true, maxLines = 1)
             Spacer(Modifier.width(8.dp))
             Mono(if (open) "▾" else "▸", size = 12.sp, color = T.faint)
         }
@@ -489,11 +540,21 @@ private fun ExerciseCard(
                     ex.ifFail?.let { Mono("▼ $it", size = 10.sp, color = T.down) }
                 }
             }
+            Live.totalLine(ex)?.let { line ->
+                Mono(line, Modifier.padding(horizontal = 4.dp, vertical = 4.dp), size = 11.sp, color = if (complete) T.up else if (skippedOut) T.dim else T.amber, bold = true)
+            }
             if (f != null) {
                 FocusPanel(ex, f, unit, isCurrent = f == currentSet, actions = actions, onKeypad = onKeypad, onCompleted = { focus = null })
                 Spacer(Modifier.height(8.dp))
             }
             ex.sets.forEachIndexed { i, x ->
+                if (x.isSkipped) {
+                    SkippedRow(ex, i) {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        actions.gym { Live.skipSet(it, ex.id, i, false) }
+                    }
+                    return@forEachIndexed
+                }
                 SetRow(
                     ex, i, x, unit, current = i == currentSet, focused = i == f,
                     onFocus = { focus = i; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
@@ -504,10 +565,15 @@ private fun ExerciseCard(
                 )
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 TButton("+ Set", Modifier.heightIn(min = 44.dp)) { actions.gym { Live.addSet(it, ex.id) } }
                 TButton(if (noteOpen) "✎ Hide note" else "✎ Note", Modifier.heightIn(min = 44.dp)) { noteOpen = !noteOpen }
-                Spacer(Modifier.weight(1f))
+                if (left) {
+                    TButton(
+                        "Skip exercise",
+                        Modifier.heightIn(min = 44.dp).semantics { contentDescription = "Skip exercise: skip the remaining sets of ${ex.displayName}" },
+                    ) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); focus = null; actions.gym { Live.skipExercise(it, ex.id) } }
+                }
                 if (ex.slotId.isNullOrEmpty()) {
                     Box(Modifier.border(1.dp, T.down.copy(alpha = 0.6f)).clickable { if (confirmRemove) actions.gym { Live.removeExercise(it, ex.id) } else confirmRemove = true }.heightIn(min = 44.dp).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                         Mono(if (confirmRemove) "SURE?" else "REMOVE", size = 11.sp, color = T.down, bold = true)
@@ -554,7 +620,7 @@ private fun FocusPanel(ex: LiveExercise, i: Int, unit: String, isCurrent: Boolea
                     actions.gym { Live.updateSet(it, ex.id, i) { s -> s.copy(weight = v) } }
                 }
                 BigStepper("REPS", x.reps?.toDouble(), 1.0, Modifier.weight(1f), onTap = { onKeypad(KeypadTarget(ex.id, i, "reps", "REPS", x.reps?.toDouble(), false)) }) { v ->
-                    actions.gym { Live.updateSet(it, ex.id, i) { s -> s.copy(reps = v?.let { r -> Live.jsRound(r).toInt() }) } }
+                    actions.gym { Live.setReps(it, ex.id, i, v?.let { r -> Live.jsRound(r).toInt() }) }
                 }
             }
             if (ex.kind == "barbell" && (x.weight ?: 0.0) > Live.bar(unit)) {
@@ -590,7 +656,15 @@ private fun FocusPanel(ex: LiveExercise, i: Int, unit: String, isCurrent: Boolea
         if (x.done) {
             TButton("Undo set", Modifier.fillMaxWidth().heightIn(min = 48.dp)) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); actions.gym { Live.undoSet(it, ex.id, i) } }
         } else {
-            BigButton("✓ DONE ${label}") { onCompleted(); actions.gym { Live.completeSet(it, ex.id, i, System.currentTimeMillis()) } }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                BigButton("✓ DONE ${label}", Modifier.weight(1f)) { onCompleted(); actions.gym { Live.completeSet(it, ex.id, i, System.currentTimeMillis()) } }
+                Box(
+                    Modifier.border(1.dp, T.line).clickable { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onCompleted(); actions.gym { Live.skipSet(it, ex.id, i) } }
+                        .heightIn(min = 56.dp).width(76.dp)
+                        .semantics(mergeDescendants = true) { contentDescription = "Skip ${label.lowercase()}" },
+                    contentAlignment = Alignment.Center,
+                ) { Mono("SKIP", size = 13.sp, color = T.dim, bold = true) }
+            }
         }
     }
 }
@@ -671,6 +745,21 @@ private fun SetRow(ex: LiveExercise, i: Int, x: LiveSet, unit: String, current: 
                 contentAlignment = Alignment.Center,
             ) { if (x.done) Mono("✓", size = 15.sp, color = T.bg, bold = true) }
         }
+    }
+}
+
+/** A skipped set: compact and dimmed, kept in place (not done, saved or counted); UNDO brings it back. */
+@Composable
+private fun SkippedRow(ex: LiveExercise, i: Int, onUndo: () -> Unit) {
+    val lbl = Live.setLabel(ex, i)
+    Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(28.dp), contentAlignment = Alignment.CenterStart) { Mono(lbl, size = 12.sp, color = T.faint, bold = true) }
+        Mono("SKIPPED", Modifier.weight(1f), size = 11.sp, color = T.faint, bold = true, maxLines = 1)
+        Box(
+            Modifier.clickable(onClick = onUndo).heightIn(min = 40.dp).padding(horizontal = 12.dp)
+                .semantics(mergeDescendants = true) { contentDescription = "Bring back skipped ${if (lbl == "W") "warm-up" else "set $lbl"}" },
+            contentAlignment = Alignment.Center,
+        ) { Mono("UNDO", size = 11.sp, color = T.amber, bold = true) }
     }
 }
 

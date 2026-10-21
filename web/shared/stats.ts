@@ -4,15 +4,52 @@ import type { HevyWorkout } from "./hevy";
 import { matchLift } from "./lifts";
 import { fromKg, type Unit } from "./units";
 
-/** YYYY-MM-DD of an ISO timestamp in a given IANA time zone. */
+// Building an Intl.DateTimeFormat is expensive and every view calls localDate for every set of
+// every workout: making one per call was ~70% of a request's CPU. One formatter per zone, plus a
+// bounded memo of answers (the same few hundred workout timestamps come up again and again).
+const dayFormats = new Map<string, Intl.DateTimeFormat>();
+const localDates = new Map<string, string>();
+
+/** YYYY-MM-DD of an ISO timestamp in a given IANA time zone. Throws RangeError for an unknown zone. */
 export function localDate(iso: string, tz: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  const key = tz + "|" + iso;
+  const hit = localDates.get(key);
+  if (hit !== undefined) return hit;
+  let f = dayFormats.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
+    dayFormats.set(tz, f);
+  }
+  const out = f.format(new Date(iso));
+  if (localDates.size >= 20_000) localDates.clear();
+  localDates.set(key, out);
+  return out;
 }
 
+const pad2 = (x: number) => (x < 10 ? "0" + x : "" + x);
+
+/** `date` (YYYY-MM-DD) plus `n` days. Plain calendar arithmetic: it runs in every view's day loops. */
 export function addDays(date: string, n: number): string {
-  const d = new Date(date + "T12:00:00Z");
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
+  if (date.length !== 10 || date[4] !== "-" || date[7] !== "-") {
+    // not a plain date: keep the old behaviour (Date parses it, or throws RangeError on garbage)
+    const d = new Date(date + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+  const Y = +date.slice(0, 4), M = +date.slice(5, 7), D = +date.slice(8, 10);
+  const d = new Date(0);
+  // setUTCFullYear, not Date.UTC: Date.UTC reads years 0–99 as 1900–1999
+  d.setUTCFullYear(Y, M - 1, D);
+  // a real calendar date only (2026-02-30 and month 13 throw below, as they always did)
+  const real = d.getUTCFullYear() === Y && d.getUTCMonth() === M - 1 && d.getUTCDate() === D;
+  const t = real ? d.setUTCDate(D + n) : NaN;
+  const y = d.getUTCFullYear();
+  if (Number.isNaN(t) || y < 0 || y > 9999) {
+    const old = new Date(date.slice(0, 10) + "T12:00:00Z");
+    old.setUTCDate(old.getUTCDate() + n);
+    return old.toISOString().slice(0, 10);
+  }
+  return (y < 1000 ? String(y).padStart(4, "0") : String(y)) + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate());
 }
 
 /** Monday of the week containing `date`. */

@@ -181,6 +181,41 @@ class ScreenshotTest {
         compose.waitForIdle()
         compose.onAllNodes(hasContentDescription("Remove set")).assertCountEquals(1)
     }
+    // ── rep totals and skips: 5/3/1 Building the Monolith, squat and OHP cut short, chin-ups in sets of 5 ──
+    private val monolith: LiveSession by lazy {
+        val plan = Live.json.decodeFromString(dev.ironterm.gym.PlannedSession.serializer(), javaClass.classLoader!!.getResource("app/plan-monolith-day0.json")!!.readText())
+        var s = Live.sessionFromPlan(plan, "lb", "5/3/1 Building the Monolith", Live.iso(now - 41 * 60_000))
+        val sq = s.exercises.first { it.lift == "squat" }
+        sq.sets.indices.take(5).forEach { s = Live.completeSet(s, sq.id, it, now - 30 * 60_000L) }
+        s = Live.skipExercise(s, sq.id)
+        val ohp = s.exercises.first { it.lift == "ohp" }
+        s = Live.skipExercise(s, ohp.id)
+        val c = s.exercises.first { it.lift == "chinUp" }
+        repeat(3) { k ->
+            val i = s.exercises.first { it.id == c.id }.sets.indexOfFirst { it.isOpen }
+            s = Live.completeSet(Live.setReps(s, c.id, i, 5), c.id, i, now - (3 - k) * 120_000L)
+        }
+        // the 4th chin-up set skipped: shown dimmed in place, UNDO brings it back
+        s = Live.skipSet(s, c.id, s.exercises.first { it.id == c.id }.sets.indexOfFirst { it.isOpen })
+        s.copy(restEndsAt = null)
+    }
+    @Test fun gym_live_rep_total() = shot("gym_live_rep_total", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = monolith)), tall = true)
+    @Test fun gym_live_rep_total_360() = shot("gym_live_rep_total_360", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = monolith)), width = 360)
+    @Test fun gym_skip_controls_are_named() {
+        compose.setContent { TerminalTheme { AppScreen(server, AppActions.None, Nav(Tabs.GYM), {}, serverData, GymUi(GymState(session = monolith)), now = now, ticking = false) } }
+        compose.waitForIdle()
+        compose.onAllNodes(hasContentDescription("Bring back skipped set 4")).assertCountEquals(1)
+        compose.onAllNodes(hasContentDescription("Skip exercise: skip the remaining sets of Chin Up")).assertCountEquals(1)
+        compose.onAllNodes(hasContentDescription("Skip set 5")).assertCountEquals(1)
+        compose.onAllNodes(hasText("20/100 REPS", substring = true)).assertCountEquals(0)
+        compose.onAllNodes(hasText("15/100 REPS")).assertCountEquals(1)
+        compose.onAllNodes(hasText("85 reps to go · sets are added as you go")).assertCountEquals(1)
+    }
+    @Test fun gym_start_skip() = shot("gym_start_skip", server, Nav(Tabs.GYM), serverData, before = click("SKIP ${Fixtures.gym.days.first { it.dayName == Fixtures.gym.next?.dayName }.dayId}"))
+    @Test fun gym_start_skipped() = shot(
+        "gym_start_skipped", server, Nav(Tabs.GYM),
+        serverData.copy(gym = Load.of(Fixtures.gym.copy(skipped = dev.ironterm.data.app.SkippedDay("A1", "Day A1 · Squat", "2026-10-21T12:00:00Z")), now)),
+    )
     @Test fun gym_empty_session() = shot("gym_empty_session", server, Nav(Tabs.GYM), serverData, GymUi(GymState(session = Live.emptySession("lb", Live.iso(now - 60_000)).copy(id = "e1"))))
     private fun summary(state: String, error: String? = null) = FinishSummary(
         sessionId = live.id, title = live.title, unit = "lb", sets = 14, volume = 11355.0, durationSec = 66 * 60, exercises = 3,

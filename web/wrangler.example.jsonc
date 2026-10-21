@@ -23,6 +23,8 @@
   },
   "workers_dev": true,
   // Per-version preview URLs would skip your login setup.
-  "preview_urls": false
+  "preview_urls": false,
+  // Workers Logs: requests, errors and exceptions (incl. "exceeded CPU") kept for a few days
+  "observability": { "enabled": true }
   // Secrets (wrangler secret put …): HEVY_API_KEY, SESSION_SECRET, WEBHOOK_SECRET, and APP_PASSWORD or GOOGLE_CLIENT_SECRET
 }
