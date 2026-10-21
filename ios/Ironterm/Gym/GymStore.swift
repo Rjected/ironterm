@@ -123,6 +123,41 @@ final class GymStore: ObservableObject {
         return ([s.startDate] + done).max() ?? s.startDate
     }
 
+    // MARK: skip a workout
+
+    /// Skip the program's next session (`dayId`) or, with nil, bring back the last skip. Needs the
+    /// server: the program moves on there. Returns the server's message, nil on failure (`error` says why).
+    @discardableResult
+    func skipWorkout(dayId: String?) async -> String? {
+        guard let api = apiProvider() else {
+            error = "Skipping a workout needs the server."
+            return nil
+        }
+        busy = true
+        defer { busy = false }
+        do {
+            let r = try await api.skipWorkout(dayId: dayId)
+            gym = r.gym
+            if let data = try? JSONEncoder().encode(r.gym) { try? data.write(to: dir.appendingPathComponent("gym.json"), options: .atomic) }
+            onWorkoutSaved?()
+            return r.message
+        } catch {
+            let what: String = dayId == nil ? "undo the skip" : "skip"
+            self.error = "Couldn't \(what): \(Self.skipError(error))"
+        }
+        return nil
+    }
+
+    /// The server's own words for a refused skip ("the next session is A2, not A1"), else the error.
+    nonisolated static func skipError(_ error: Error) -> String {
+        guard let e = error as? ApiError else { return error.localizedDescription }
+        switch e {
+        case .http(let code, let msg) where code < 500 && !msg.isEmpty: return msg
+        case .network: return "you're offline. Skipping a workout needs the server."
+        default: return e.errorDescription ?? "error"
+        }
+    }
+
     // MARK: start / edit
 
     func start(dayIndex: Int?, empty: Bool) async {

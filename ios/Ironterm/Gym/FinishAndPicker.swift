@@ -127,7 +127,8 @@ struct FinishSheet: View {
     var body: some View {
         let p = Live.progress(s)
         let sum = Live.summary(s) { gym.name($0) }
-        let undone = s.exercises.flatMap(\.sets).filter { !$0.done && !$0.isWarmup }.count
+        // skipped sets were left out on purpose: not "not done"
+        let undone = s.exercises.flatMap(\.sets).filter { $0.isOpen && !$0.isWarmup }.count
         return VStack(alignment: .leading, spacing: 14) {
             Cap("FINISH WORKOUT?", T.amber, size: 12, weight: .heavy)
             Text(s.title).font(T.mono(20, .heavy)).foregroundStyle(T.text)

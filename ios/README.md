@@ -68,6 +68,12 @@ Bottom bar: **TODAY · GYM · FRIENDS · HISTORY · MORE** (LIFTS is the first e
     set number's menu, + SET, remove set / exercise, warmups before T1 lifts, back-offs filled in from
     the top set, a plate loader (bar weight in SETUP), program notes (▲ if you hit it, ▼ if you
     miss), your exercise note and the workout note, and a searchable exercise catalog with cardio.
+  - Rep totals ("100 total reps" in Building the Monolith and friends): the header counts reps
+    (`65/100 REPS`), the sets still planned follow the reps you actually do, one more set is added
+    while you're short and leftovers are skipped once you reach it. Skip a set (SKIP SET, or the set
+    number's menu; UNDO on the row) or the rest of an exercise (SKIP EXERCISE): skipped sets aren't
+    done, saved or counted. **SKIP <day>** on the start screen skips the program's next session
+    after a confirm (nothing is logged, no weights change); *Skipped <day> · UNDO* brings it back.
   - Header: rename, elapsed clock, progress. The rest timer (−15 / +30 / SKIP) also runs as a
     **Live Activity** on the lock screen and in the Dynamic Island, with a local notification and
     haptics when it ends. The screen stays awake while a session runs.
@@ -183,7 +189,8 @@ xcodebuild … test
 ```
 
 - Unit tests: the live-session port replays golden cases generated from `web/shared/live.ts`
-  (`IrontermTests/Fixtures/live_golden.json`), every app document decodes from the server samples
+  (`IrontermTests/Fixtures/live_golden.json`; rep totals and skips on a Building the Monolith day in
+  `totals_golden.json`, also from the TypeScript), every app document decodes from the server samples
   (copies of `docs/api/app/*.json`), the offline queue and GymStore against an in-process stub server,
   the SVG path parser and body figures, and Direct-mode LIFTS / HISTORY.
 - Against a real server: `cd web && PORT=8791 HOST=127.0.0.1 DATA_DIR=$(mktemp -d) SYNC_MINUTES=0 node dist/server/main.mjs`,

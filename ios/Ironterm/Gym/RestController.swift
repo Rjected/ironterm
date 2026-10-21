@@ -91,9 +91,13 @@ final class RestController: ObservableObject {
         if let c = Live.current(s), let ex = s.exercises.first(where: { $0.id == c.exId }) {
             let set = ex.sets[c.set]
             exercise = name(ex).uppercased()
-            let work = ex.sets.filter { !$0.isWarmup }
-            let n = ex.sets[...c.set].filter { !$0.isWarmup }.count
-            let label = set.isWarmup ? "WARMUP" : "SET \(n)/\(work.count)"
+            // skipped sets don't count; a rep total shows reps done/total instead of a set count
+            let work: [LiveSet] = ex.sets.filter { !$0.isWarmup && !$0.isSkipped }
+            let n: Int = ex.sets[...c.set].filter { !$0.isWarmup && !$0.isSkipped }.count
+            let label: String
+            if set.isWarmup { label = "WARMUP" }
+            else if let total = ex.repTotal { label = "\(Live.repsDone(ex))/\(total) REPS" }
+            else { label = "SET \(n)/\(work.count)" }
             let load: String
             if ex.isCardio { load = "\(Int((set.durationSec ?? 0) / 60)) MIN" }
             else { load = "\(set.weight.map { Fmt.weight($0) } ?? "BW") × \(set.reps ?? 0)\(set.type == "failure" ? "+" : "")" }

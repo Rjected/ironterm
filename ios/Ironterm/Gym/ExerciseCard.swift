@@ -27,19 +27,69 @@ struct ExerciseCard: View {
     var name: String { gym.name(ex) }
     var kind: String { gym.kind(ex.lift) }
     var step: Double { Live.loadStep(kind: kind, unit: unit) }
-    var done: Int { ex.sets.filter(\.done).count }
-    var complete: Bool { !ex.sets.isEmpty && done == ex.sets.count }
+    /// sets that count (skipped ones don't)
+    var counted: [LiveSet] { ex.sets.filter { !$0.isSkipped } }
+    var done: Int { counted.filter(\.done).count }
+    var reps: Int { Live.repsDone(ex) }
+    var complete: Bool { Live.isComplete(ex) }
+    /// sets still to do
+    var hasOpen: Bool { ex.sets.contains { $0.isOpen } }
+    /// nothing left to do but not complete: the rest was skipped
+    var skippedOut: Bool { Live.isSkippedOut(ex) }
+
+    /// "65/100 REPS", "65/100–200 REPS" for rep totals, otherwise "2/5" (skipped sets excluded)
+    var countText: String {
+        var t: String
+        if let total = ex.repTotal {
+            let range: String = ex.totalRepsMax.map { "–\($0)" } ?? ""
+            t = "\(reps)/\(total)\(range) REPS"
+        } else {
+            t = "\(done)/\(counted.count)"
+        }
+        if skippedOut { t += " · SKIPPED" }
+        return t
+    }
+
+    var countSpoken: String {
+        var t: String
+        if let total = ex.repTotal { t = "\(reps) of \(total) reps" } else { t = "\(done) of \(counted.count) sets done" }
+        if skippedOut { t += ", rest skipped" } else if complete { t += ", complete" }
+        return t
+    }
+
+    /// what a rep-total exercise still needs
+    var totalLine: String? {
+        guard let total = ex.repTotal else { return nil }
+        if reps >= total { return "\(reps) reps: total reached" }
+        if skippedOut { return "skipped at \(reps) of \(total) reps · + SET to keep going" }
+        return "\(total - reps) reps to go · sets are added as you go"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: onToggle) { headerRow }.buttonStyle(.plain)
+                .accessibilityLabel("\(name), \(countSpoken)")
+                .accessibilityHint(open ? "Collapses the exercise" : "Shows the sets")
             if open {
                 VStack(alignment: .leading, spacing: 8) {
                     notes
+                    if let t = totalLine {
+                        Text(t).font(T.mono(10, .bold)).foregroundStyle(complete ? T.up : T.amber)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("total-\(ex.id)")
+                    }
                     ForEach(Array(ex.sets.enumerated()), id: \.offset) { i, set in
-                        SetRow(ex: ex, i: i, set: set, unit: unit, kind: kind, step: step, current: i == currentSet,
-                               number: workNumber(i), gym: gym, onEdit: onEdit)
-                            .id("\(ex.id)-\(i)")
+                        Group {
+                            if set.isSkipped {
+                                SkippedSetRow(label: set.isWarmup ? "W" : "\(workNumber(i))", warmup: set.isWarmup) {
+                                    gym.update { Live.skipSet($0, exId: ex.id, i, skipped: false) }
+                                }
+                            } else {
+                                SetRow(ex: ex, i: i, set: set, unit: unit, kind: kind, step: step, current: i == currentSet,
+                                       number: workNumber(i), gym: gym, onEdit: onEdit)
+                            }
+                        }
+                        .id("\(ex.id)-\(i)")
                         if i == currentSet, kind == "barbell", !ex.isCardio, let w = set.weight, w > prefs.bar(unit) {
                             PlateBar(plates: Live.plates(w, unit: unit, bar: prefs.bar(unit)), unit: unit, compact: false)
                                 .padding(.leading, 4)
@@ -47,9 +97,26 @@ struct ExerciseCard: View {
                     }
                     NoteField(text: Binding(get: { ex.userNote ?? "" }, set: { v in gym.update { Live.mapEx($0, ex.id) { var e = $0; e.userNote = v.isEmpty ? nil : v; return e } } }),
                               placeholder: "note for this exercise (saved with the workout)", minHeight: 38)
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         TermButton(title: "+ SET") { gym.update { Live.addSet($0, exId: ex.id) } }
-                        if ex.slotId == nil { TermButton(title: "REMOVE", style: .danger) { confirmRemove = true } }
+                            .accessibilityLabel("Add a set to \(name)")
+                        if currentSet >= 0 {
+                            TermButton(title: "SKIP SET") { let i = currentSet; gym.update { Live.skipSet($0, exId: ex.id, i) } }
+                                .accessibilityLabel("Skip the next set of \(name)")
+                                .accessibilityHint("Not done, saved or counted. Undo on the set.")
+                                .accessibilityIdentifier("skip-set-\(ex.id)")
+                        }
+                    }
+                    if hasOpen || ex.slotId == nil {
+                        HStack(spacing: 8) {
+                            if hasOpen {
+                                TermButton(title: "SKIP EXERCISE") { gym.update { Live.skipExercise($0, exId: ex.id) } }
+                                    .accessibilityLabel("Skip exercise \(name)")
+                                    .accessibilityHint("Skips every set not done yet. Each can be brought back.")
+                                    .accessibilityIdentifier("skip-exercise-\(ex.id)")
+                            }
+                            if ex.slotId == nil { TermButton(title: "REMOVE", style: .danger) { confirmRemove = true } }
+                        }
                     }
                 }
                 .padding(.horizontal, 10).padding(.bottom, 12)
@@ -72,7 +139,8 @@ struct ExerciseCard: View {
             Spacer(minLength: 4)
             if ex.userNote != nil && !open { Image(systemName: "note.text").font(.system(size: 10)).foregroundStyle(T.amber) }
             if complete { Image(systemName: "checkmark").font(.system(size: 11, weight: .heavy)).foregroundStyle(T.up) }
-            Text("\(done)/\(ex.sets.count)").font(T.mono(12, .bold)).foregroundStyle(complete ? T.up : currentSet >= 0 ? T.amber : T.dim)
+            Text(countText).font(T.mono(12, .bold)).foregroundStyle(complete ? T.up : currentSet >= 0 ? T.amber : T.dim)
+                .lineLimit(1).minimumScaleFactor(0.7).layoutPriority(1)
             Image(systemName: open ? "chevron.up" : "chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(T.faint)
         }
         .padding(.horizontal, 10).padding(.vertical, 12)
@@ -125,7 +193,7 @@ struct SetRow: View {
                          onChange: { v in patch { $0.weight = v.map { max(0, $0) } } },
                          onTap: { onEdit(target(.weight, set.weight, step, unit.uppercased())) })
                 Stepper2(name: "reps", value: set.reps.map(Double.init), placeholder: "REPS", step: 1, h: h, big: current, dim: set.done,
-                         onChange: { v in patch { $0.reps = v.map { max(0, Int($0.rounded())) } } },
+                         onChange: { v in gym.update { Live.setReps($0, exId: ex.id, i, v.map { max(0, Int($0.rounded())) }) } },
                          onTap: { onEdit(target(.reps, set.reps.map(Double.init), 1, "REPS")) })
                     .frame(maxWidth: 118)
             }
@@ -181,6 +249,9 @@ struct SetRow: View {
                 Button("Clear") { patch { $0.rpe = nil } }
             }
             if set.done { Button("Undo set") { patch { $0.done = false; $0.doneAt = nil } } }
+            if !set.done {
+                Button("Skip set") { gym.update { Live.skipSet($0, exId: ex.id, i) } }
+            }
             if set.target == nil && !set.done {
                 Button("Remove set", role: .destructive) { gym.update { Live.removeSet($0, exId: ex.id, i) } }
             }
@@ -214,6 +285,33 @@ struct SetRow: View {
         .buttonStyle(.plain)
         .accessibilityLabel(set.done ? "Undo set" : "Complete set")
         .accessibilityIdentifier("done-\(ex.id)-\(i)")
+    }
+}
+
+/// A skipped set: kept in place, not done, saved or counted; UNDO brings it back.
+struct SkippedSetRow: View {
+    var label: String
+    var warmup: Bool
+    var onUndo: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(label).font(T.mono(12, .heavy)).foregroundStyle(T.faint).frame(width: 46)
+            Text("SKIPPED").font(T.mono(11, .bold)).foregroundStyle(T.faint).tracking(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button(action: onUndo) {
+                Text("UNDO").font(T.mono(11, .heavy)).foregroundStyle(T.amber)
+                    .padding(.horizontal, 12).frame(height: 32)
+                    .overlay(Rectangle().stroke(T.amber.opacity(0.5), lineWidth: 1))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Bring back \(warmup ? "warmup set" : "set \(label)")")
+        }
+        .frame(minHeight: 36)
+        .opacity(0.75)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(warmup ? "Warmup set" : "Set \(label)"), skipped")
     }
 }
 
