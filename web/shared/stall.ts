@@ -85,13 +85,17 @@ function pointE1rm(p: LiftPoint, maxReps: number): number {
 
 /** Median of pairwise slopes (Theil–Sen). Robust to a third of the points being outliers. */
 export function theilSen(xs: number[], ys: number[]): number | null {
-  const slopes: number[] = [];
-  for (let i = 0; i < xs.length; i++)
-    for (let j = i + 1; j < xs.length; j++) if (xs[j] !== xs[i]) slopes.push((ys[j] - ys[i]) / (xs[j] - xs[i]));
-  if (!slopes.length) return null;
-  slopes.sort((a, b) => a - b);
-  const m = slopes.length >> 1;
-  return slopes.length % 2 ? slopes[m] : (slopes[m - 1] + slopes[m]) / 2;
+  // every pairwise slope (n² / 2 of them): a typed array sorts numerically without a comparator,
+  // several times faster than Array#sort((a, b) => a - b), with the same median
+  const n = xs.length;
+  const buf = new Float64Array((n * (n - 1)) / 2);
+  let k = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++) if (xs[j] !== xs[i]) buf[k++] = (ys[j] - ys[i]) / (xs[j] - xs[i]);
+  if (!k) return null;
+  const slopes = buf.subarray(0, k).sort();
+  const m = k >> 1;
+  return k % 2 ? slopes[m] : (slopes[m - 1] + slopes[m]) / 2;
 }
 
 /** Status per lift from its session history (any unit; outputs are in the same unit). */

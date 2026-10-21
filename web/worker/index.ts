@@ -22,6 +22,7 @@ import { withSecurityHeaders } from "./headers";
 import { ensureSocialSchema, handleOwner, handlePeer, isPeerPath, socialOrigin, type SocialCtx } from "./social";
 import { BadRequest, liveSession, notesEdit, programConfig, readJson, readObject, settingsPatch, trips as tripsBody, validTz, weighIn } from "./validate";
 import { buildProgram } from "../shared/programs";
+import { e1rmsFrom, fillMissing, missingValues } from "../shared/fill";
 
 export interface Env {
   DB: D1Database;
@@ -533,6 +534,21 @@ function socialCtx(req: Request, env: Env, ctx: ExecutionContext, authMode: stri
   };
 }
 
+/**
+ * The saved program with any missing start weights / training maxes filled in (fill.ts) and saved
+ * back, once. A swap or an older config otherwise had every request redo that fill-in from your
+ * whole history, which is enough extra CPU to get requests cut off on the Workers free plan.
+ */
+async function settled(env: Env, m: Mode, cfg: ProgramConfig | null, workouts: HevyWorkout[], s: Settings): Promise<ProgramConfig | null> {
+  if (!cfg) return null;
+  const miss = missingValues(cfg);
+  if (!miss.slots.length && !miss.tms.length) return cfg;
+  const asc = [...workouts].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const filled = fillMissing(cfg, (need) => e1rmsFrom(asc, cfg.unit, today(s.tz), need, cfg.liftMap, s.tz));
+  if (filled !== cfg) await kvPut(env.DB, k(m, "program"), filled);
+  return filled;
+}
+
 async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap> {
   const s = await settings(env, m);
   if (m === "demo") {
@@ -543,9 +559,10 @@ async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap
       const n = demoNotes[w.id];
       try { return n ? applyNotes(w, n) : w; } catch { return w; }
     });
-    return ({ mode: "demo" as const, auth: authMode, settings: s, program: (await program(env, m)) ?? demo.config, workouts, sync: { cursor: null, at: new Date().toISOString(), count: workouts.length }, today: today(s.tz), live: await kvGet(env.DB, k(m, "live")), weighins: (await kvGet(env.DB, k(m, "weighins"))) ?? [], trips: (await kvGet(env.DB, k(m, "trips"))) ?? [] }) as Bootstrap;
+    return ({ mode: "demo" as const, auth: authMode, settings: s, program: (await settled(env, m, await program(env, m), workouts, s)) ?? demo.config, workouts, sync: { cursor: null, at: new Date().toISOString(), count: workouts.length }, today: today(s.tz), live: await kvGet(env.DB, k(m, "live")), weighins: (await kvGet(env.DB, k(m, "weighins"))) ?? [], trips: (await kvGet(env.DB, k(m, "trips"))) ?? [] }) as Bootstrap;
   }
-  const [cfg, workouts, st] = await Promise.all([program(env, m), allWorkouts(env.DB), kvGet<SyncState>(env.DB, "sync")]);
+  const [saved, workouts, st] = await Promise.all([program(env, m), allWorkouts(env.DB), kvGet<SyncState>(env.DB, "sync")]);
+  const cfg = await settled(env, m, saved, workouts, s);
   const sync: SyncState = m === "live" ? (st ?? { cursor: null }) : { cursor: null, count: workouts.length };
   return ({ mode: m, auth: authMode, settings: s, program: cfg, workouts, sync, today: today(s.tz), live: await kvGet(env.DB, "live"), whoop: await whoopData(env), body: (await kvGet(env.DB, "body")) ?? [], weighins: (await kvGet(env.DB, "weighins")) ?? [], trips: (await kvGet(env.DB, "trips")) ?? [] }) as Bootstrap;
 }
