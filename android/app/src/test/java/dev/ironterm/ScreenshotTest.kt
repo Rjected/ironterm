@@ -205,7 +205,7 @@ class ScreenshotTest {
         compose.setContent { TerminalTheme { AppScreen(server, AppActions.None, Nav(Tabs.GYM), {}, serverData, GymUi(GymState(session = monolith)), now = now, ticking = false) } }
         compose.waitForIdle()
         compose.onAllNodes(hasContentDescription("Bring back skipped set 4")).assertCountEquals(1)
-        compose.onAllNodes(hasContentDescription("Skip the remaining sets of Chin Up")).assertCountEquals(1)
+        compose.onAllNodes(hasContentDescription("Skip exercise: skip the remaining sets of Chin Up")).assertCountEquals(1)
         compose.onAllNodes(hasContentDescription("Skip set 5")).assertCountEquals(1)
         compose.onAllNodes(hasText("20/100 REPS", substring = true)).assertCountEquals(0)
         compose.onAllNodes(hasText("15/100 REPS")).assertCountEquals(1)

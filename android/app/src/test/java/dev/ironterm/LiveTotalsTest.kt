@@ -204,9 +204,11 @@ class LiveTotalsTest {
         assertTrue(ex(s, "squat").sets[0].done)
         assertTrue(ex(s, "squat").sets.drop(1).all { it.isSkipped && !it.done })
         assertNotEquals(e.id, Live.current(s)?.exId)
-        // header: sets done / sets not skipped (like the web, what you did counts as complete)
-        assertEquals("1/1", Live.countLabel(ex(s, "squat")))
-        assertFalse(Live.isSkippedOut(ex(s, "squat")))
+        // a warm-up done and the work sets skipped: not complete, flagged as skipped (count keeps warm-ups)
+        assertEquals(SetType.WARMUP, ex(s, "squat").sets[0].type)
+        assertFalse(Live.isComplete(ex(s, "squat")))
+        assertTrue(Live.isSkippedOut(ex(s, "squat")))
+        assertEquals("1/1 · skipped", Live.countLabel(ex(s, "squat")))
         // nothing done at all: flagged as skipped
         val o = ex(s, "ohp")
         s = Live.skipExercise(s, o.id)
@@ -216,6 +218,33 @@ class LiveTotalsTest {
         s = Live.undoSet(s, e.id, 0)
         assertEquals("0/1", Live.countLabel(ex(s, "squat")))
         assertEquals(dev.ironterm.gym.Cursor(e.id, 0), Live.current(s))
+    }
+
+    @Test fun warmUpsDoneWorkSkippedIsSkippedNotComplete() {
+        var s = monolithDay0()
+        val e = ex(s, "squat")
+        val warm = e.sets.withIndex().filter { it.value.type == SetType.WARMUP }.map { it.index }
+        assertTrue(warm.size >= 2)
+        warm.forEach { s = Live.completeSet(s, e.id, it) }
+        s = Live.skipExercise(s, e.id)
+        val sq = ex(s, "squat")
+        assertFalse("warm-ups alone don't complete an exercise", Live.isComplete(sq))
+        assertEquals("${warm.size}/${warm.size} · skipped", Live.countLabel(sq))
+        // one working set done, the rest skipped: complete
+        var t = monolithDay0()
+        val w = ex(t, "squat").sets.indexOfFirst { it.type != SetType.WARMUP }
+        val tid = ex(t, "squat").id
+        warm.forEach { t = Live.completeSet(t, tid, it) }
+        t = Live.completeSet(t, tid, w)
+        t = Live.skipExercise(t, tid)
+        assertTrue(Live.isComplete(ex(t, "squat")))
+        assertEquals("${warm.size + 1}/${warm.size + 1}", Live.countLabel(ex(t, "squat")))
+        // everything done but an open set left: not complete yet
+        var u = monolithDay0()
+        val uid = ex(u, "squat").id
+        u = Live.completeSet(u, uid, w)
+        assertFalse(Live.isComplete(ex(u, "squat")))
+        assertFalse(Live.isSkippedOut(ex(u, "squat")))
     }
 
     @Test fun headerLabelsWithSkips() {

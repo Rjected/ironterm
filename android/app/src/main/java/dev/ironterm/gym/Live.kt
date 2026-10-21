@@ -394,12 +394,14 @@ object Live {
 
     // ── exercise header / rep-total line (web/src/views/gym.tsx ExerciseCard) ──
 
-    /** Done: the rep total is reached, or every set that isn't skipped is done. */
+    /**
+     * Done: the rep total is reached; otherwise at least one working (non-warm-up) set is done and
+     * nothing is left open. Warm-ups alone don't make an exercise complete.
+     */
     fun isComplete(ex: LiveExercise): Boolean {
         val total = ex.totalReps
         if (total != null && total > 0) return repsDone(ex) >= total
-        val counted = ex.sets.filter { !it.isSkipped }
-        return counted.isNotEmpty() && counted.all { it.done }
+        return ex.sets.any { it.done && it.type != SetType.WARMUP && !it.isSkipped } && ex.sets.none { it.isOpen }
     }
 
     /** Nothing left to do but it isn't complete: the rest was skipped. */
