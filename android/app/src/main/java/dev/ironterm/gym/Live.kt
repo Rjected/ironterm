@@ -57,8 +57,15 @@ data class LiveSet(
     val done: Boolean = false,
     val doneAt: String? = null,
     val target: LiveTarget? = null,
+    /** skipped on purpose: not done, not saved, not counted (null = false; old sessions don't have it) */
+    val skipped: Boolean? = null,
+    /** reps were set by the app (a rep-total exercise following your pace), not by you */
+    val auto: Boolean? = null,
 ) {
     val isWarmup: Boolean get() = type == SetType.WARMUP
+    val isSkipped: Boolean get() = skipped == true
+    /** still to do: not done and not skipped */
+    val isOpen: Boolean get() = !done && skipped != true
 }
 
 @Serializable
@@ -79,6 +86,9 @@ data class LiveExercise(
     val ifFail: String? = null,
     @Serializable(LenientInt::class) val restSeconds: Int = 90,
     val cardio: Boolean? = null,
+    /** reach this many working reps in as many sets as it takes ("100 total reps"); sets are added as you go */
+    @Serializable(LenientIntN::class) val totalReps: Int? = null,
+    @Serializable(LenientIntN::class) val totalRepsMax: Int? = null,
     val sets: List<LiveSet> = emptyList(),
 ) {
     val isCardio: Boolean get() = cardio == true
@@ -127,6 +137,8 @@ data class PlannedExercise(
     val note: String? = null,
     val ifSuccess: String? = null,
     val ifFail: String? = null,
+    @Serializable(LenientIntN::class) val totalReps: Int? = null,
+    @Serializable(LenientIntN::class) val totalRepsMax: Int? = null,
 )
 
 @Serializable
@@ -237,6 +249,8 @@ object Live {
             LiveExercise(
                 id = uid(), lift = ex.lift, slotId = ex.slotId, tier = ex.tier, scheme = ex.scheme, note = ex.note,
                 ifSuccess = ex.ifSuccess, ifFail = ex.ifFail, restSeconds = ex.restSeconds,
+                totalReps = ex.totalReps?.takeIf { it != 0 },
+                totalRepsMax = if (truthy(ex.totalReps)) ex.totalRepsMax?.takeIf { it != 0 } else null,
                 sets = (if (heavy && top != 0.0) warmups(top, unit) else emptyList()) + work,
             )
         }
@@ -266,7 +280,7 @@ object Live {
     /** Copy the last set (weight/reps) as a new undone set. */
     fun addSet(s: LiveSession, exId: String): LiveSession = mapEx(s, exId) { ex ->
         val last = ex.sets.lastOrNull()
-        val next = last?.copy(type = if (last.type == SetType.WARMUP) SetType.NORMAL else last.type, done = false, doneAt = null, target = null)
+        val next = last?.copy(type = if (last.type == SetType.WARMUP) SetType.NORMAL else last.type, done = false, doneAt = null, target = null, skipped = null)
             ?: LiveSet(type = SetType.NORMAL, weight = null, reps = 5, done = false)
         ex.copy(sets = ex.sets + next)
     }
@@ -274,15 +288,69 @@ object Live {
     fun mapEx(s: LiveSession, exId: String, f: (LiveExercise) -> LiveExercise): LiveSession =
         s.copy(exercises = s.exercises.map { if (it.id == exId) f(it) else it })
 
+    /** Reps you change are yours: the app stops pacing that set (auto is cleared unless the patch sets it). */
     fun updateSet(s: LiveSession, exId: String, i: Int, patch: (LiveSet) -> LiveSet): LiveSession =
-        mapEx(s, exId) { ex -> ex.copy(sets = ex.sets.mapIndexed { k, x -> if (k == i) patch(x) else x }) }
+        mapEx(s, exId) { ex ->
+            ex.copy(sets = ex.sets.mapIndexed { k, x ->
+                if (k != i) x else patch(x).let { y -> if (y.reps != x.reps && y.auto == x.auto) y.copy(auto = null) else y }
+            })
+        }
+
+    /** Reps typed by you (keypad / stepper): like TS updateSet(…, {reps}), the set stops following the pace. */
+    fun setReps(s: LiveSession, exId: String, i: Int, reps: Int?): LiveSession = updateSet(s, exId, i) { it.copy(reps = reps, auto = null) }
+
+    /** Working reps done so far (warm-ups and skipped sets don't count). */
+    fun repsDone(ex: LiveExercise): Int = ex.sets.sumOf { x -> if (x.done && !x.isSkipped && x.type != SetType.WARMUP) x.reps ?: 0 else 0 }
+
+    /** Skip a set (or bring it back): skipped sets aren't done, saved or counted. */
+    fun skipSet(s: LiveSession, exId: String, i: Int, skipped: Boolean = true): LiveSession =
+        updateSet(s, exId, i) { if (skipped) it.copy(skipped = true, done = false, doneAt = null) else it.copy(skipped = false) }
+
+    /** Skip every set of an exercise that isn't done yet. */
+    fun skipExercise(s: LiveSession, exId: String): LiveSession =
+        mapEx(s, exId) { ex -> ex.copy(sets = ex.sets.map { x -> if (x.done) x else x.copy(skipped = true, doneAt = null) }) }
+
+    /**
+     * A rep-total exercise ("100 total reps") after set [i]: the sets still planned follow the reps you
+     * actually do (sets of 5 instead of 20), one more set is added while you're short, and once the
+     * total is reached any planned sets left over are skipped.
+     */
+    private fun chaseTotal(ex: LiveExercise, i: Int): LiveExercise {
+        val total = ex.totalReps
+        if (!truthy(total) || ex.isCardio) return ex
+        val set = ex.sets.getOrNull(i) ?: return ex
+        if (set.type == SetType.WARMUP || !set.done) return ex
+        val left = total!! - repsDone(ex)
+        val pace = set.reps?.takeIf { it > 0 }
+        var sets = ex.sets.mapIndexed { k, x ->
+            when {
+                k <= i || x.done || x.isSkipped || x.type == SetType.WARMUP -> x
+                left <= 0 -> x.copy(skipped = true)
+                else -> {
+                    // a planned set you haven't touched takes your pace (and never more than what's left)
+                    val untouched = x.auto == true || (x.target != null && x.reps == x.target.reps)
+                    if (untouched && pace != null) x.copy(reps = min(pace, left), auto = true) else x
+                }
+            }
+        }
+        val planned = sets.filter { !it.done && !it.isSkipped && it.type != SetType.WARMUP }.sumOf { it.reps ?: 0 }
+        if (left > 0 && planned < left) {
+            val reps = min(pace ?: set.target?.reps?.takeIf { it != 0 } ?: 10, left - planned)
+            if (reps > 0) sets = sets + LiveSet(
+                type = SetType.NORMAL, weight = set.weight, reps = reps, rpe = null, done = false, auto = true,
+                target = set.target?.copy(reps = reps, repsMax = null, amrap = false),
+            )
+        }
+        return ex.copy(sets = sets)
+    }
 
     private fun truthy(x: Double?) = x != null && x != 0.0 && !x.isNaN()
     private fun truthy(x: Int?) = x != null && x != 0
 
     /** Mark a set done and start the rest timer. Back-off sets keyed to today's top set get their load filled in. */
     fun completeSet(s: LiveSession, exId: String, i: Int, nowMs: Long = System.currentTimeMillis()): LiveSession {
-        var next = updateSet(s, exId, i) { it.copy(done = true, doneAt = iso(nowMs)) }
+        var next = updateSet(s, exId, i) { it.copy(done = true, doneAt = iso(nowMs), skipped = null) }
+        next = mapEx(next, exId) { e -> chaseTotal(e, i) }
         val ex = next.exercises.first { it.id == exId }
         val set = ex.sets[i]
         // A finished top set sets the load for "% of top" back-offs.
@@ -298,7 +366,7 @@ object Live {
             }
         }
         val rest = if (set.type == SetType.WARMUP) min(60, ex.restSeconds) else ex.restSeconds
-        val more = next.exercises.first { it.id == exId }.sets.any { !it.done }
+        val more = next.exercises.first { it.id == exId }.sets.any { it.isOpen }
         return next.copy(
             restEndsAt = if (rest != 0 && (more || hasNextExercise(next, exId))) iso(nowMs + rest * 1000L) else null,
             restFor = exId,
@@ -307,21 +375,53 @@ object Live {
 
     private fun hasNextExercise(s: LiveSession, exId: String): Boolean {
         val i = s.exercises.indexOfFirst { it.id == exId }
-        return s.exercises.drop(i + 1).any { e -> e.sets.any { !it.done } }
+        return s.exercises.drop(i + 1).any { e -> e.sets.any { it.isOpen } }
     }
 
     /** The exercise and set to do next. */
     fun current(s: LiveSession): Cursor? {
         for (e in s.exercises) {
-            val k = e.sets.indexOfFirst { !it.done }
+            val k = e.sets.indexOfFirst { it.isOpen }
             if (k >= 0) return Cursor(e.id, k)
         }
         return null
     }
 
     fun progress(s: LiveSession): Progress {
-        val all = s.exercises.flatMap { e -> e.sets.filter { it.type != SetType.WARMUP } }
+        val all = s.exercises.flatMap { e -> e.sets.filter { it.type != SetType.WARMUP && !it.isSkipped } }
         return Progress(all.count { it.done }, all.size)
+    }
+
+    // ── exercise header / rep-total line (web/src/views/gym.tsx ExerciseCard) ──
+
+    /** Done: the rep total is reached, or every set that isn't skipped is done. */
+    fun isComplete(ex: LiveExercise): Boolean {
+        val total = ex.totalReps
+        if (total != null && total > 0) return repsDone(ex) >= total
+        val counted = ex.sets.filter { !it.isSkipped }
+        return counted.isNotEmpty() && counted.all { it.done }
+    }
+
+    /** Nothing left to do but it isn't complete: the rest was skipped. */
+    fun isSkippedOut(ex: LiveExercise): Boolean = !isComplete(ex) && ex.sets.none { it.isOpen }
+
+    /** "65/100 reps", "65/100–200 reps" or "3/5" (sets done / sets not skipped), plus " · skipped" when the rest was skipped. */
+    fun countLabel(ex: LiveExercise): String {
+        val total = ex.totalReps?.takeIf { it > 0 }
+        val base = if (total != null) "${repsDone(ex)}/$total${ex.totalRepsMax?.takeIf { it > 0 }?.let { "–$it" } ?: ""} reps"
+        else ex.sets.filter { !it.isSkipped }.let { c -> "${c.count { it.done }}/${c.size}" }
+        return if (isSkippedOut(ex)) "$base · skipped" else base
+    }
+
+    /** The rep-total line in the open exercise, null for a set-by-set exercise. */
+    fun totalLine(ex: LiveExercise): String? {
+        val total = ex.totalReps?.takeIf { it > 0 } ?: return null
+        val reps = repsDone(ex)
+        return when {
+            reps >= total -> "$reps reps: total reached"
+            isSkippedOut(ex) -> "skipped at $reps of $total reps · + SET to keep going"
+            else -> "${total - reps} reps to go · sets are added as you go"
+        }
     }
 
     // ── UI operations from web/src/views/gym.tsx (kept here so they are unit tested too) ──
@@ -354,6 +454,14 @@ object Live {
     /** Working-set number shown on the card (warmups are "W"). */
     fun setLabel(ex: LiveExercise, i: Int): String =
         if (ex.sets[i].type == SetType.WARMUP) "W" else ex.sets.take(i + 1).count { it.type != SetType.WARMUP }.toString()
+
+    /** Set [i] as "n of N" among the working sets you'll actually do (warm-ups and skipped sets left out); null for a warm-up or skipped set. */
+    fun workingPosition(ex: LiveExercise, i: Int): Pair<Int, Int>? {
+        val x = ex.sets.getOrNull(i) ?: return null
+        if (x.type == SetType.WARMUP || x.isSkipped) return null
+        val counted = { y: LiveSet -> y.type != SetType.WARMUP && !y.isSkipped }
+        return ex.sets.take(i + 1).count(counted) to ex.sets.count(counted)
+    }
 
     /** e1RM (Epley) of a done set, the same formula the server uses. */
     fun e1rm(weight: Double, reps: Int): Double = if (reps <= 1) weight else weight * (1 + reps / 30.0)

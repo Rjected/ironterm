@@ -542,6 +542,42 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         }
     }
 
+    override fun skipWorkout(dayId: String?, undo: Boolean) {
+        if (_data.value.skipping) return
+        val api = repo.api() ?: run { setData { copy(toast = "Skipping a workout needs the server.") }; return }
+        setData { copy(skipping = true) }
+        viewModelScope.launch {
+            try {
+                val r = api.skipWorkout(dayId, undo)
+                // the program moved (or came back): gym, home and program documents are stale
+                appCache.invalidateAfterWorkout()
+                r.program?.let { appCache.write("program", AppProgram.serializer(), it) }
+                val now = System.currentTimeMillis()
+                setData {
+                    copy(
+                        skipping = false,
+                        gym = r.gym?.let { Load.of(it, now) } ?: gym,
+                        program = r.program?.let { Load.of(it, now) } ?: program,
+                        programDetail = emptyMap(), programBody = emptyMap(),
+                        toast = r.message.ifBlank { if (undo) "Skip undone" else "Skipped" },
+                    )
+                }
+                load(Screens.GYM, force = true)
+                load(Screens.HOME, force = true)
+                load(Screens.PROGRAM, force = true)
+            } catch (e: Exception) {
+                val msg = when {
+                    e is ApiException -> friendly(e) // 409: stale day / nothing to undo, in the server's words
+                    e.isRetryable() -> "Skipping a workout needs the server: ${friendly(e)}"
+                    else -> friendly(e)
+                }
+                setData { copy(skipping = false, toast = "Couldn't ${if (undo) "undo the skip" else "skip"}: $msg") }
+                if (e is ApiException && e.code == 409) load(Screens.GYM, force = true)
+                if (e.isAuth()) reload { copy(status = status.copy(authError = true, lastError = friendly(e), lastAttemptAt = System.currentTimeMillis())) }
+            }
+        }
+    }
+
     override fun toastShown() = setData { copy(toast = null) }
 
     // ═════════════════════════════ social ═════════════════════════════

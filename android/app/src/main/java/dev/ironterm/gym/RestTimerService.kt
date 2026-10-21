@@ -82,38 +82,120 @@ class RestTimerService : Service() {
                     },
                 )
             }
-        }
-
-        /** Notification text for a session: (title, body, chronometer base or null, counting down). Pure, unit tested. */
-        fun content(s: LiveSession, nowMs: Long): NotifContent {
-            val cur = Live.current(s)
-            val ex = cur?.let { c -> s.exercises.firstOrNull { it.id == c.exId } }
-            val set = cur?.let { ex?.sets?.getOrNull(it.set) }
-            val nextLine = if (ex != null && set != null) {
-                val n = ex.sets.count { it.type != SetType.WARMUP }
-                val label = Live.setLabel(ex, cur.set).let { if (it == "W") "Warmup" else "Set $it/$n" }
-                val load = when {
-                    ex.isCardio -> set.durationSec?.let { "${(it / 60).toInt()} min" } ?: ""
-                    set.weight != null && set.weight != 0.0 -> "${Fmt.w(set.weight)} ${s.unit} × ${set.reps ?: "?"}"
-                    else -> "${set.reps ?: "?"} reps"
-                }
-                "${ex.displayName} · $label · $load"
-            } else "All sets done · tap FINISH"
-            val end = Live.parseMs(s.restEndsAt)
-            return if (end != null && end > nowMs) {
-                NotifContent("REST", "Next: $nextLine", end, countDown = true, resting = true, hasNext = cur != null)
-            } else {
-                val start = Live.parseMs(s.startedAt) ?: nowMs
-                NotifContent(if (end != null) "GO · ${s.title}" else s.title, nextLine, start, countDown = false, resting = false, hasNext = cur != null)
+            if (nm.getNotificationChannel(ALERT_CHANNEL) == null) {
+                nm.createNotificationChannel(
+                    // High importance so it pops up over whatever is on screen; the beep/vibration is RestAlert's
+                    // (it follows the SETUP toggles and the ringer mode), so the channel itself stays quiet.
+                    NotificationChannel(ALERT_CHANNEL, "Rest over", NotificationManager.IMPORTANCE_HIGH).apply {
+                        setSound(null, null)
+                        enableVibration(false)
+                        description = "Pops up when a rest ends"
+                        setShowBadge(false)
+                        lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                    },
+                )
             }
         }
+
+        /** Heads-up "rest over" alert: its own high-importance channel (it pops up), no channel sound or vibration (RestAlert does those). */
+        const val ALERT_CHANNEL = "gym_rest_over"
+        const val ALERT_ID = 43
+        /** The rest-over alert goes away by itself after this long. */
+        const val ALERT_TIMEOUT_MS = 30_000L
+        /** How often the rest progress bar is refreshed (the countdown chronometer ticks by itself). */
+        const val TICK_MS = 5_000L
+
+        /** The set to do next, as the notification words it. */
+        data class Next(val name: String, val label: String, val load: String) {
+            /** "Back Squat · Set 3/5 · 225 lb × 5" */
+            val line: String get() = listOf(name, label, load).filter { it.isNotEmpty() }.joinToString(" · ")
+        }
+
+        fun next(s: LiveSession): Next? {
+            val cur = Live.current(s) ?: return null
+            val ex = s.exercises.firstOrNull { it.id == cur.exId } ?: return null
+            val set = ex.sets.getOrNull(cur.set) ?: return null
+            val total = ex.totalReps?.takeIf { it > 0 }
+            val label = when {
+                set.type == SetType.WARMUP -> "Warmup"
+                total != null -> "${Live.repsDone(ex)}/$total reps"
+                else -> Live.workingPosition(ex, cur.set)?.let { (n, of) -> "Set $n/$of" } ?: ""
+            }
+            val load = when {
+                ex.isCardio -> set.durationSec?.let { "${(it / 60).toInt()} min" } ?: ""
+                set.weight != null && set.weight != 0.0 -> "${Fmt.w(set.weight)} ${s.unit} × ${set.reps ?: "?"}"
+                else -> "${set.reps ?: "?"} reps"
+            }
+            return Next(ex.displayName, label, load)
+        }
+
+        /** Rest length for the progress bar: the exercise's rest (60 s cap after a warm-up), never less than what's left. */
+        private fun restTotalMs(s: LiveSession, leftMs: Long): Long {
+            val ex = s.exercises.firstOrNull { it.id == s.restFor }
+            val last = ex?.sets?.filter { it.done }?.maxByOrNull { Live.parseMs(it.doneAt) ?: 0L }
+            val sec = ex?.restSeconds?.takeIf { it > 0 }?.let { if (last?.type == SetType.WARMUP) minOf(60, it) else it } ?: 90
+            return maxOf(sec * 1000L, leftMs)
+        }
+
+        /**
+         * The ongoing notification for a session at [nowMs]. Pure, unit tested. Three states:
+         * resting (REST + countdown + progress), working after a rest (SET n/N · LIFT + overtime count-up),
+         * working (SET n/N · LIFT + workout clock); or all done.
+         */
+        fun content(s: LiveSession, nowMs: Long): NotifContent {
+            val nx = next(s)
+            val prog = Live.progress(s)
+            val sets = "${prog.done}/${prog.total} sets"
+            val end = Live.parseMs(s.restEndsAt)
+            if (end != null && end > nowMs) {
+                val total = restTotalMs(s, end - nowMs)
+                return NotifContent(
+                    title = "REST", text = nx?.let { "Next: ${it.line}" } ?: "Next: all sets done · tap FINISH",
+                    whenMs = end, countDown = true, state = NotifState.RESTING, hasNext = nx != null, subText = "rest left",
+                    progressMax = (total / 1000).toInt(), progress = ((total - (end - nowMs)) / 1000).toInt().coerceIn(0, (total / 1000).toInt()),
+                )
+            }
+            if (nx == null) {
+                return NotifContent("ALL SETS DONE", "Tap to FINISH and save ${s.title}", Live.parseMs(s.startedAt) ?: nowMs, countDown = false, state = NotifState.DONE, hasNext = false, subText = sets)
+            }
+            val title = (if (nx.label.isNotEmpty()) "${nx.label.uppercase()} · " else "") + nx.name.uppercase()
+            return if (end != null) {
+                // rest is over and the next set isn't done: count the overtime up from the end of the rest
+                NotifContent(title, "Go: ${nx.line}", end, countDown = false, state = NotifState.OVERTIME, hasNext = true, subText = "overtime")
+            } else {
+                NotifContent(title, nx.line, Live.parseMs(s.startedAt) ?: nowMs, countDown = false, state = NotifState.WORKING, hasNext = true, subText = sets)
+            }
+        }
+
+        /** The heads-up when a rest ends: ("Rest over", "Go: Back Squat · Set 3/5 · 225 lb × 5"). */
+        fun restOver(s: LiveSession): Pair<String, String> =
+            "Rest over" to (next(s)?.let { "Go: ${it.line}" } ?: "All sets done · tap FINISH")
     }
 
-    data class NotifContent(val title: String, val text: String, val whenMs: Long, val countDown: Boolean, val resting: Boolean, val hasNext: Boolean)
+    enum class NotifState { RESTING, OVERTIME, WORKING, DONE }
+
+    data class NotifContent(
+        val title: String,
+        val text: String,
+        /** chronometer base: rest end (counting down, or up for overtime) or the workout start */
+        val whenMs: Long,
+        val countDown: Boolean,
+        val state: NotifState,
+        val hasNext: Boolean,
+        /** shown next to the chronometer: "rest left", "overtime" (counting up since the rest ended), "3/14 sets" */
+        val subText: String,
+        /** rest progress in seconds (resting only) */
+        val progressMax: Int = 0,
+        val progress: Int = 0,
+    ) {
+        val resting: Boolean get() = state == NotifState.RESTING
+    }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var alarm: Job? = null
     private var alarmFor: String? = null
+    /** restEndsAt the rest-over alert was posted for (one per rest) */
+    private var alertFor: String? = null
     private var wake: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -127,14 +209,44 @@ class RestTimerService : Service() {
         scope.launch {
             store.state.map { it.session }.distinctUntilChanged().collect { session ->
                 if (session == null) {
+                    cancelAlert()
                     stopForegroundCompat()
                     stopSelf()
                     return@collect
                 }
+                // a set done, +30 s or skip: the rest-over alert (if any) is for a rest that's gone
+                if (alertFor != null && session.restEndsAt != alertFor) cancelAlert()
                 notifyFor(session)
                 armAlarm(session)
             }
         }
+    }
+
+    private fun cancelAlert() {
+        alertFor = null
+        runCatching { NotificationManagerCompat.from(this).cancel(ALERT_ID) }
+    }
+
+    /** Heads-up "Rest over · Go: …", once per rest; gone after [ALERT_TIMEOUT_MS] or when the session moves on. */
+    private fun postAlert(s: LiveSession) {
+        if (alertFor == s.restEndsAt) return
+        alertFor = s.restEndsAt
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        val (title, text) = restOver(s)
+        val b = NotificationCompat.Builder(this, ALERT_CHANNEL)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setColor(0xFFFFB000.toInt())
+            .setContentTitle(title)
+            .setContentText(text)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOnlyAlertOnce(true)
+            .setAutoCancel(true)
+            .setTimeoutAfter(ALERT_TIMEOUT_MS)
+            .setContentIntent(openIntent())
+        if (Live.current(s) != null) b.addAction(0, "Set done", pending(ACTION_DONE, 5))
+        runCatching { NotificationManagerCompat.from(this).notify(ALERT_ID, b.build()) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -183,13 +295,15 @@ class RestTimerService : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+    private fun openIntent(): PendingIntent = PendingIntent.getActivity(
+        this, 1,
+        Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_TAB, Tabs.GYM).setAction("dev.ironterm.OPEN_GYM")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
     private fun build(s: LiveSession?): android.app.Notification {
-        val open = PendingIntent.getActivity(
-            this, 1,
-            Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_TAB, Tabs.GYM).setAction("dev.ironterm.OPEN_GYM")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        val open = openIntent()
         val b = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(0xFFFFB000.toInt())
@@ -206,10 +320,13 @@ class RestTimerService : Service() {
         b.setContentTitle(c.title).setContentText(c.text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(c.text))
             .setWhen(c.whenMs).setShowWhen(true).setUsesChronometer(true).setChronometerCountDown(c.countDown)
-            .setSubText(Live.progress(s).let { "${it.done}/${it.total} sets" })
+            .setSubText(c.subText)
+        if (c.resting) b.setProgress(c.progressMax, c.progress, false)
+        // resting reads as quiet grey, a set to do as the app's amber
+        b.setColorized(false).setColor(if (c.resting) 0xFF8A8A8A.toInt() else 0xFFFFB000.toInt())
         if (c.resting) {
             b.addAction(0, "+30s", pending(ACTION_PLUS30, 2))
-            b.addAction(0, "Skip", pending(ACTION_SKIP, 3))
+            b.addAction(0, "Skip rest", pending(ACTION_SKIP, 3))
         } else if (c.hasNext) {
             b.addAction(0, "Set done", pending(ACTION_DONE, 4))
         }
@@ -229,9 +346,20 @@ class RestTimerService : Service() {
         if (left < -5_000) return // long over (e.g. service restarted): don't beep late
         acquireWake(left.coerceAtLeast(0) + 10_000)
         alarm = scope.launch {
-            if (left > 0) delay(left)
-            RestAlert.fire(this@RestTimerService)
-            Gym.store(this@RestTimerService).session?.let { notifyFor(it) } // REST → GO
+            val store = Gym.store(this@RestTimerService)
+            // the rest progress bar moves every few seconds (the countdown itself is a chronometer)
+            while (end - System.currentTimeMillis() > TICK_MS) {
+                delay(TICK_MS)
+                store.session?.takeIf { it.restEndsAt == endIso }?.let { notifyFor(it) } ?: return@launch
+            }
+            val rest = end - System.currentTimeMillis()
+            if (rest > 0) delay(rest)
+            val s = store.session?.takeIf { it.restEndsAt == endIso }
+            if (s != null) {
+                RestAlert.fire(this@RestTimerService)
+                postAlert(s)
+                notifyFor(s) // REST → SET n/N with the overtime count-up
+            }
             GymWidget.refresh(this@RestTimerService)
             releaseWake()
         }

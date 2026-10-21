@@ -82,6 +82,9 @@ class AppApi(
     /** Do [to] instead of [lift] everywhere the program has it; null undoes the swap. */
     suspend fun swapLift(lift: String, to: String?): ProgramStartResult =
         call("POST", "/api/app/program/swap", AppJson.json.encodeToString(SwapBody.serializer(), SwapBody(lift, to)), ProgramStartResult.serializer())!!
+    /** Skip the program's next session ([dayId] must be it: a stale screen or double tap gets a 409), or undo the last skip. */
+    suspend fun skipWorkout(dayId: String?, undo: Boolean = false): SkipResult =
+        call("POST", "/api/app/program/skip", AppJson.json.encodeToString(SkipBody.serializer(), if (undo) SkipBody(undo = true) else SkipBody(dayId = dayId)), SkipResult.serializer())!!
     suspend fun body(mode: String) = get("/api/app/body?mode=${enc(mode)}", AppBody.serializer())
     suspend fun insights() = get("/api/app/insights", AppInsights.serializer())
     suspend fun stats() = get("/api/app/stats", AppStats.serializer())
