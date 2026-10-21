@@ -28,6 +28,10 @@ export interface LiveSet {
   done: boolean;
   doneAt?: string;
   target?: LiveTarget;
+  /** skipped on purpose: not done, not saved, not counted */
+  skipped?: boolean;
+  /** reps were set by the app (a rep-total exercise following your pace), not by you */
+  auto?: boolean;
 }
 
 export interface LiveExercise {
@@ -47,6 +51,9 @@ export interface LiveExercise {
   ifFail?: string;
   restSeconds: number;
   cardio?: boolean;
+  /** reach this many working reps in as many sets as it takes ("100 total reps"); sets are added as you go */
+  totalReps?: number;
+  totalRepsMax?: number;
   sets: LiveSet[];
 }
 
@@ -97,6 +104,7 @@ export function sessionFromPlan(plan: PlannedSession, unit: Unit, programName: s
     return {
       id: uid(), lift: ex.lift, slotId: ex.slotId, tier: ex.tier, scheme: ex.scheme, note: ex.note,
       ifSuccess: ex.ifSuccess, ifFail: ex.ifFail, restSeconds: ex.restSeconds,
+      ...(ex.totalReps ? { totalReps: ex.totalReps, ...(ex.totalRepsMax ? { totalRepsMax: ex.totalRepsMax } : {}) } : {}),
       sets: [...(heavy && top ? warmups(top, unit) : []), ...work],
     };
   });
@@ -127,7 +135,7 @@ export function addExercise(s: LiveSession, lift: string, opts: { cardio?: boole
 export function addSet(s: LiveSession, exId: string): LiveSession {
   return mapEx(s, exId, (ex) => {
     const last = ex.sets[ex.sets.length - 1];
-    const next: LiveSet = last ? { ...last, type: last.type === "warmup" ? "normal" : last.type, done: false, doneAt: undefined, target: undefined } : { type: "normal", weight: null, reps: 5, done: false };
+    const next: LiveSet = last ? { ...last, type: last.type === "warmup" ? "normal" : last.type, done: false, doneAt: undefined, target: undefined, skipped: false } : { type: "normal", weight: null, reps: 5, done: false };
     return { ...ex, sets: [...ex.sets, next] };
   });
 }
@@ -137,12 +145,57 @@ export function mapEx(s: LiveSession, exId: string, f: (ex: LiveExercise) => Liv
 }
 
 export function updateSet(s: LiveSession, exId: string, i: number, patch: Partial<LiveSet>): LiveSession {
-  return mapEx(s, exId, (ex) => ({ ...ex, sets: ex.sets.map((x, k) => (k === i ? { ...x, ...patch } : x)) }));
+  // reps you type are yours: the app stops pacing that set
+  const p = "reps" in patch && !("auto" in patch) ? { ...patch, auto: undefined } : patch;
+  return mapEx(s, exId, (ex) => ({ ...ex, sets: ex.sets.map((x, k) => (k === i ? { ...x, ...p } : x)) }));
+}
+
+/** Working reps done so far (warm-ups and skipped sets don't count). */
+export function repsDone(ex: LiveExercise): number {
+  return ex.sets.reduce((n, x) => n + (x.done && !x.skipped && x.type !== "warmup" ? x.reps ?? 0 : 0), 0);
+}
+
+/** Skip a set (or bring it back): skipped sets aren't done, saved or counted. */
+export function skipSet(s: LiveSession, exId: string, i: number, skipped = true): LiveSession {
+  return updateSet(s, exId, i, skipped ? { skipped: true, done: false, doneAt: undefined } : { skipped: false });
+}
+
+/** Skip every set of an exercise that isn't done yet. */
+export function skipExercise(s: LiveSession, exId: string): LiveSession {
+  return mapEx(s, exId, (ex) => ({ ...ex, sets: ex.sets.map((x) => (x.done ? x : { ...x, skipped: true, doneAt: undefined })) }));
+}
+
+/**
+ * A rep-total exercise ("100 total reps") after a set: the sets still planned follow the reps you
+ * actually do (sets of 5 instead of 20), one more set is added while you're short, and once the
+ * total is reached any planned sets left over are skipped.
+ */
+function chaseTotal(ex: LiveExercise, i: number): LiveExercise {
+  if (!ex.totalReps || ex.cardio) return ex;
+  const set = ex.sets[i];
+  if (!set || set.type === "warmup" || !set.done) return ex;
+  const left = ex.totalReps - repsDone(ex);
+  const pace = set.reps && set.reps > 0 ? set.reps : null;
+  let sets = ex.sets.map((x, k) => {
+    if (k <= i || x.done || x.skipped || x.type === "warmup") return x;
+    if (left <= 0) return { ...x, skipped: true };
+    // a planned set you haven't touched takes your pace (and never more than what's left)
+    const untouched = x.auto || (x.target ? x.reps === x.target.reps : false);
+    return untouched && pace ? { ...x, reps: Math.min(pace, left), auto: true } : x;
+  });
+  const open = sets.filter((x) => !x.done && !x.skipped && x.type !== "warmup");
+  const planned = open.reduce((n, x) => n + (x.reps ?? 0), 0);
+  if (left > 0 && planned < left) {
+    const reps = Math.min(pace ?? set.target?.reps ?? 10, left - planned);
+    if (reps > 0) sets = [...sets, { type: "normal", weight: set.weight, reps, rpe: null, done: false, auto: true, ...(set.target ? { target: { ...set.target, reps, repsMax: undefined, amrap: false } } : {}) }];
+  }
+  return { ...ex, sets };
 }
 
 /** Mark a set done and start the rest timer. Back-off sets keyed to today's top set get their load filled in. */
 export function completeSet(s: LiveSession, exId: string, i: number, now = new Date()): LiveSession {
-  let next = updateSet(s, exId, i, { done: true, doneAt: now.toISOString() });
+  let next = updateSet(s, exId, i, { done: true, doneAt: now.toISOString(), skipped: false });
+  next = mapEx(next, exId, (e) => chaseTotal(e, i));
   const ex = next.exercises.find((e) => e.id === exId)!;
   const set = ex.sets[i];
   // A finished top set sets the load for "% of top" back-offs.
@@ -152,26 +205,26 @@ export function completeSet(s: LiveSession, exId: string, i: number, now = new D
     next = mapEx(next, exId, (e) => ({ ...e, sets: e.sets.map((x) => (x.target?.ofTop && !x.done && !x.weight ? { ...x, weight: roundTo(e1 * x.target.ofTop, step) } : x)) }));
   }
   const rest = set.type === "warmup" ? Math.min(60, ex.restSeconds) : ex.restSeconds;
-  const more = next.exercises.find((e) => e.id === exId)!.sets.some((x) => !x.done);
+  const more = next.exercises.find((e) => e.id === exId)!.sets.some((x) => !x.done && !x.skipped);
   return { ...next, restEndsAt: rest && (more || hasNextExercise(next, exId)) ? new Date(now.getTime() + rest * 1000).toISOString() : null, restFor: exId };
 }
 
 function hasNextExercise(s: LiveSession, exId: string) {
   const i = s.exercises.findIndex((e) => e.id === exId);
-  return s.exercises.slice(i + 1).some((e) => e.sets.some((x) => !x.done));
+  return s.exercises.slice(i + 1).some((e) => e.sets.some((x) => !x.done && !x.skipped));
 }
 
 /** The exercise and set to do next. */
 export function current(s: LiveSession): { exId: string; set: number } | null {
   for (const e of s.exercises) {
-    const k = e.sets.findIndex((x) => !x.done);
+    const k = e.sets.findIndex((x) => !x.done && !x.skipped);
     if (k >= 0) return { exId: e.id, set: k };
   }
   return null;
 }
 
 export function progress(s: LiveSession) {
-  const all = s.exercises.flatMap((e) => e.sets.filter((x) => x.type !== "warmup"));
+  const all = s.exercises.flatMap((e) => e.sets.filter((x) => x.type !== "warmup" && !x.skipped));
   const done = all.filter((x) => x.done).length;
   return { done, total: all.length };
 }

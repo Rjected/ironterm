@@ -118,6 +118,8 @@ export interface AppGym {
   days: { dayIndex: number; dayId: string; dayName: string }[];
   /** exercises you can add: the lift library (Hevy titles for matching) */
   catalog: { key: string; name: string; kind: string; hevy: string | null }[];
+  /** the program's last session was skipped (POST /api/app/program/skip): it can still be undone */
+  skipped: null | { dayId: string; dayName: string; date: string };
 }
 
 export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
@@ -128,7 +130,41 @@ export function appGym(b: Bootstrap, d: Derived = derive(b, "volume")): AppGym {
     plan: d.next,
     days: d.def ? d.def.days.map((x, i) => ({ dayIndex: i, dayId: x.id, dayName: x.name })) : [],
     catalog: Object.entries(LIFTS).map(([key, l]) => ({ key, name: l.name, kind: l.kind, hevy: l.hevy[0] ?? null })),
+    skipped: lastSkip(d),
   };
+}
+
+/** The last program session, if it was a skip. */
+export function lastSkip(d: Derived): AppGym["skipped"] {
+  const last = d.state?.log[d.state.log.length - 1];
+  if (!last?.skipped || !d.def) return null;
+  const day = d.def.days.find((x) => x.id === last.dayId);
+  return { dayId: last.dayId, dayName: day?.name ?? last.dayId, date: last.date };
+}
+
+/**
+ * POST /api/app/program/skip {dayId} skips the program's next session (it must be `dayId`, so a
+ * double tap or a stale screen can't skip two); {undo: true} brings back the last skip.
+ */
+export function skipWorkout(b: Bootstrap, body: unknown, now = new Date().toISOString(), d: Derived = derive(b, "volume")): { cfg: ProgramConfig; message: string } | { error: string; status: number } {
+  const cfg = b.program;
+  if (!cfg || !d.def || !d.state) return { error: "no active program", status: 400 };
+  if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "body must be {dayId} or {undo: true}", status: 400 };
+  const { dayId, undo } = body as { dayId?: unknown; undo?: unknown };
+  const adjustments = [...(cfg.adjustments ?? [])];
+  if (undo === true) {
+    const last = lastSkip(d);
+    const i = last ? adjustments.map((a) => !!a.skip).lastIndexOf(true) : -1;
+    if (!last || i < 0) return { error: "nothing to undo: the last session wasn't a skip", status: 409 };
+    adjustments.splice(i, 1);
+    return { cfg: { ...cfg, adjustments }, message: `${last.dayId} is back` };
+  }
+  if (typeof dayId !== "string") return { error: "dayId must be the next session's day", status: 400 };
+  if (d.state.complete) return { error: "the program is complete", status: 409 };
+  const next = d.def.days[d.state.dayIndex];
+  if (next.id !== dayId) return { error: `the next session is ${next.id}, not ${dayId}`, status: 409 };
+  adjustments.push({ date: now, skip: true, dayId, note: `skipped ${dayId}` });
+  return { cfg: { ...cfg, adjustments }, message: `Skipped ${dayId}` };
 }
 
 /** The session the app starts: today's plan (or another day / empty), same as the web GYM view. */

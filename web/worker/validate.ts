@@ -75,7 +75,7 @@ export function programConfig(v: unknown): Record<string, unknown> | null {
     const m = v[k];
     if (m != null && (!isObj(m) || Object.values(m).some((x) => typeof x !== "string"))) throw new BadRequest(`program.${k} must map keys to strings`);
   }
-  if (v.adjustments != null && (!Array.isArray(v.adjustments) || v.adjustments.some((a) => !isObj(a) || typeof a.date !== "string"))) throw new BadRequest("program.adjustments must be a list of {date, …}");
+  if (v.adjustments != null && (!Array.isArray(v.adjustments) || v.adjustments.some((a) => !isObj(a) || typeof a.date !== "string" || (a.skip != null && typeof a.skip !== "boolean")))) throw new BadRequest("program.adjustments must be a list of {date, …}");
   return { ...v, options: v.options ?? {}, startWeights: v.startWeights ?? {}, trainingMaxes: v.trainingMaxes ?? {} };
 }
 

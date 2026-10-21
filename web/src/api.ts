@@ -87,6 +87,8 @@ export const api = {
   programBody: (id: string, opts: Record<string, string> = {}, days: number[] | null = null) =>
     call<ProgramBody>(`/api/app/programs/${encodeURIComponent(id)}/body?svg=0${days?.length ? `&days=${days.join(",")}` : ""}${Object.entries(opts).map(([k, v]) => `&opt.${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("")}`),
   /** do `to` instead of `lift` everywhere the program has it (null undoes the swap) */
+  /** skip the program's next session ({dayId}) or undo the last skip ({undo: true}) */
+  skipWorkout: (body: { dayId: string } | { undo: true }) => call<{ ok: true; message: string }>("/api/app/program/skip", { method: "POST", body: JSON.stringify(body) }),
   swapLift: (lift: string, to: string | null) => call<{ ok: true; program: AppProgram }>("/api/app/program/swap", { method: "POST", body: JSON.stringify({ lift, to }) }),
   startProgram: (id: string, body: StartBody) => call<{ ok: true; program: AppProgram }>(`/api/app/programs/${encodeURIComponent(id)}/start`, { method: "POST", body: JSON.stringify(body) }),
 };

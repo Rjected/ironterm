@@ -86,3 +86,8 @@
 .gym, .gym * { min-width: 0; }
 .gx-note { margin-top: 8px; font-size: var(--fs-s); }
 .gx-has-note { color: var(--amber); font-size: var(--fs-s); }
+
+/* skipped sets: kept in place, not counted or saved */
+.gs.skipped { grid-template-columns: 58px minmax(0, 1fr) auto; opacity: .5; min-height: 36px; }
+.gs-skipped { letter-spacing: .08em; }
+.linkish { background: none; border: 0; padding: 0; color: var(--amber); cursor: pointer; font: inherit; text-decoration: underline; }
