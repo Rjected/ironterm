@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { HevyWorkout } from "./hevy";
 import { initialState, planDay, rampLength, rampNeed, replay } from "./program";
 import { buildProgram, defaultConfig } from "./programs";
-import { applyRamp, onTrip, rampFactors, rampInfo, returnStats, travelDays, travelSessions, type Trip } from "./travel";
+import { applyRamp, onTrip, rampFactors, rampInfo, returnStats, slowReturn, travelDays, travelSessions, type Trip } from "./travel";
 import { toKg } from "./units";
 
 const W = (date: string, ex: [string, [number, number][]][]): HevyWorkout => ({
@@ -157,5 +157,46 @@ describe("return stats", () => {
     expect(r.breaks).toBe(1);
     expect(r.firstSession).toBeCloseTo(245 / 255, 3);
     expect(r.sessionsToRecover).toBe(2);
+  });
+});
+
+describe("slow return", () => {
+  const cfg = defaultConfig("531-monolith", "lb", "2026-09-01");
+  const def = buildProgram(cfg)!;
+  // Mon / Wed / Fri for three weeks: usual gap 2 days
+  const mwf = ["2026-09-07", "2026-09-09", "2026-09-11", "2026-09-14", "2026-09-16", "2026-09-18", "2026-09-21", "2026-09-23", "2026-09-25", "2026-09-28"];
+  const state = (dates: string[], skipped: string[] = []) => ({
+    ...initialState(def, cfg),
+    log: [...dates.map((d, i) => ({ workoutId: d, date: `${d}T17:00:00Z`, dayId: def.days[i % 3].id, week: 0, results: [] })),
+      ...skipped.map((d) => ({ workoutId: "", date: `${d}T17:00:00Z`, dayId: "1", week: 0, results: [], skipped: true }))],
+  });
+
+  it("a week off a 3-day program, after the chin-up day", () => {
+    const r = slowReturn(def, state(mwf), "UTC", "2026-10-05")!;
+    expect(r).toMatchObject({ days: 7, usual: 2, after: { date: "2026-09-28", dayName: "Monday · Squat / Press" } });
+    expect(r.text).toContain("7 days since your last session (Monday · Squat / Press); you usually train every 2 days");
+    expect(r.text).toContain("From day 9 off");
+  });
+
+  it("missing one session isn't slow; 9+ days is a break the ramp handles", () => {
+    expect(slowReturn(def, state(mwf), "UTC", "2026-10-02")).toBeNull(); // 4 days
+    expect(slowReturn(def, state(mwf), "UTC", "2026-10-03")).not.toBeNull(); // 5 = 2 × 2 + … ≥ usual + 3
+    expect(slowReturn(def, state(mwf), "UTC", "2026-10-07")).toBeNull(); // 9 days
+  });
+
+  it("needs a few sessions to know your normal, and stays quiet on a trip or a session today", () => {
+    expect(slowReturn(def, state(mwf.slice(0, 4)), "UTC", "2026-09-21")).toBeNull();
+    expect(slowReturn(def, state(mwf), "UTC", "2026-10-05", [{ id: "t", name: "Trip", start: "2026-10-01", end: "2026-10-04", gym: "none" } as Trip])).toBeNull();
+    expect(slowReturn(def, state([...mwf, "2026-10-05"]), "UTC", "2026-10-05")).toBeNull();
+  });
+
+  it("skipped sessions don't count as training, and old breaks don't skew the usual gap", () => {
+    expect(slowReturn(def, state(mwf, ["2026-10-02"]), "UTC", "2026-10-05")?.days).toBe(7);
+    const withBreak = ["2026-08-01", ...mwf];
+    expect(slowReturn(def, state(withBreak), "UTC", "2026-10-05")?.usual).toBe(2);
+  });
+
+  it("without the ramp, no mention of it", () => {
+    expect(slowReturn(def, state(mwf), "UTC", "2026-10-05", [], false)!.text).not.toContain("ease you back");
   });
 });

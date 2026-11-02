@@ -83,6 +83,7 @@ export function Dash(props: { d: Derived; metric: GraphMetric; setMetric: (m: Gr
         act={d.next && <button class="btn" onClick={() => nav({ view: "prog" })}><em>F2</em>PROGRAM</button>}
       >
         {d.reentry && <ReentryNote info={d.reentry} onOpen={(id) => nav({ view: "set", tab: "programs", id })} />}
+        {!d.reentry && d.slowReturn && <div class="warnbox reentry" style={{ borderColor: "var(--amber)", color: "var(--amber)" }}>{d.slowReturn.text}</div>}
         {d.next ? <SessionTicket s={d.next} unit={u} /> : (
           <div class="empty">No active program. <button class="btn pri" onClick={() => nav({ view: "set" })}>SET UP GZCLP</button></div>
         )}

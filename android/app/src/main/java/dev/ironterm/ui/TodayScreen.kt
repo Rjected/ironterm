@@ -170,12 +170,16 @@ private fun NextCard(s: Snapshot, unit: String, onGym: () -> Unit, onBrowse: () 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Mono(next.dayName.uppercase(), Modifier.weight(1f), size = 19.sp, bold = true, maxLines = 2)
             if (next.reentry) { Spacer(Modifier.width(8.dp)); Badge("RE-ENTRY") }
+            else if (next.slowNote != null) { Spacer(Modifier.width(8.dp)); Badge("SLOW RETURN") }
         }
         Spacer(Modifier.height(4.dp))
         Mono(listOfNotNull(s.program.name, next.weekName, next.date?.let { Fmt.day(it) }).joinToString(" · ").uppercase(), size = 11.sp, color = T.faint)
         if (next.reentry) {
             Spacer(Modifier.height(6.dp))
             Mono(next.reentryNote ?: "Re-entry after a break: weights are eased back in.", size = 11.sp, color = T.amber)
+        } else if (next.slowNote != null) {
+            Spacer(Modifier.height(6.dp))
+            Mono(next.slowNote, size = 11.sp, color = T.amber)
         }
         Spacer(Modifier.height(10.dp))
         next.exercises.forEachIndexed { i, e ->

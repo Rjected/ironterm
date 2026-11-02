@@ -105,6 +105,8 @@ data class NextSession(
     val reentry: Boolean = false,
     /** what the re-entry ramp does to this session, in words */
     val reentryNote: String? = null,
+    /** longer than usual since your last session (short of a break): a heads-up, the plan is unchanged */
+    val slowNote: String? = null,
     val exercises: List<PlannedExercise> = emptyList(),
 )
 
