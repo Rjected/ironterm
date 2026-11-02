@@ -262,7 +262,7 @@ struct NextSessionPanel: View {
                     }
                     HStack(alignment: .firstTextBaseline) {
                         Text(n.when).font(T.mono(24, .heavy)).foregroundStyle(T.amber)
-                        if n.reentry { Badge(text: "RE-ENTRY") }
+                        if n.reentry { Badge(text: "RE-ENTRY") } else if n.slowNote != nil { Badge(text: "SLOW RETURN") }
                         Spacer()
                         if model.gym.session == nil {
                             Text("START ▸").font(T.mono(11, .heavy)).foregroundStyle(T.bg).padding(.horizontal, 8).padding(.vertical, 4).background(T.amber)
@@ -271,6 +271,8 @@ struct NextSessionPanel: View {
                     Text(n.dayName + (n.weekName.map { " · \($0)" } ?? "")).font(T.mono(14, .bold)).foregroundStyle(T.text)
                     if n.reentry {
                         Text(n.reentryNote ?? "Back after a break: weights are eased in for this session.").font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
+                    } else if let slow = n.slowNote {
+                        Text(slow).font(T.mono(10)).foregroundStyle(T.dim).fixedSize(horizontal: false, vertical: true)
                     }
                     Divider1()
                     ForEach(Array(n.exercises.enumerated()), id: \.offset) { _, e in

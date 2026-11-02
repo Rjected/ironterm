@@ -83,6 +83,8 @@ struct Snapshot: Codable, Equatable {
         var reentry: Bool
         /// what the re-entry ramp does to this session, in words
         var reentryNote: String?
+        /// longer than usual since your last session (short of a break): a heads-up, the plan is unchanged
+        var slowNote: String?
         var exercises: [Exercise]
 
         struct Exercise: Codable, Equatable {

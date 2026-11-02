@@ -13,7 +13,7 @@
 
 import type { HevyWorkout } from "./hevy";
 import { LIFTS, matchLift } from "./lifts";
-import { rampProgress, rampsSlower, type PlannedExercise, type PlannedSession, type PlannedSet, type ProgramDef, type Reentry } from "./program";
+import { rampProgress, rampsSlower, type PlannedExercise, type PlannedSession, type PlannedSet, type ProgramDef, type ProgramState, type Reentry } from "./program";
 import { addDays, epley, localDate } from "./stats";
 import { fromKg, loadStep, roundTo, type Unit } from "./units";
 
@@ -190,6 +190,51 @@ export function rampInfo(r: Reentry, lifts: string[], activeTemplate?: string): 
   if (suggest.length) text += ` After a break this long, a short comeback block (${suggest.map((x) => x.name).join(" or ")}) can be easier than ramping your program.`;
   return { gapDays: r.gapDays, done: r.done, total: r.total, headline, lifts: rows, text, suggest };
 }
+
+// ───────────────────────── slow recovery ─────────────────────────
+
+export interface SlowReturn {
+  /** days since your last program session */
+  days: number;
+  /** your usual gap between program sessions */
+  usual: number;
+  /** the session before the gap */
+  after: { date: string; dayName: string };
+  text: string;
+}
+
+/**
+ * Too long since your last program session for your normal rhythm, but short of a break (the
+ * re-entry ramp takes those): 7 days off a 3-day program, say, after a session that took a while
+ * to recover from. Only a note; the plan doesn't change. "Usual" is the median of your last 12
+ * gaps between program sessions, leaving out breaks and gaps that span a trip, and needs 4.
+ */
+export function slowReturn(def: ProgramDef, state: ProgramState, tz: string, today: string, trips: Trip[] = [], ramp = true, minGapDays = 9): SlowReturn | null {
+  const sessions = state.log.filter((e) => !e.skipped).map((e) => ({ date: localDate(e.date, tz), dayId: e.dayId }));
+  const dates = [...new Set(sessions.map((s) => s.date))].sort();
+  const last = dates[dates.length - 1];
+  if (!last || last >= today) return null;
+  const spansTrip = (a: string, b: string) => trips.some((t) => t.start <= b && t.end > a);
+  if (spansTrip(last, today)) return null;
+  const gaps: number[] = [];
+  for (let i = 1; i < dates.length; i++) {
+    const g = daysBetween(dates[i - 1], dates[i]);
+    if (g < minGapDays && !spansTrip(dates[i - 1], dates[i])) gaps.push(g);
+  }
+  const recent = gaps.slice(-12).sort((a, b) => a - b);
+  if (recent.length < 4) return null;
+  const mid = recent.length >> 1;
+  const usual = Math.max(1, Math.round(recent.length % 2 ? recent[mid] : (recent[mid - 1] + recent[mid]) / 2));
+  const days = daysBetween(last, today);
+  if (days >= minGapDays || days < Math.max(2 * usual, usual + 3)) return null;
+  const s = sessions.filter((x) => x.date === last).pop()!;
+  const dayName = def.days.find((d) => d.id === s.dayId)?.name ?? s.dayId;
+  let text = `${days} days since your last session (${dayName}); you usually train every ${usual === 1 ? "day" : `${usual} days`}. Taking longer to recover after a hard session is normal, and nothing in your plan changes.`;
+  if (ramp) text += ` From day ${minGapDays} off, the next sessions ease you back in.`;
+  return { days, usual, after: { date: last, dayName }, text };
+}
+
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
 
 /** Main lifts of a session, for rampInfo. */
 export const sessionMainLifts = (plan: PlannedSession | null): string[] =>
