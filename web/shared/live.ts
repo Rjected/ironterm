@@ -243,8 +243,9 @@ export function toHevyWorkout(s: LiveSession, templateFor: (ex: LiveExercise) =>
         type: x.type,
         weight_kg: ex.cardio ? null : kg(x.weight),
         reps: ex.cardio ? null : x.reps,
-        distance_meters: x.distanceM ?? null,
-        duration_seconds: x.durationSec ?? null,
+        // Hevy rejects fractional values ("Expected integer, received float"); miles → m is rarely whole.
+        distance_meters: x.distanceM == null ? null : Math.round(x.distanceM),
+        duration_seconds: x.durationSec == null ? null : Math.round(x.durationSec),
         rpe: x.rpe ?? null,
         custom_metric: null,
       })),

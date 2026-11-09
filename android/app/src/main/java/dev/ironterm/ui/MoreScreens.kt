@@ -298,7 +298,14 @@ fun ProgramScreen(state: UiState, data: DataUi, actions: AppActions, onBack: () 
                                     Mono(u.dayName.uppercase(), Modifier.weight(1f), size = 11.sp, bold = true, maxLines = 1)
                                 }
                                 Spacer(Modifier.height(3.dp))
-                                Mono(u.exercises.joinToString("   ") { "${it.short} ${it.summary.substringAfter("@").trim().let { w -> if (it.summary.contains("@")) w else it.summary }}" }, size = 10.sp, color = T.dim, maxLines = 2)
+                                // One row per exercise, like iOS: a joined line wrapped mid-list and dropped the scheme.
+                                u.exercises.forEach { e ->
+                                    Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.width(46.dp)) { TierTag(e.tier) }
+                                        Mono(e.short, Modifier.width(90.dp), size = 10.sp, bold = true, maxLines = 1)
+                                        Mono(e.summary, Modifier.weight(1f), size = 10.sp, color = T.dim, maxLines = 1)
+                                    }
+                                }
                             }
                         }
                     }

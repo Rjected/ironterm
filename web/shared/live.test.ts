@@ -46,4 +46,13 @@ describe("live session", () => {
     expect(st.log[0].dayId).toBe("A1");
     expect(st.slots["a1-t1"].weight).toBe(195);
   });
+
+  it("sends whole-number cardio distance and duration (Hevy 400s on floats)", () => {
+    const s = emptySession("lb", "2026-11-07T21:36:54Z", "America/New_York");
+    s.exercises.push({ id: "b", lift: "cardio", title: "Recumbent Bike", templateId: "7FD2EC3E", restSeconds: 0, cardio: true,
+      sets: [{ type: "normal", weight: null, reps: null, durationSec: 2100.4, distanceM: 12874.751999999995, done: true }] });
+    const set = toHevyWorkout(s, () => "t").workout.exercises[0].sets[0];
+    expect(set.distance_meters).toBe(12875);
+    expect(set.duration_seconds).toBe(2100);
+  });
 });
