@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToLong
 import kotlin.random.Random
 
 // Kotlin port of web/shared/live.ts: the in-progress gym session, logged set by set, written to
@@ -504,8 +505,9 @@ object Live {
                             type = x.type,
                             weight_kg = if (ex.isCardio) null else kg(x.weight),
                             reps = if (ex.isCardio) null else x.reps,
-                            distance_meters = x.distanceM,
-                            duration_seconds = x.durationSec,
+                            // Hevy rejects fractional values; miles → m is rarely whole.
+                            distance_meters = x.distanceM?.roundToLong(),
+                            duration_seconds = x.durationSec?.roundToLong(),
                             rpe = x.rpe,
                             custom_metric = null,
                         )
@@ -546,8 +548,8 @@ data class HevyWorkoutBody(val workout: Workout) {
         val type: String,
         val weight_kg: Double?,
         val reps: Int?,
-        val distance_meters: Double?,
-        val duration_seconds: Double?,
+        val distance_meters: Long?,
+        val duration_seconds: Long?,
         val rpe: Double?,
         val custom_metric: Double?,
     )
