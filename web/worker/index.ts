@@ -440,12 +440,12 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       const extra = (await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? [];
       await kvPut(env.DB, "demo:extra", [...extra.filter((x) => x.id !== w.id), w]);
       await kvPut(env.DB, k(m, "live"), null);
-      return json({ workout: w, demo: true, prs: finishPRs(await bootstrap(env, authMode, m), w.id) });
+      return json({ workout: w, demo: true, prs: await safePRs(env, authMode, m, w.id) });
     }
     // Idempotent per session: a retry after a lost response must not log the workout twice.
     const doneKey = `finished:${session.id}`;
     const prior = await kvGet<{ pending?: string; workout?: HevyWorkout }>(env.DB, doneKey);
-    if (prior?.workout) return json({ workout: prior.workout, prs: finishPRs(await bootstrap(env, authMode, m), prior.workout.id), duplicate: true, ...(m === "local" ? { local: true } : {}) });
+    if (prior?.workout) return json({ workout: prior.workout, prs: await safePRs(env, authMode, m, prior.workout.id), duplicate: true, ...(m === "local" ? { local: true } : {}) });
     if (prior?.pending && Date.now() - Date.parse(prior.pending) < 120_000) return json({ error: "This workout is still being saved. Try again in a moment." }, { status: 409 });
     await kvPut(env.DB, doneKey, { pending: new Date().toISOString() });
     if (m === "local") {
@@ -455,7 +455,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
       await upsertWorkouts(env.DB, [w]);
       await kvPut(env.DB, doneKey, { workout: { id: w.id, title: w.title, start_time: w.start_time, end_time: w.end_time, exercises: [] } });
       await kvPut(env.DB, "live", null);
-      return json({ workout: w, local: true, prs: finishPRs(await bootstrap(env, authMode, m), w.id) });
+      return json({ workout: w, local: true, prs: await safePRs(env, authMode, m, w.id) });
     }
     let w: HevyWorkout;
     try {
@@ -466,8 +466,10 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     }
     await kvPut(env.DB, doneKey, { workout: { id: w.id, title: w.title, start_time: w.start_time, end_time: w.end_time, exercises: [] } });
     await kvPut(env.DB, "live", null);
+    const prs = await safePRs(env, authMode, m, w.id);
+    // After the PRs, not alongside them: both are heavy and share this request's limits.
     ctx.waitUntil(afterSync(env).catch((e) => console.error("autopush", e)));
-    return json({ workout: w, prs: finishPRs(await bootstrap(env, authMode, m), w.id) });
+    return json({ workout: w, prs });
   }
 
   // ── trips
@@ -554,6 +556,19 @@ async function settled(env: Env, m: Mode, cfg: ProgramConfig | null, workouts: H
   const filled = fillMissing(cfg, (need) => e1rmsFrom(asc, cfg.unit, today(s.tz), need, cfg.liftMap, s.tz));
   if (filled !== cfg) await kvPut(env.DB, k(m, "program"), filled);
   return filled;
+}
+
+/**
+ * PRs for the finish screen. Best-effort: the workout is already saved by now, so a failure here
+ * (a Workers limit, a bad row) must not come back as an error the app reads as "not saved".
+ */
+async function safePRs(env: Env, authMode: string, m: Mode, workoutId: string) {
+  try {
+    return finishPRs(await bootstrap(env, authMode, m), workoutId);
+  } catch (e) {
+    console.error("finish PRs", e);
+    return [];
+  }
 }
 
 async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap> {
