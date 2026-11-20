@@ -9,7 +9,7 @@ import { clearFlowCookie, handleCallback as googleCallback, loginRedirect, safeP
 import { Hevy, HevyError } from "./hevy";
 import { applyNotes, toHevyUpdate, type NotesEdit } from "../shared/notes";
 import { authUrl, disconnect, ensureWhoopSchema, handleCallback, handleWebhookEvent, syncWhoop, verifyWebhook, whoopConfigured, whoopData } from "./whoop";
-import { allWorkouts, ensureSchema, kvGet, kvPut, upsertWorkouts, workoutCount, workoutJson } from "./store";
+import { allWorkouts, ensureSchema, kvGet, kvGetMany, kvPut, upsertWorkouts, workoutCount, workoutJson, workoutsAt, WHOOP_REV, WORKOUTS_REV } from "./store";
 import { parseStrong, StrongError } from "../shared/strong";
 import { finishLive, getTemplates, pushRoutines, pushSessions, sync, syncOne, type SyncState } from "./sync";
 import type { PlannedSession } from "../shared/program";
@@ -95,10 +95,18 @@ const NO_HEVY: Record<Mode, string> = {
 };
 
 async function settings(env: Env, m: Mode): Promise<Settings> {
-  const s = await kvGet<Partial<Settings>>(env.DB, k(m, "settings"));
+  return settingsFrom(env, await kvGet<Partial<Settings>>(env.DB, k(m, "settings")));
+}
+
+let settingsMemo: { saved: unknown; tz: string | undefined; out: Settings } | null = null;
+
+/** Settings with defaults. The same object while the saved value is unchanged (see derive's cache). */
+function settingsFrom(env: Env, s: Partial<Settings> | null | undefined): Settings {
+  if (s && settingsMemo?.saved === s && settingsMemo.tz === env.TIMEZONE) return settingsMemo.out;
   const out: Settings = { unit: "lb", tz: env.TIMEZONE ?? "America/New_York", autoPush: true, graphMetric: "volume", ...s };
   // A zone the runtime doesn't know would make every date computation throw.
   if (!validTz(out.tz)) out.tz = validTz(env.TIMEZONE) ? env.TIMEZONE! : "UTC";
+  if (s) settingsMemo = { saved: s, tz: env.TIMEZONE, out };
   return out;
 }
 
@@ -468,7 +476,7 @@ async function api(req: Request, env: Env, ctx: ExecutionContext, path: string):
     await kvPut(env.DB, "live", null);
     const prs = await safePRs(env, authMode, m, w.id);
     // After the PRs, not alongside them: both are heavy and share this request's limits.
-    ctx.waitUntil(afterSync(env).catch((e) => console.error("autopush", e)));
+    ctx.waitUntil(afterSync(env).catch((e) => { console.error("autopush", e); return logError(env.DB, "BG", "autopush", 0, e); }));
     return json({ workout: w, prs });
   }
 
@@ -567,13 +575,14 @@ async function safePRs(env: Env, authMode: string, m: Mode, workoutId: string) {
     return finishPRs(await bootstrap(env, authMode, m), workoutId);
   } catch (e) {
     console.error("finish PRs", e);
+    await logError(env.DB, "POST", "/api/live/finish (PRs)", 0, e);
     return [];
   }
 }
 
 async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap> {
-  const s = await settings(env, m);
   if (m === "demo") {
+    const s = await settings(env, m);
     const demo = demoData(today(s.tz));
     const extra = (await kvGet<HevyWorkout[]>(env.DB, "demo:extra")) ?? [];
     const demoNotes = (await kvGet<Record<string, NotesEdit>>(env.DB, "demo:notes")) ?? {};
@@ -583,10 +592,32 @@ async function bootstrap(env: Env, authMode: string, m: Mode): Promise<Bootstrap
     });
     return ({ mode: "demo" as const, auth: authMode, settings: s, program: (await settled(env, m, await program(env, m), workouts, s)) ?? demo.config, workouts, sync: { cursor: null, at: new Date().toISOString(), count: workouts.length }, today: today(s.tz), live: await kvGet(env.DB, k(m, "live")), weighins: (await kvGet(env.DB, k(m, "weighins"))) ?? [], trips: (await kvGet(env.DB, k(m, "trips"))) ?? [] }) as Bootstrap;
   }
-  const [saved, workouts, st] = await Promise.all([program(env, m), allWorkouts(env.DB), kvGet<SyncState>(env.DB, "sync")]);
-  const cfg = await settled(env, m, saved, workouts, s);
+  // One kv query and (when workouts changed) one workouts query: this runs on every app request,
+  // and each D1 round trip is wall time the phone waits for.
+  const keys = [k(m, "settings"), k(m, "program"), "sync", "live", "body", "weighins", "trips", WORKOUTS_REV, "whoop:tokens", "whoop:body", "whoop:synced", WHOOP_REV];
+  const kv = await kvGetMany(env.DB, keys);
+  const s = settingsFrom(env, kv[k(m, "settings")] as Partial<Settings> | undefined);
+  const [workouts, whoop] = await Promise.all([workoutsAt(env.DB, kv[WORKOUTS_REV]), whoopData(env, 800, kv)]);
+  const cfg = await settled(env, m, (kv[k(m, "program")] as ProgramConfig | undefined) ?? null, workouts, s);
+  const st = (kv.sync as SyncState | undefined) ?? null;
   const sync: SyncState = m === "live" ? (st ?? { cursor: null }) : { cursor: null, count: workouts.length };
-  return ({ mode: m, auth: authMode, settings: s, program: cfg, workouts, sync, today: today(s.tz), live: await kvGet(env.DB, "live"), whoop: await whoopData(env), body: (await kvGet(env.DB, "body")) ?? [], weighins: (await kvGet(env.DB, "weighins")) ?? [], trips: (await kvGet(env.DB, "trips")) ?? [] }) as Bootstrap;
+  return ({ mode: m, auth: authMode, settings: s, program: cfg, workouts, sync, today: today(s.tz), live: kv.live ?? null, whoop, body: kv.body ?? [], weighins: kv.weighins ?? [], trips: kv.trips ?? EMPTY }) as Bootstrap;
+}
+
+const EMPTY: never[] = [];
+
+/**
+ * The last 50 server errors, newest first, in kv "errors": the cause of a 500 is readable later
+ * (`wrangler d1 execute … "SELECT value FROM kv WHERE key='errors'"`) without a live tail.
+ */
+async function logError(db: D1Database, method: string, path: string, status: number, e: unknown) {
+  try {
+    const prev = (await kvGet<unknown[]>(db, "errors")) ?? [];
+    const err = e instanceof Error ? { message: e.message, stack: e.stack?.slice(0, 1500) } : { message: String(e) };
+    await kvPut(db, "errors", [{ at: new Date().toISOString(), method, path, status, ...err }, ...prev].slice(0, 50));
+  } catch (x) {
+    console.error("logError", x);
+  }
 }
 
 export default {
@@ -603,6 +634,7 @@ export default {
       if (e instanceof BadRequest) return json({ error: e.message }, { status: 400 });
       // BodyTooLarge: the self-hosted server cut off an oversized upload (server/bodylimit.ts)
       const status = e instanceof HevyError ? 502 : e instanceof Error && e.name === "BodyTooLarge" ? 413 : 500;
+      if (status >= 500) ctx.waitUntil(logError(env.DB, req.method, url.pathname, status, e));
       return withSecurityHeaders(json({ error: e instanceof Error ? e.message : String(e) }, { status }));
     }
   },

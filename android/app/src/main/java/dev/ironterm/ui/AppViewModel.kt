@@ -322,6 +322,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
             gym = repo.cached("gym", AppGym.serializer()) ?: Load(),
             program = repo.cached("program", AppProgram.serializer()) ?: Load(),
             programs = repo.cached("programs", ProgramCatalog.serializer()) ?: Load(),
+            history = appCache.read("history", AppHistory.serializer())?.value?.let { HistoryUi(items = it.workouts, next = it.next, total = it.total) } ?: HistoryUi(),
         )
     }
 
@@ -341,7 +342,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
         if (cur.loading) return
         setData { put(cur.copy(loading = true)) }
         val g = generation
-        viewModelScope.launch {
+        @Suppress("UNCHECKED_CAST")
+        val early = dev.ironterm.data.app.EarlyCache { c -> if (g == generation) setData { put(c as Load<T>) } }
+        viewModelScope.launch(early) {
             val r = try { block(force) } catch (e: Exception) { Load(data = cur.data, savedAt = cur.savedAt, error = friendly(e)) }
             if (g != generation) return@launch // connected elsewhere meanwhile: this is the old source's answer
             setData { put(r) }
@@ -353,9 +356,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
 
     override fun load(screen: String, force: Boolean) {
         when (screen) {
-            Screens.HOME -> run({ home }, { copy(home = it) }, force) { f ->
+            Screens.HOME -> { prefetch(); run({ home }, { copy(home = it) }, force) { f ->
                 repo.load("home", AppHome.serializer(), f, maxAge(screen), { d -> _state.value.snapshot?.let(d::home) }) { it.home() }
-            }
+            } }
             Screens.LIFTS -> run({ lifts }, { l -> copy(lifts = l, bests = l.data?.lifts?.associate { it.key to it.best } ?: bests) }, force) { f ->
                 repo.load("lifts", AppLiftList.serializer(), f, maxAge(screen), { it.lifts() }) { it.lifts() }
             }
@@ -364,6 +367,43 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
             Screens.STATS -> run({ stats }, { copy(stats = it) }, force) { f -> repo.load("stats", AppStats.serializer(), f, maxAge(screen), null) { it.stats() } }
             Screens.HISTORY -> if (force || !_data.value.history.loaded) loadHistory(reset = true)
             Screens.GYM -> loadGym(force)
+        }
+    }
+
+    private var prefetchedAt = 0L
+
+    /**
+     * Fill the disk cache for every screen and detail a tap can open (each lift, recent workouts,
+     * calendar, body, insights, stats), so a first open draws from disk instead of the network.
+     * Cached entries younger than 10 minutes are skipped; at most every 10 minutes.
+     */
+    private fun prefetch() {
+        val now = System.currentTimeMillis()
+        if (settings.mode != SourceMode.SERVER || now - prefetchedAt < 10 * 60_000L) return
+        prefetchedAt = now
+        val g = generation
+        viewModelScope.launch {
+            val age = 10 * 60_000L
+            suspend fun <T> warm(key: String, ser: kotlinx.serialization.KSerializer<T>, fetch: suspend (AppApi) -> T): T? =
+                if (g != generation) null else repo.server(key, ser, false, age, fetch).data
+            val month = java.time.LocalDate.now().toString().take(7)
+            val lifts = warm("lifts", AppLiftList.serializer()) { it.lifts() }
+            warm("program", AppProgram.serializer()) { it.program() }
+            val recent = runCatching { repo.api()?.history(null, 30, null) }.getOrNull()
+            recent?.let { appCache.write("history", AppHistory.serializer(), it) }
+            // a few at a time: plenty fast, and the screen you're on keeps its share of the network
+            val jobs: List<suspend () -> Unit> =
+                (lifts?.lifts.orEmpty().map { l -> suspend { warm("lift_${l.key}", AppLiftDetail.serializer()) { it.lift(l.key) }; Unit } }) +
+                (recent?.workouts.orEmpty().take(15).map { w -> suspend { warm("workout_${w.id}", AppWorkout.serializer()) { it.workout(w.id) }; Unit } }) +
+                listOf(
+                    suspend { warm("calendar_$month", AppCalendar.serializer()) { it.calendar(month) }; Unit },
+                    suspend { warm("body_ready", AppBody.serializer()) { it.body("ready") }; Unit },
+                    suspend { warm("body_load", AppBody.serializer()) { it.body("load") }; Unit },
+                    suspend { warm("insights", AppInsights.serializer()) { it.insights() }; Unit },
+                    suspend { warm("stats", AppStats.serializer()) { it.stats() }; Unit },
+                    suspend { warm("programs", ProgramCatalog.serializer()) { it.programs() }; Unit },
+                )
+            jobs.chunked(4).forEach { batch -> kotlinx.coroutines.coroutineScope { batch.forEach { j -> launch { runCatching { j() } } } } }
         }
     }
 
@@ -405,6 +445,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), AppActions {
             try {
                 val q = _data.value.history.query
                 val page = historyPage(if (reset) null else h.next, q)
+                if (reset && q.isBlank() && settings.mode == SourceMode.SERVER) appCache.write("history", AppHistory.serializer(), page)
                 setData {
                     copy(history = history.copy(
                         items = if (reset) page.workouts else (history.items + page.workouts).distinctBy { it.id },

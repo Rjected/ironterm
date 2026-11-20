@@ -380,7 +380,13 @@ object Live {
     }
 
     /** The exercise and set to do next. */
+    /**
+     * The exercise and set to do next: the exercise you last finished a set of, while it has sets
+     * left (you may be working out of order), else the first open set in list order.
+     */
     fun current(s: LiveSession): Cursor? {
+        val last = s.exercises.flatMap { e -> e.sets.filter { it.done && it.doneAt != null }.map { e to it.doneAt!! } }.maxByOrNull { it.second }?.first
+        last?.sets?.indexOfFirst { it.isOpen }?.takeIf { it >= 0 }?.let { return Cursor(last.id, it) }
         for (e in s.exercises) {
             val k = e.sets.indexOfFirst { it.isOpen }
             if (k >= 0) return Cursor(e.id, k)
