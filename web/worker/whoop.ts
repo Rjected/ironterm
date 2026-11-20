@@ -3,7 +3,7 @@
 // the app's /api/whoop/callback registered as a redirect URL in the WHOOP developer dashboard.
 
 import type { WhoopBody, WhoopData, WhoopRecovery, WhoopWorkout } from "../shared/whoop";
-import { kvGet, kvPut } from "./store";
+import { bumpWhoopRev, kvGet, kvGetMany, kvPut, WHOOP_REV } from "./store";
 
 const AUTH = "https://api.prod.whoop.com/oauth/oauth2/auth";
 const TOKEN = "https://api.prod.whoop.com/oauth/oauth2/token";
@@ -15,11 +15,15 @@ export interface WhoopEnv { DB: D1Database; WHOOP_CLIENT_ID?: string; WHOOP_CLIE
 
 export const whoopConfigured = (env: WhoopEnv) => !!(env.WHOOP_CLIENT_ID && env.WHOOP_CLIENT_SECRET);
 
+const whoopSchemaReady = new WeakMap<D1Database, Promise<unknown>>();
+
 export function ensureWhoopSchema(db: D1Database) {
-  return db.batch([
+  let p = whoopSchemaReady.get(db);
+  if (!p) whoopSchemaReady.set(db, (p = db.batch([
     db.prepare("CREATE TABLE IF NOT EXISTS whoop (id TEXT PRIMARY KEY, kind TEXT NOT NULL, start TEXT NOT NULL, json TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS whoop_kind_start ON whoop(kind, start)"),
-  ]);
+  ])));
+  return p;
 }
 
 export async function authUrl(env: WhoopEnv, origin: string): Promise<string> {
@@ -92,6 +96,7 @@ const recovery = (r: any, date: string): WhoopRecovery => ({
 
 async function put(db: D1Database, kind: string, id: string, start: string, v: unknown) {
   await db.prepare("INSERT INTO whoop (id, kind, start, json) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET start = excluded.start, json = excluded.json").bind(`${kind}:${id}`, kind, start, JSON.stringify(v)).run();
+  await bumpWhoopRev(db);
 }
 
 const localDay = (iso: string, tz: string) => (iso ? new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(iso)) : "");
@@ -127,7 +132,7 @@ export async function verifyWebhook(env: WhoopEnv, req: Request, raw: string): P
 
 export async function handleWebhookEvent(env: WhoopEnv, ev: { id: string | number; type: string }) {
   const id = String(ev.id);
-  if (ev.type === "workout.deleted") return env.DB.prepare("DELETE FROM whoop WHERE id = ?").bind(`workout:${id}`).run();
+  if (ev.type === "workout.deleted") { await env.DB.prepare("DELETE FROM whoop WHERE id = ?").bind(`workout:${id}`).run(); return bumpWhoopRev(env.DB); }
   if (ev.type === "workout.updated") {
     const r = await get<any>(env, `/activity/workout/${id}`);
     return put(env.DB, "workout", id, r.start, workout(r));
@@ -136,19 +141,34 @@ export async function handleWebhookEvent(env: WhoopEnv, ev: { id: string | numbe
   if (ev.type.startsWith("recovery") || ev.type.startsWith("sleep")) return syncWhoop(env, 3);
 }
 
-export async function whoopData(env: WhoopEnv, sinceDays = 800): Promise<WhoopData> {
+let whoopCache: { key: string; data: WhoopData } | null = null;
+// constants, not fresh objects: derive's cache compares by identity
+const OFF: WhoopData = { connected: false, configured: false, workouts: [], recoveries: [] };
+const OFF_CONFIGURED: WhoopData = { connected: false, configured: true, workouts: [], recoveries: [] };
+
+/**
+ * [pre]: the whoop kv keys already read by the caller (one query for the whole bootstrap). The
+ * result is cached per isolate until WHOOP_REV or those keys change, so derive() can reuse its work.
+ */
+export async function whoopData(env: WhoopEnv, sinceDays = 800, pre?: Record<string, unknown>): Promise<WhoopData> {
   const configured = whoopConfigured(env);
-  const tokens = await kvGet<Tokens>(env.DB, "whoop:tokens");
-  if (!configured || !tokens) return { connected: false, configured, workouts: [], recoveries: [] };
+  const kv = pre ?? (await kvGetMany(env.DB, ["whoop:tokens", "whoop:body", "whoop:synced", WHOOP_REV]));
+  const tokens = kv["whoop:tokens"] as Tokens | undefined;
+  if (!configured || !tokens) return configured ? OFF_CONFIGURED : OFF;
+  const day = new Date().toISOString().slice(0, 10);
+  const key = [kv[WHOOP_REV] ?? "", kv["whoop:synced"] ?? "", sinceDays, day].join("|");
+  if (kv[WHOOP_REV] != null && whoopCache?.key === key && whoopCache.data.body === kv["whoop:body"]) return whoopCache.data;
   const since = new Date(Date.now() - sinceDays * 864e5).toISOString();
   const rows = (await env.DB.prepare("SELECT kind, json FROM whoop WHERE start >= ? ORDER BY start").bind(since).all<{ kind: string; json: string }>()).results;
-  return {
+  const data: WhoopData = {
     connected: true, configured,
     workouts: rows.filter((r) => r.kind === "workout").map((r) => JSON.parse(r.json)),
     recoveries: rows.filter((r) => r.kind === "recovery").map((r) => JSON.parse(r.json)),
-    body: (await kvGet<WhoopBody>(env.DB, "whoop:body")) ?? undefined,
-    syncedAt: (await kvGet<string>(env.DB, "whoop:synced")) ?? undefined,
+    body: (kv["whoop:body"] as WhoopBody | undefined) ?? undefined,
+    syncedAt: (kv["whoop:synced"] as string | undefined) ?? undefined,
   };
+  whoopCache = { key, data };
+  return data;
 }
 
 export async function disconnect(env: WhoopEnv) {

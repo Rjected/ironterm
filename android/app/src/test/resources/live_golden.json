@@ -3734,8 +3734,8 @@
       "restFor": "4qh0z1qv"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 1,
+      "set": 1
      },
      "progress": {
       "done": 6,
@@ -4033,8 +4033,8 @@
       "restFor": "4qh0z1qv"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 1,
+      "set": 2
      },
      "progress": {
       "done": 7,
@@ -4634,8 +4634,8 @@
       "restFor": "r79iseca"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 9,
@@ -4936,8 +4936,8 @@
       "restFor": "r79iseca"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 2,
+      "set": 2
      },
      "progress": {
       "done": 10,
@@ -5543,8 +5543,8 @@
       "restFor": "gies3lkp"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 3,
+      "set": 1
      },
      "progress": {
       "done": 12,
@@ -5848,8 +5848,8 @@
       "restFor": "gies3lkp"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 3,
+      "set": 2
      },
      "progress": {
       "done": 13,
@@ -6154,8 +6154,8 @@
       "restFor": "gies3lkp"
      },
      "current": {
-      "ex": 0,
-      "set": 9
+      "ex": 3,
+      "set": 3
      },
      "progress": {
       "done": 14,
@@ -8045,8 +8045,8 @@
       "restFor": "1oyww1kv"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 1,
+      "set": 1
      },
      "progress": {
       "done": 3,
@@ -8226,8 +8226,8 @@
       "restFor": "oft41g7n"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -8409,8 +8409,8 @@
       "restFor": "oft41g7n"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -8590,8 +8590,8 @@
       "restFor": "oft41g7n"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -8776,8 +8776,8 @@
       "restFor": "oft41g7n"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -8965,7 +8965,7 @@
       "restFor": "1oyww1kv"
      },
      "current": {
-      "ex": 0,
+      "ex": 1,
       "set": 2
      },
      "progress": {
@@ -10102,8 +10102,8 @@
       "restFor": "dt0o843k"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 1,
+      "set": 1
      },
      "progress": {
       "done": 3,
@@ -10283,8 +10283,8 @@
       "restFor": "ip5w1rqv"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -10466,8 +10466,8 @@
       "restFor": "ip5w1rqv"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -10647,8 +10647,8 @@
       "restFor": "ip5w1rqv"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -10833,8 +10833,8 @@
       "restFor": "ip5w1rqv"
      },
      "current": {
-      "ex": 0,
-      "set": 2
+      "ex": 2,
+      "set": 1
      },
      "progress": {
       "done": 4,
@@ -11022,7 +11022,7 @@
       "restFor": "dt0o843k"
      },
      "current": {
-      "ex": 0,
+      "ex": 1,
       "set": 2
      },
      "progress": {

@@ -52,7 +52,22 @@ export interface Derived {
   slowReturn: SlowReturn | null;
 }
 
+// The server hands back the same objects while the data is unchanged (worker/store.ts), so a
+// request after the first reuses this instead of replaying the whole log again.
+const memo: { b: Bootstrap; metric: GraphMetric; d: Derived }[] = [];
+const same = (a: Bootstrap, c: Bootstrap) =>
+  a.workouts === c.workouts && a.program === c.program && a.settings === c.settings && a.trips === c.trips && a.whoop === c.whoop && a.today === c.today;
+
 export function derive(b: Bootstrap, metric: GraphMetric): Derived {
+  const hit = memo.find((x) => x.metric === metric && same(x.b, b));
+  if (hit) return hit.d;
+  const d = computeDerive(b, metric);
+  memo.unshift({ b, metric, d });
+  if (memo.length > 4) memo.length = 4;
+  return d;
+}
+
+function computeDerive(b: Bootstrap, metric: GraphMetric): Derived {
   const unit = b.program?.unit ?? b.settings.unit;
   const tz = b.settings.tz;
   const today = b.today;

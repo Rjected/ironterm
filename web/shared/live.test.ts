@@ -55,4 +55,15 @@ describe("live session", () => {
     expect(set.distance_meters).toBe(12875);
     expect(set.duration_seconds).toBe(2100);
   });
+
+  it("next set follows the exercise you're on, not list order", () => {
+    let s = sessionFromPlan(plan, "lb", def.name, "2026-01-02T15:00:00Z");
+    const [a, b] = s.exercises;
+    s = completeSet(s, a.id, 0, new Date("2026-01-02T15:05:00Z"));
+    s = completeSet(s, b.id, 0, new Date("2026-01-02T15:10:00Z"));
+    expect(current(s)).toEqual({ exId: b.id, set: 1 });
+    // done with that one: back to the first open set in order
+    b.sets.forEach((_, i) => { s = completeSet(s, b.id, i, new Date(`2026-01-02T15:2${i}:00Z`)); });
+    expect(current(s)).toEqual({ exId: a.id, set: 1 });
+  });
 });

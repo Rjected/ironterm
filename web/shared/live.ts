@@ -214,8 +214,15 @@ function hasNextExercise(s: LiveSession, exId: string) {
   return s.exercises.slice(i + 1).some((e) => e.sets.some((x) => !x.done && !x.skipped));
 }
 
-/** The exercise and set to do next. */
+/**
+ * The exercise and set to do next: the exercise you last finished a set of, while it has sets
+ * left (you may be working out of order), else the first open set in list order.
+ */
 export function current(s: LiveSession): { exId: string; set: number } | null {
+  let last: { e: LiveExercise; at: string } | null = null;
+  for (const e of s.exercises) for (const x of e.sets) if (x.done && x.doneAt && (!last || x.doneAt > last.at)) last = { e, at: x.doneAt };
+  const k = last ? last.e.sets.findIndex((x) => !x.done && !x.skipped) : -1;
+  if (last && k >= 0) return { exId: last.e.id, set: k };
   for (const e of s.exercises) {
     const k = e.sets.findIndex((x) => !x.done && !x.skipped);
     if (k >= 0) return { exId: e.id, set: k };

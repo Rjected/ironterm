@@ -8,6 +8,9 @@ import dev.ironterm.data.SourceMode
 import dev.ironterm.data.direct.DirectApp
 import dev.ironterm.data.direct.WorkoutsRepository
 import kotlinx.serialization.KSerializer
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -34,6 +37,14 @@ data class Load<out T>(
         fun <T> failed(msg: String) = Load<T>(error = msg)
         fun <T> server() = Load<T>(needsServer = true)
     }
+}
+
+/**
+ * Put in a screen load's coroutine context: gets the cached copy (marked loading) before the
+ * network answers, so a stale screen shows instantly instead of a skeleton.
+ */
+class EarlyCache(val emit: (Load<Any?>) -> Unit) : AbstractCoroutineContextElement(Key) {
+    companion object Key : CoroutineContext.Key<EarlyCache>
 }
 
 fun friendly(e: Throwable): String = when (e) {
@@ -91,6 +102,7 @@ class AppRepo(
         val c = cache.read(key, ser)
         if (!force && c != null && clock() - c.savedAt < maxAgeMs) return Load.of(c.value, c.savedAt)
         val api = api() ?: return c?.let { Load(it.value, savedAt = it.savedAt, error = "Not connected") } ?: Load.failed("Not connected. Open SETUP.")
+        if (c != null) coroutineContext[EarlyCache]?.emit(Load(c.value, loading = true, savedAt = c.savedAt))
         val source = settings.sourceKey
         return try {
             val v = fetch(api)

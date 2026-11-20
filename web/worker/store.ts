@@ -27,6 +27,9 @@ export async function kvPut(db: D1Database, key: string, value: unknown) {
     .run();
 }
 
+const bumpRev = (db: D1Database, key: string) =>
+  db.prepare("INSERT INTO kv (key, value, updated_at) VALUES (?, '1', datetime('now')) ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = excluded.updated_at").bind(key);
+
 export async function upsertWorkouts(db: D1Database, ws: HevyWorkout[]) {
   if (!ws.length) return;
   await db.batch(
@@ -34,13 +37,13 @@ export async function upsertWorkouts(db: D1Database, ws: HevyWorkout[]) {
       db
         .prepare("INSERT INTO workouts (id, start_time, updated_at, json) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET start_time = excluded.start_time, updated_at = excluded.updated_at, json = excluded.json")
         .bind(w.id, w.start_time, w.updated_at ?? null, JSON.stringify(w)),
-    ),
+    ).concat(bumpRev(db, WORKOUTS_REV)),
   );
 }
 
 export async function deleteWorkouts(db: D1Database, ids: string[]) {
   if (!ids.length) return;
-  await db.batch(ids.map((id) => db.prepare("DELETE FROM workouts WHERE id = ?").bind(id)));
+  await db.batch(ids.map((id) => db.prepare("DELETE FROM workouts WHERE id = ?").bind(id)).concat(bumpRev(db, WORKOUTS_REV)));
 }
 
 export async function allWorkouts(db: D1Database): Promise<HevyWorkout[]> {
@@ -61,4 +64,42 @@ export async function workoutJson(db: D1Database, ids: string[]): Promise<Map<st
     for (const r of results) out.set(r.id, r.json);
   }
   return out;
+}
+
+/** Bumped in the same batch as every workouts write, so a cached copy knows when it's stale. */
+export const WORKOUTS_REV = "workouts:rev";
+export const WHOOP_REV = "whoop:rev";
+export const bumpWhoopRev = (db: D1Database) => bumpRev(db, WHOOP_REV).run();
+
+// Per-isolate caches. A Worker isolate serves many requests; handing back the same objects while
+// the data is unchanged lets derive() (src/derive.ts) skip its heavy work.
+const parsed = new Map<string, { raw: string; value: unknown }>();
+let workoutsCache: { rev: string; ws: HevyWorkout[] } | null = null;
+
+/**
+ * Many kv keys in one query. Values whose JSON is unchanged since the last read come back as the
+ * same object.
+ */
+export async function kvGetMany(db: D1Database, keys: string[]): Promise<Record<string, unknown>> {
+  const { results } = await db.prepare(`SELECT key, value FROM kv WHERE key IN (${keys.map(() => "?").join(",")})`).bind(...keys).all<{ key: string; value: string }>();
+  const out: Record<string, unknown> = {};
+  for (const r of results) {
+    const c = parsed.get(r.key);
+    if (c && c.raw === r.value) out[r.key] = c.value;
+    else {
+      const value = JSON.parse(r.value);
+      parsed.set(r.key, { raw: r.value, value });
+      out[r.key] = value;
+    }
+  }
+  return out;
+}
+
+/** All workouts, from this isolate's copy when [rev] (the WORKOUTS_REV value) hasn't moved. */
+export async function workoutsAt(db: D1Database, rev: unknown): Promise<HevyWorkout[]> {
+  const r = rev == null ? null : String(rev);
+  if (r && workoutsCache?.rev === r) return workoutsCache.ws;
+  const ws = await allWorkouts(db);
+  workoutsCache = r ? { rev: r, ws } : null;
+  return ws;
 }

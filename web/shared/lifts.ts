@@ -208,8 +208,25 @@ const MAP_INDEX = new WeakMap<Record<string, string>, Map<string, string>>();
 /** Template id Ironterm uses for a library lift logged without Hevy (local mode). */
 export const localTemplateId = (lift: string) => `lift:${lift}`;
 
-/** Find which lift (if any) a logged exercise counts as. */
-export function matchLift(title: string, templateId: string, map: Record<string, string> = {}): string | null {
+const NO_MAP: Record<string, string> = {};
+const MATCHED = new WeakMap<Record<string, string>, Map<string, string | null>>();
+
+/**
+ * Find which lift (if any) a logged exercise counts as. Cached per lift map: it runs for every
+ * exercise of every workout, once per lift, on each request.
+ */
+export function matchLift(title: string, templateId: string, map: Record<string, string> = NO_MAP): string | null {
+  let memo = MATCHED.get(map);
+  if (!memo) MATCHED.set(map, (memo = new Map()));
+  const key = templateId + "\u0000" + title;
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  const r = matchUncached(title, templateId, map);
+  memo.set(key, r);
+  return r;
+}
+
+function matchUncached(title: string, templateId: string, map: Record<string, string>): string | null {
   let inv = MAP_INDEX.get(map);
   if (!inv) { inv = new Map(Object.entries(map).map(([lift, tid]) => [tid, lift])); MAP_INDEX.set(map, inv); }
   // explicit mapping wins over title guessing

@@ -443,7 +443,11 @@ enum Live {
     struct Cursor: Equatable { var exId: String; var set: Int }
 
     /// The exercise and set to do next.
+    /// The exercise and set to do next: the exercise you last finished a set of, while it has sets
+    /// left (you may be working out of order), else the first open set in list order.
     static func current(_ s: LiveSession) -> Cursor? {
+        let last = s.exercises.flatMap { e in e.sets.compactMap { x in x.done ? x.doneAt.map { (e, $0) } : nil } }.max { $0.1 < $1.1 }?.0
+        if let e = last, let k = e.sets.firstIndex(where: { $0.isOpen }) { return Cursor(exId: e.id, set: k) }
         for e in s.exercises {
             if let k = e.sets.firstIndex(where: { $0.isOpen }) { return Cursor(exId: e.id, set: k) }
         }
